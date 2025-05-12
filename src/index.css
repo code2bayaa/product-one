@@ -1,13 +1,297 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+} 
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.movie-scene::-webkit-scrollbar{
+  width:8px;
+
+}
+
+/* Styling the scrollbar track */
+.movie-scene::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Color of the track */
+}
+
+/* Styling the scrollbar handle */
+.movie-scene::-webkit-scrollbar-thumb {
+  background: #888; /* Color of the handle */
+  border-radius: 4px; /* Rounded corners */
+}
+
+/* Styling the scrollbar handle on hover */
+.movie-scene::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Color of the handle on hover */
+}
+
+/* Ensuring smooth scrolling behavior */
+.movie-scene {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #888 #f1f1f1; /* For Firefox */
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS devices */
+}
+
+.active{
+  text-shadow:0 0 5px #fff;
+}
+
+.active a{
+  text-shadow:0 0 5px #fff;
+}
+
+html,body{
+  height:100%;
+  width:100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+#build{
+  height:100%;
+  width:100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.swiper{
+  transition:3s ease-in infinite;
+  width:100% !important;
+}
+
+.swiper-button-prev::after{
+  font-size: 120% !important;
+  width:30%;
+}
+
+.swiper-button-next::after{
+  font-size: 120% !important;
+  display: inline-block;
+  width:5%;
+}
+
+.swiper-button-next, .swiper-button-prev{
+  color:#81067b !important;
+  display: inline-block;
+  height:50px !important;
+  /* transition: 2s ease;; */
+  background-color: #000 !important;
+  border-radius: 50%;
+  box-shadow: 2px 2px 10px 0px rgba(234,234,234,1);
+  border:2px solid #fff;
+  width:5% !important;
+}
+
+.plyr{
+  width : 100%;
+  /* max-height:550px; */
+  height:100%;
+  /* border-radius:5px; */
+  /* margin-top:5%; */
+}
+.plyr__video-wrapper{
+  height:100%;
+  width:100%;
+}
+.plyr__controls{
+  display:none
+}
+video, iframe{
+  height:100%;
+  width:100%;
+}
+
+
+/* .playfair-display-<uniquifier> {
+  font-family: "Playfair Display", serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+}
+
+.bebas-neue-regular {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.poppins-thin {
+  font-family: "Poppins", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.poppins-extralight {
+  font-family: "Poppins", sans-serif;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.poppins-light {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.poppins-regular {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.poppins-medium {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.poppins-semibold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.poppins-bold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.poppins-extrabold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.poppins-black {
+  font-family: "Poppins", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.poppins-thin-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 100;
+  font-style: italic;
+}
+
+.poppins-extralight-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 200;
+  font-style: italic;
+}
+
+.poppins-light-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.poppins-regular-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.poppins-medium-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.poppins-semibold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.poppins-bold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.poppins-extrabold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-style: italic;
+}
+
+.poppins-black-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.abril-fatface-regular {
+  font-family: "Abril Fatface", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+.eb-garamond-<uniquifier> {
+  font-family: "EB Garamond", serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+} */
+
+.swiper-button-prev::after{
+  font-size: 120% !important;
+  width:30%;
+}
+
+.swiper-button-next::after{
+  font-size: 120% !important;
+  display: inline-block;
+  width:5%;
+}
+
+.swiper-button-next, .swiper-button-prev{
+  color:#81067b !important;
+  display: inline-block;
+  height:50px !important;
+  /* transition: 2s ease;; */
+  background-color: #000 !important;
+  border-radius: 50%;
+  box-shadow: 2px 2px 10px 0px rgba(234,234,234,1);
+  border:2px solid #fff;
+  width:5% !important;
+}
+
+@media(max-width:800px){
+  .swiper-button-prev::after{
+    font-size: 120% !important;
+    width:30%;
+  }
+  
+  .swiper-button-next::after{
+    width:15%;
+  }
+  
+  .swiper-button-next, .swiper-button-prev{
+    width:15% !important;
+  }
+  
 }

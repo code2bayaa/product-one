@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
-import { useQuery, gql, useMutation, useLazyQuery } from '@apollo/client';
+import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
@@ -96,7 +96,7 @@ const PEOPLE = () => {
         onCompleted: (data) => {
             console.log(data)
             if (data.addPerson.success) {
-                if(data.addPerson.message == "already inserted")
+                if(data.addPerson.message === "already inserted")
                     console.log("person inserting already started...")
                 // console.log("Movies successfully inserted into MySQL:", data.addPerson.message);
                 fetchedPersonData.refetch()
@@ -110,23 +110,14 @@ const PEOPLE = () => {
         },
     });
 
-    useEffect(() => {
-        intitializePeople(
-            {runContent:[
-            // "latest",
-            "discover movie","discover tv","trending","popular"]
-        })
-
-    },[])
-
-    const intitializePeople = async ({
+    const intitializePeople = useCallback(async ({
         runContent,
         page,
         jobId='Actor',
         genreId = '',
         regionId = '',
         languageId='',
-        yearId=(new Date).getFullYear()
+        yearId=(new Date()).getFullYear()
     }) => {
         
         const fetchPersonFromAPI = async (actual_index) => {
@@ -274,7 +265,16 @@ const PEOPLE = () => {
                 }
             })
         })
-    }
+    },[mutateInsertPerson,fetchPerson])
+
+    useEffect(() => {
+        intitializePeople(
+            {runContent:[
+            // "latest",
+            "discover movie","discover tv","trending","popular"]
+        })
+
+    },[intitializePeople])
 
     return (
         <div className="w-[100%] min-h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>

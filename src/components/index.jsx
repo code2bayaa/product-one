@@ -69,7 +69,7 @@ const EMPIRE = () => {
         });
 
 
-    }, [gsap, divRefs]);
+    }, [windowWidth]);
     
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>

@@ -1,9 +1,9 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDoubleRight, faEyeSlash, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
@@ -100,7 +100,7 @@ const SEASON = () => {
         notifyOnNetworkStatusChange: true,
     })
 
-    const [mutateInsertImage, insertImage] = useMutation(gql`
+    const [mutateInsertImage] = useMutation(gql`
         mutation AddImage(
             $meta_data: META_DATA_INPUT!
             $data: DATA_INPUT!
@@ -369,7 +369,7 @@ const SEASON = () => {
         },
     });
 
-    const graphImages = async() => {
+    const graphImages = useCallback(async() => {
         try{
 
         async function freshFetch(){
@@ -397,11 +397,11 @@ const SEASON = () => {
         // console.log(fetched)
         if (fetched.data && fetched.data.image.success) {
             console.log("image cached data:", fetched.data);
-            return setImages(() => ({...fetched.data.image.data}))
+            setImages(() => ({...fetched.data.image.data}))
 
         }else {
             const getImageData = await freshFetch()
-            return setImages(() => ({...getImageData}))
+            setImages(() => ({...getImageData}))
         }
     }catch(error){
         console.log(error)
@@ -409,9 +409,9 @@ const SEASON = () => {
         .then(data => data.json())
         .then(data => setImages(() => ({...data})))
     }
-    }
+    },[fetchImage, id, season, mutateInsertImage]);
 
-    const fetchTV = async() => {
+    const fetchTV = useCallback(async() => {
 
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}?api_key=${process.env.REACT_APP_api_key}`);
@@ -419,7 +419,7 @@ const SEASON = () => {
             const newData = {...data }
             newData.episodes = newData.episodes.map(({crew,guest_stars,cast, ...rest}) => rest)
 
-            console.log(newData,"new data")
+            // console.log(newData,"new data")
             mutateInsertTV({
                 variables: {
                     single : {...newData}
@@ -433,18 +433,18 @@ const SEASON = () => {
         if (fetched.data && fetched.data.season.air_date === null) {
             console.log("first time...")
             const tv = await freshFetch()
-            return setSerie(() => ({...tv}));
+            setSerie(() => ({...tv}));
         }else if(fetched.data && fetched.data.season.success){
             console.log("Using cached data:", fetched.data);
-            return setSerie(() => ({...fetched.data.season}));
+            setSerie(() => ({...fetched.data.season}));
         }else {
             const tv = await freshFetch()
-            return setSerie(() => ({...tv}));
+            setSerie(() => ({...tv}));
         }
 
-    }
+    },[fetchSeason, id, season, mutateInsertTV]);
 
-    const fetchCredits = async() => {
+    const fetchCredits = useCallback(async() => {
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
             const credits_data = await response.json();
@@ -460,24 +460,24 @@ const SEASON = () => {
         console.log(fetched)
         if(fetched.data && fetched.data.credits.success){
             console.log("Using cached data:", fetched.data);
-            return setCredit(() => ({...fetched.data.credits}));
+            setCredit(() => ({...fetched.data.credits}));
         }else {
             const credits = await freshFetch()
-            return setCredit(() => ({...credits}));
+            setCredit(() => ({...credits}));
         }
-    }
+    },[fetchCreditsData, id, season, mutateInsertCredits]);
 
     useEffect(() => {
         graphImages()
-    },[])
+    },[graphImages])
 
     useEffect(() => {
         fetchTV();
-    }, []);
+    }, [fetchTV]);
 
     useEffect(() => {
         fetchCredits();
-    }, []);
+    }, [fetchCredits]);
 
     return (
         

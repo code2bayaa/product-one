@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -6,7 +6,7 @@ import { faStar } from "@fortawesome/free-solid-svg-icons"
 import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
-import { useQuery, gql, useMutation, useLazyQuery, useApolloClient } from '@apollo/client';
+import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
@@ -103,7 +103,7 @@ const SERIES = () => {
     const [mutateInsertMovies] = useMutation(INSERT_MOVIES_MUTATION, {
         onCompleted: (data) => {
             if (data.addTVS.success) {
-                if(data.addTVS.message == "already inserted")
+                if(data.addTVS.message === "already inserted")
                     console.log("movie inserting already started...")
                 fetchedMoviesData.refetch()
                 .then(status => console.log(status,"status"))
@@ -116,17 +116,7 @@ const SERIES = () => {
         },
     });
 
-    useEffect(() => {
-        intitializeMovies(
-            {runContent:[
-            // "latest",
-                "airing","trending","popular","top rated","discover","on air"
-            ]
-        })
-
-    },[])
-
-    const intitializeMovies = async ({
+    const intitializeMovies = useCallback(async ({
         runContent,
         page,
         genreId = '',
@@ -145,7 +135,7 @@ const SERIES = () => {
                 );
                 const data = await response.json();
 
-                console.log(data)
+                // console.log(data)
                 if (data.results.length > 0) {
                     temp_movies[key].results = [
                         ...temp_movies[key].results,
@@ -279,7 +269,17 @@ const SERIES = () => {
                 }
             })
         })
-    }
+    },[fetchMovies,mutateInsertMovies])
+
+    useEffect(() => {
+        intitializeMovies(
+            {runContent:[
+            // "latest",
+                "airing","trending","popular","top rated","discover","on air"
+            ]
+        })
+
+    },[intitializeMovies])
 
     return (
         <div className="w-[100%] h-[auto] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>

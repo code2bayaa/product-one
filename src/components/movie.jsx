@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlayCircle, faStar } from "@fortawesome/free-solid-svg-icons";
@@ -109,7 +109,7 @@ const MOVIE = () => {
             notifyOnNetworkStatusChange: true,
         })
     
-        const [mutateInsertImage, insertImage] = useMutation(gql`
+        const [mutateInsertImage] = useMutation(gql`
             mutation AddImage(
                 $meta_data: META_DATA_INPUT!
                 $data: DATA_INPUT!
@@ -390,7 +390,7 @@ const MOVIE = () => {
         },
     });
 
-        const graphImages = async() => {
+        const graphImages = useCallback(async() => {
             try{
                 
             //     const fetchFresh = async() => {
@@ -463,11 +463,11 @@ const MOVIE = () => {
             console.log(fetched)
             if (fetched.data && fetched.data.image.success) {
                 console.log("image cached data:", fetched.data);
-                return setImages(() => ({...fetched.data.image.data}))
+                setImages(() => ({...fetched.data.image.data}))
     
             }else {
                 const getImageData = await freshFetch()
-                return setImages(() => ({...getImageData}))
+                setImages(() => ({...getImageData}))
             }
         }catch(error){
             console.log(error)
@@ -475,9 +475,9 @@ const MOVIE = () => {
             .then(data => data.json())
             .then(data => setImages(() => ({...data})))
         }
-    }
+    },[fetchImage,id,mutateInsertImage])
 
-    const fetchMovie = async() => {
+    const fetchMovie = useCallback(async() => {
 
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}?api_key=${process.env.REACT_APP_api_key}`);
@@ -493,22 +493,22 @@ const MOVIE = () => {
 
         const fetched = await fetchSingleMovie({
             variables : { id }})
-        console.log(fetched)
+        // console.log(fetched)
         if (fetched.data && fetched.data.single.runtime === null) {
-            console.log("first time...")
+            // console.log("first time...")
             const movie = await freshFetch()
-            return setMovie(() => ({...movie}));
+            setMovie(() => ({...movie}));
         }else if(fetched.data && fetched.data.single.success){
-            console.log("Using cached data:", fetched.data);
-            return setMovie(() => ({...fetched.data.single}));
+            // console.log("Using cached data:", fetched.data);
+            setMovie(() => ({...fetched.data.single}));
         }else {
             const movie = await freshFetch()
-            return setMovie(() => ({...movie}));
+            setMovie(() => ({...movie}));
         }
         
-    }
+    },[fetchSingleMovie,id,mutateInsertMovie])
 
-    const fetchCredits = async() => {
+    const fetchCredits = useCallback(async() => {
         // const credits_response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/credits?api_key=${process.env.REACT_APP_api_key}`);
         // const credits_data = await credits_response.json();
         // setCredit(() => ({...credits_data})); 
@@ -535,19 +535,19 @@ const MOVIE = () => {
             const credits = await freshFetch()
             return setCredit(() => ({...credits}));
         }
-    }
+    },[fetchCreditsData,id,mutateInsertCredits])
 
     useEffect(() => {
         graphImages()
-    },[])
+    },[graphImages])
 
     useEffect(() => {
       fetchMovie();
-    }, []);
+    }, [fetchMovie]);
 
     useEffect(() => {
         fetchCredits();
-    }, []);
+    }, [fetchCredits]);
 
     const getBackground = () => {
         if(fetchedImageBackgrounds)
@@ -613,7 +613,7 @@ const MOVIE = () => {
                                 <h3>{movie.revenue}</h3>
                                 <p style={{fontStyle:"italic"}}>{movie.status}</p>
                                 {/* <h3>{movie.video ? "available":"not available"}</h3> */}
-                                <h4>{ (movie.runtime > 60) ? Math.floor(movie.runtime / 60) + "h" + " " + movie.runtime % 60 + "min" : movie.runtime + "min" }</h4>
+                                <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + "h " + (movie.runtime % 60) + "min" : movie.runtime + "min" }</h4>
                                 <article>
                                     {movie.overview}
                                 </article>

@@ -1,7 +1,5 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowAltCircleLeft, faArrowCircleRight, faCaretRight, faHeartPulse } from '@fortawesome/free-solid-svg-icons'
 import { NavLink } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react"
 import {Navigation, Pagination, Autoplay, EffectCoverflow, EffectCards, Scrollbar, Thumbs, Controller, A11y } from "swiper/modules"
@@ -40,8 +38,8 @@ const Carousel = ({ images, autoplayInterval = 5000 }) => {
         
   }, [autoplayInterval]);
 
-  const [firstSwiper, setFirstSwiper] = useState(null);
-  const [secondSwiper, setSecondSwiper] = useState(null);
+  // const [firstSwiper, setFirstSwiper] = useState(null);
+  // const [secondSwiper, setSecondSwiper] = useState(null);
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   return (
          <Swiper
@@ -50,12 +48,12 @@ const Carousel = ({ images, autoplayInterval = 5000 }) => {
           thumbs={{ swiper: thumbsSwiper }}
           onSwiper={(swiper) => {
             // console.log("loop:"+loop)
-            setFirstSwiper()
+            // setFirstSwiper()
             setThumbsSwiper()
             // setFirstSwiper(swiper);
             // setSecondSwiper(swiper)
           }}
-          controller={{ control: secondSwiper }}
+          controller={{ control: true }}
           onSlideChange={(swiper) => {
             // console.log(swiper)
             if(window.screen.width > 800)

@@ -1,9 +1,9 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDoubleRight, faEyeSlash, faPlayCircle, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faPlayCircle, faStar } from "@fortawesome/free-solid-svg-icons";
 import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
@@ -89,7 +89,7 @@ const EPISODE = () => {
         notifyOnNetworkStatusChange: true,
     })
 
-    const [mutateInsertImage, insertImage] = useMutation(gql`
+    const [mutateInsertImage] = useMutation(gql`
         mutation AddImage(
             $meta_data: META_DATA_INPUT!
             $data: DATA_INPUT!
@@ -368,49 +368,49 @@ const EPISODE = () => {
         },
     });
 
-    const graphImages = async() => {
+    const graphImages = useCallback(async() => {
         try{
 
-        async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`);
-            const getImageData = await response.json();
-            console.log(getImageData)
-            mutateInsertImage({ variables: { meta_data : {
+            async function freshFetch(){
+                const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`);
+                const getImageData = await response.json();
+                console.log(getImageData)
+                mutateInsertImage({ variables: { meta_data : {
+                    type:"tv",
+                    season:season?parseInt(season):-1,
+                    episode:episode?parseInt(episode):-1,
+                    id:id?parseInt(id):-1
+                }, data:{...getImageData} } });
+                return {...getImageData}
+            } 
+
+            
+
+            const fetched = await fetchImage({
+                variables : {
                 type:"tv",
-                season:season?parseInt(season):-1,
                 episode:episode?parseInt(episode):-1,
+                season:season?parseInt(season):-1,
                 id:id?parseInt(id):-1
-            }, data:{...getImageData} } });
-            return {...getImageData}
-        } 
+            }})
+            // console.log(fetched)
+            if (fetched.data && fetched.data.image.success) {
+                console.log("image cached data:", fetched.data);
+                setImages(() => ({...fetched.data.image.data}))
 
-        
-
-        const fetched = await fetchImage({
-            variables : {
-            type:"tv",
-            episode:episode?parseInt(episode):-1,
-            season:season?parseInt(season):-1,
-            id:id?parseInt(id):-1
-        }})
-        // console.log(fetched)
-        if (fetched.data && fetched.data.image.success) {
-            console.log("image cached data:", fetched.data);
-            return setImages(() => ({...fetched.data.image.data}))
-
-        }else {
-            const getImageData = await freshFetch()
-            return setImages(() => ({...getImageData}))
+            }else {
+                const getImageData = await freshFetch()
+                setImages(() => ({...getImageData}))
+            }
+        }catch(error){
+            console.log(error)
+            fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`)
+            .then(data => data.json())
+            .then(data => setImages(() => ({...data})))
         }
-    }catch(error){
-        console.log(error)
-        fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`)
-        .then(data => data.json())
-        .then(data => setImages(() => ({...data})))
-    }
-    }
+    },[id, season, episode, fetchImage, mutateInsertImage])
 
-    const fetchTV = async() => {
+    const fetchTV = useCallback(async() => {
 
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}?api_key=${process.env.REACT_APP_api_key}`);
@@ -420,7 +420,7 @@ const EPISODE = () => {
             delete newData.guest_stars
             delete newData.cast
             // newData.episodes = newData.episodes.map(({crew,guest_stars,cast, ...rest}) => rest)
-            console.log(newData,"newData")
+            // console.log(newData,"newData")
             mutateInsertTV({
                 variables: {
                     single : {...newData}
@@ -434,18 +434,18 @@ const EPISODE = () => {
         if (fetched.data && fetched.data.episode.air_date === null) {
             console.log("first time...")
             const tv = await freshFetch()
-            return setSerie(() => ({...tv}));
+            setSerie(() => ({...tv}));
         }else if(fetched.data && fetched.data.episode.success){
-            console.log("Using cached data:", fetched.data);
-            return setSerie(() => ({...fetched.data.episode}));
+            console.log("Using cached data:", fetched.data)
+            setSerie(() => ({...fetched.data.episode}))
         }else {
             const tv = await freshFetch()
-            return setSerie(() => ({...tv}));
+            setSerie(() => ({...tv}))
         }
 
-    }
+    },[id, season, episode, fetchEpisode, mutateInsertTV])
 
-    const fetchCredits = async() => {
+    const fetchCredits = useCallback(async() => {
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
             const credits_data = await response.json();
@@ -461,24 +461,24 @@ const EPISODE = () => {
         console.log(fetched)
         if(fetched.data && fetched.data.credits.success){
             console.log("Using cached data:", fetched.data);
-            return setCredit(() => ({...fetched.data.credits}));
+            setCredit(() => ({...fetched.data.credits}));
         }else {
             const credits = await freshFetch()
-            return setCredit(() => ({...credits}));
+            setCredit(() => ({...credits}));
         }
-    }
+    },[id, season, episode, fetchCreditsData, mutateInsertCredits])
 
     useEffect(() => {
         graphImages()
-    },[])
+    },[graphImages])
 
     useEffect(() => {
         fetchTV();
-    }, []);
+    }, [fetchTV]);
 
     useEffect(() => {
         fetchCredits();
-    }, []);
+    }, [fetchCredits]);
 
     useEffect(() => {
         const handleResize = () => {

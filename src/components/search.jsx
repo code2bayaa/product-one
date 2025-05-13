@@ -1,6 +1,6 @@
 import NAVBAR from "./nav";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PICTURE from "../midlleware/picture";
 import { faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
@@ -84,7 +84,7 @@ const SEARCH = () => {
         onCompleted: (data) => {
             console.log(data)
             if (data.searchMovies.success) {
-                if(data.searchMovies.message == "already inserted")
+                if(data.searchMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movies successfully inserted into MySQL:", data.searchMovies.message);
                 fetchedMoviesData.refetch()
@@ -160,8 +160,8 @@ const SEARCH = () => {
         onCompleted: (data) => {
             console.log(data)
             if (data.searchPerson.success) {
-                if(data.searchPerson.message == "already inserted")
-                    console.log("person inserting already started...")
+                if(data.searchPerson.message === "already inserted")
+                    // console.log("person inserting already started...")
                 fetchedPersonData.refetch()
                 .then(status => console.log(status,"status"))
             } else {
@@ -173,7 +173,7 @@ const SEARCH = () => {
         },
     });
 
-    const intitializeMovies = ({runContent}) => {
+    const intitializeMovies = useCallback(({runContent}) => {
         if(search){
             runContent.forEach(async({index, api, page, select, insert, type, object}) => {
   
@@ -250,7 +250,7 @@ const SEARCH = () => {
             });
         }
 
-    }
+    },[search,search_content])
 
     useEffect(() => {
         console.log("changing search...")
@@ -261,7 +261,7 @@ const SEARCH = () => {
                 {"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
             ]})
         }
-    },[search])
+    },[search,intitializeMovies,fetchMovies,mutateInsertMovies,fetchPerson,mutateInsertPerson])
     
     const searchMachine = async (e) => {
         try{

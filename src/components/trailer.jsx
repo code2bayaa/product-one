@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
-import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import Plyr from "plyr-react";
 import { useQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
@@ -10,7 +10,7 @@ const TRAILER = () => {
     const { id, stream, season, episode, background } = useParams();
     const [trailor, setTrailor] = useState(null)
     // const [videos,setTrailor] = useState(null)
-    const [player,setPlayer] = useState(null)
+    // const [player,setPlayer] = useState(null)
     // const [backgroundImg,setBackgroundImg] = useState(background)
     // const [fetchedVideoBackgrounds,setFetchedVideoBackgrounds] = useState(null)
     const [fetchedVideo, setFetchedVideo] = useState(null)
@@ -60,7 +60,7 @@ const TRAILER = () => {
         }
     });
 
-    const [mutateInsertVideo, insertVideo] = useMutation(gql`
+    const [mutateInsertVideo] = useMutation(gql`
         mutation AddVideo(
             $meta_data: VIDEO_META_DATA_INPUT!
             $data: VIDEO_DATA_INPUT!
@@ -115,7 +115,7 @@ const TRAILER = () => {
         },
     });
 
-    const graphVideos = async() => {
+    const graphVideos = useCallback(async() => {
         if(fetchedVideo)
             return null
         try{
@@ -167,7 +167,7 @@ const TRAILER = () => {
             .then(data => setTrailor(() => ({...data})))
         }
         setFetchedVideo(true)
-    }
+    },[mutateInsertVideo,fetchVideo,fetchedVideo,stream,id,season,episode])
 
     // const getBackground = () => {
     //     console.log(process.env.REACT_APP_img_poster + "/" + backgroundImg + ".jpg")
@@ -179,7 +179,7 @@ const TRAILER = () => {
         // console.log(background,"background")
         graphVideos()
 
-    },[fetchVideo,mutateInsertVideo])
+    },[fetchVideo,mutateInsertVideo,graphVideos])
 
     // useEffect(() => {
     //     // setPlayer(true)

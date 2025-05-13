@@ -1,9 +1,9 @@
 import { faBars, faBarsStaggered } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import NAVBAR from "./nav"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
-import { faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import { NavLink } from "react-router-dom";
 import SWEETPAGE from "../midlleware/pages";
@@ -96,7 +96,7 @@ const MOBILE = () => {
         onCompleted: (data) => {
             console.log(data)
             if (data.searchMovies.success) {
-                if(data.searchMovies.message == "already inserted")
+                if(data.searchMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movies successfully inserted into MySQL:", data.searchMovies.message);
                 fetchedMoviesData.refetch()
@@ -172,7 +172,7 @@ const MOBILE = () => {
         onCompleted: (data) => {
             console.log(data)
             if (data.searchPerson.success) {
-                if(data.searchPerson.message == "already inserted")
+                if(data.searchPerson.message === "already inserted")
                     console.log("person inserting already started...")
                 fetchedPersonData.refetch()
                 .then(status => console.log(status,"status"))
@@ -185,22 +185,7 @@ const MOBILE = () => {
         },
     });
 
-    useEffect(() => {
-        console.log("changing search...")
-        if(search){
-            intitializeMovies({runContent:[
-                {"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
-                {"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
-                {"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
-            ]})
-        }
-    },[search])
-
-    const editMachine = (e) => {
-        setSearch(() => e.target.value);
-    }
-
-    const intitializeMovies = ({runContent}) => {
+    const intitializeMovies = useCallback(({runContent}) => {
         if(search){
             runContent.forEach(async({index, api, page, select, insert, type, object}) => {
     
@@ -209,7 +194,7 @@ const MOBILE = () => {
                     const data = await response.json();
         
                     if (data.results.length > 0) {
-                        let key = search_content && search_content.findIndex((cont) => cont.index === index) || -1
+                        let key = (search_content && search_content.findIndex((cont) => cont.index === index)) || -1
                         if(key > -1){
                             setSearchContent(prevSearch => {
                                 prevSearch[key] = {index, page, total_pages:data.total_pages, results: data.results, name: search, api}
@@ -253,7 +238,7 @@ const MOBILE = () => {
                         freshFetch()
                     }else if(fetched.data[object].results && fetched.data[object].results.length > 0){
                         console.log("finally using cached data")
-                        let key = search_content && search_content.findIndex((cont) => cont.index === index) || -1
+                        let key = (search_content && search_content.findIndex((cont) => cont.index === index)) || -1
                         if(key > -1){
                             setSearchContent(prevSearch => {
                                 prevSearch[key] = {index, page, total_pages:fetched.data[object].total_pages, results: fetched.data[object].results, name: search, api}
@@ -277,6 +262,21 @@ const MOBILE = () => {
             });
         }
 
+    },[search,search_content])
+
+    useEffect(() => {
+        console.log("changing search...")
+        if(search){
+            intitializeMovies({runContent:[
+                {"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
+                {"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
+                {"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
+            ]})
+        }
+    },[search,intitializeMovies,fetchMovies,fetchPerson,mutateInsertMovies,mutateInsertPerson])
+
+    const editMachine = (e) => {
+        setSearch(() => e.target.value);
     }
 
     return (

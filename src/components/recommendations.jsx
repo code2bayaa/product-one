@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Carousel from "../midlleware/carousel";
@@ -107,11 +107,8 @@ const RECOMMENDATIONS = () => {
         },
     });
 
-    useEffect(() => {
-        fetchMain(1)
-    },[])
-
-    const fetchMain = async(page) => {
+    
+    const fetchMain = useCallback(async(page) => {
         try{
             
             const type = stream === "movies" ? "movie" : "tv"
@@ -135,23 +132,27 @@ const RECOMMENDATIONS = () => {
                     page,
                     id:id?parseInt(id):-1
             }})
-            console.log(fetched)
+            // console.log(fetched)
             if (fetched.data && fetched.data.recommendedMovies.success) {
-                console.log("movies cached data:", fetched.data);
-                return setRecommendations(() => ({...fetched.data.recommendedMovies}))
+                // console.log("movies cached data:", fetched.data);
+                setRecommendations(() => ({...fetched.data.recommendedMovies}))
     
             }else {
                 const recommendations_data = await freshFetch()
-                return setRecommendations(() => ({...recommendations_data}))
+                setRecommendations(() => ({...recommendations_data}))
             }
         }catch(error){
-            console.log(error,"error")
+            // console.log(error,"error")
             const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/recommendations?api_key=${process.env.REACT_APP_api_key}&page=${page || recommendations.page}`
             fetch(`${api}`)
             .then(data => data.json())
             .then(data => setRecommendations(() => ({...data})))
         }
-    }
+    },[fetchMovie, id, mutateInsertMovie, recommendations.page, stream])
+
+    useEffect(() => {
+        fetchMain(1)
+    },[fetchMain])
 
     const intitializeMovies = async({page}) => {
         console.log("clicked page",page)

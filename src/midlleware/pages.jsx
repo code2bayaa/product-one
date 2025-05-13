@@ -48,8 +48,10 @@ const SWEETPAGE = ({intitializeMovies,page,index,total_pages}) => {
                                     page {k + 1}
                                 </button>
                         }
+                        return false
 
                     })
+                    .filter(page => page)
                 }
             </div>
         </div>

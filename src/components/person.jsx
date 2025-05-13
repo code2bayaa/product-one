@@ -1,11 +1,10 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faAngleDoubleRight } from "@fortawesome/free-solid-svg-icons";
-import { useQuery, gql, useMutation, useLazyQuery } from '@apollo/client';
-import Swal from "sweetalert2"
+import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 
@@ -104,7 +103,7 @@ const PERSON = () => {
         notifyOnNetworkStatusChange: true,
     })
 
-    const [mutateInsertImage, insertImage] = useMutation(gql`
+    const [mutateInsertImage] = useMutation(gql`
         mutation AddImage(
             $meta_data: META_DATA_INPUT!
             $data: DATA_INPUT!
@@ -190,12 +189,12 @@ const PERSON = () => {
         },
     });
 
-    const graphImages = async() => {
+    const graphImages = useCallback(async() => {
         try{
             async function freshFetch(){
                 const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
                 const getImageData = await response.json();
-                console.log(getImageData)
+                // console.log(getImageData)
                 mutateInsertImage({ variables: { meta_data : {
                     type:"person",
                     season:-1,
@@ -213,12 +212,12 @@ const PERSON = () => {
                 id:id?parseInt(id):-1
             }})
             if (fetched.data && fetched.data.image.success) {
-                console.log("image cached data:", fetched.data);
-                return setImages(() => ({...fetched.data.image.data}))
+                // console.log("image cached data:", fetched.data);
+                setImages(() => ({...fetched.data.image.data}))
 
             }else {
                 const getImageData = await freshFetch()
-                return setImages(() => ({...getImageData}))
+                setImages(() => ({...getImageData}))
             }
         }catch(error){
             console.log(error)
@@ -226,7 +225,7 @@ const PERSON = () => {
             .then(data => data.json())
             .then(data => setImages(() => ({...data})))
         }
-    }
+    },[fetchImage, id, mutateInsertImage])
 
     const FETCH_PERSON_QUERY = gql`
         query Person (
@@ -287,7 +286,7 @@ const PERSON = () => {
         },
     });
 
-    const fetchPerson = async() => {
+    const fetchPerson = useCallback(async() => {
 
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}?api_key=${process.env.REACT_APP_api_key}`);
@@ -316,7 +315,7 @@ const PERSON = () => {
             return setPerson(() => ({...movie}));
         }
         
-    }
+    },[fetchPersonData, id, mutateInsertPerson])
 
     const FETCH_MOVIE_QUERY = gql`
         query Played(
@@ -413,7 +412,7 @@ const PERSON = () => {
         },
     });
 
-    const fetchMovies = async() => {
+    const fetchMovies = useCallback(async() => {
         try{
             
             const api = `${process.env.REACT_APP_movie_db}person/${id}/movie_credits?api_key=${process.env.REACT_APP_api_key}`
@@ -449,9 +448,9 @@ const PERSON = () => {
             .then(data => data.json())
             .then(data => setMovies(() => ({...data})))
         }
-    }
+    },[mutateInsertMovie, id, fetchMovie])
 
-    const fetchTV = async() => {
+    const fetchTV = useCallback(async() => {
         try{
 
             const api = `${process.env.REACT_APP_movie_db}person/${id}/tv_credits?api_key=${process.env.REACT_APP_api_key}`
@@ -487,23 +486,23 @@ const PERSON = () => {
             .then(data => data.json())
             .then(data => setSeries(() => ({...data})))
         }
-    }
+    },[mutateInsertMovie, id, fetchMovie])
 
     useEffect(() => {
         graphImages()
-    },[])
+    },[graphImages])
 
     useEffect(() => {
         fetchPerson();
-    }, []);
+    }, [fetchPerson]);
 
     useEffect(() => {
         fetchMovies();
-    }, []);
+    }, [fetchMovies]);
 
     useEffect(() => {
         fetchTV();
-    }, []);
+    }, [fetchTV]);
 
     const getBackground = () => {
         if(!images)
@@ -554,7 +553,7 @@ const PERSON = () => {
                                 <div className="w-[90%] min-h-[100%] ml-[5%] flex flex-col">
                                     {
 
-                                        (series.cast && series.cast.length > 0 || series.crew && series.crew.length > 0) &&
+                                        ((series.cast && series.cast.length > 0) || (series.crew && series.crew.length > 0)) &&
                                             <div className="w-[100%] h-[auto] text-left flex flex-wrap flex-col">
                                                 <h1 className="my-t-[5%] text-[20px] text-[#ffd800]">TV</h1>
                                                 {
@@ -604,7 +603,7 @@ const PERSON = () => {
                                             </div>
                                     }
                                     {
-                                        (movies.cast && movies.cast.length > 0 || movies.crew && movies.crew.length > 0) &&
+                                        ((movies.cast && movies.cast.length > 0) ||( movies.crew && movies.crew.length > 0)) &&
 
                                         <div className="w-[100%] h-[auto] flex flex-wrap flex-col">
                                             <h1 className="my-t-[5%] text-[20px] text-[#ffd800]">movies</h1>

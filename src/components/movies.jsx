@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
@@ -107,7 +107,7 @@ const MOVIES = () => {
         onCompleted: (data) => {
             console.log(data)
             if (data.addMovies.success) {
-                if(data.addMovies.message == "already inserted")
+                if(data.addMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movies successfully inserted into MySQL:", data.addMovies.message);
                 fetchedMoviesData.refetch()
@@ -159,16 +159,7 @@ const MOVIES = () => {
     //     }
     // }, [fetchMovies.data, variables, client]);
 
-    useEffect(() => {
-        intitializeMovies(
-            {runContent:[
-            // "latest",
-            "discover","popular","trending","top_rated","upcoming","now_playing"]
-        })
-
-    },[])
-
-    const intitializeMovies = async ({
+    const intitializeMovies = useCallback(async({
         runContent,
         page,
         genreId = '',
@@ -188,7 +179,7 @@ const MOVIES = () => {
                 );
                 const data = await response.json();
 
-                console.log(data)
+                // console.log(data)
                 if (data.results.length > 0) {
                     temp_movies[key].results = [
                         ...temp_movies[key].results,
@@ -340,19 +331,19 @@ const MOVIES = () => {
                 index: actual_index,
                 date: current_date,  
             }})
-            console.log(fetched)
+            // console.log(fetched)
             // console.log(fetchedMoviesData)
 
             if (fetched.data) {
-                console.log("Using cached data:", fetched.data);
+                // console.log("Using cached data:", fetched.data);
                 if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
-                    console.log("less items")
+                    // console.log("less items")
                     return await freshFetch()
                 }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
-                    console.log("no records found")
+                    // console.log("no records found")
                     return await freshFetch()
                 }else{
-                    console.log("finally using cached data")
+                    // console.log("finally using cached data")
                     setMovies((prevMovies) => {
                         const updatedMovies = [...prevMovies]
                         const existingIndex = updatedMovies.findIndex(
@@ -397,7 +388,16 @@ const MOVIES = () => {
                 }
             })
         })
-    }
+    },[fetchMovies,mutateInsertMovies]);
+
+    useEffect(() => {
+        intitializeMovies(
+            {runContent:[
+            // "latest",
+            "discover","popular","trending","top_rated","upcoming","now_playing"]
+        })
+
+    },[intitializeMovies])
 
 
     return (

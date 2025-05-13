@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useQuery, gql, useLazyQuery, useMutation } from '@apollo/client';
+import { useQuery, gql, useMutation } from '@apollo/client';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 
@@ -55,7 +55,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         notifyOnNetworkStatusChange: true,
     });
 
-    const [mutateInsertGenre, insertGenre] = useMutation(gql`
+    const [mutateInsertGenre] = useMutation(gql`
         mutation AddGenre(
             $date: String!
             $data: [GENRE_LIST_INPUT]!
@@ -94,7 +94,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         },
     });
 
-    const [mutateUpdateGenre, updateGenre] = useMutation(gql`
+    const [mutateUpdateGenre] = useMutation(gql`
         mutation UpdateGenre(
             $date: String!
             $data: [GENRE_LIST_INPUT]!
@@ -152,7 +152,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         notifyOnNetworkStatusChange: true,
     });
 
-    const [mutateInsertRegion, insertRegion] = useMutation(gql`
+    const [mutateInsertRegion] = useMutation(gql`
         mutation AddRegion(
             $date: String!
             $data: [REGION_DATA_INPUT]!
@@ -189,44 +189,44 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         },
     });
 
-    const [mutateUpdateRegion, updateRegion] = useMutation(gql`
-        mutation UpdateRegion(
-            $date: String!
-            $data: [REGION_DATA_INPUT]!
-        ) {
-            updateRegion(
-                date: $date
-                data: $data
-            ){
-                date
-                data {
-                    iso_3166_1
-                    english_name
-                    native_name  
-                }
-                success
-                error
-            }
-        }
-    `,
-    {
-        onCompleted: (data) => {
-            if (data.updateRegion.success) {
-                // Refetch the query to get updated data
-                if (data && data.addRegion.success) {
-                    // Refetch the query to get updated data
-                    fetchRegion.refetch().then((refetched) => {
-                        const typeGetRegionData = [...refetched.data.region.data]
-                        setRegion(() => typeGetRegionData)
-                    })
+    // const [mutateUpdateRegion, updateRegion] = useMutation(gql`
+    //     mutation UpdateRegion(
+    //         $date: String!
+    //         $data: [REGION_DATA_INPUT]!
+    //     ) {
+    //         updateRegion(
+    //             date: $date
+    //             data: $data
+    //         ){
+    //             date
+    //             data {
+    //                 iso_3166_1
+    //                 english_name
+    //                 native_name  
+    //             }
+    //             success
+    //             error
+    //         }
+    //     }
+    // `,
+    // {
+    //     onCompleted: (data) => {
+    //         if (data.updateRegion.success) {
+    //             // Refetch the query to get updated data
+    //             if (data && data.addRegion.success) {
+    //                 // Refetch the query to get updated data
+    //                 fetchRegion.refetch().then((refetched) => {
+    //                     const typeGetRegionData = [...refetched.data.region.data]
+    //                     setRegion(() => typeGetRegionData)
+    //                 })
     
-                }
-            }
-        },
-        onError: (error) => {
-            console.error("insert genre Error:", error);
-        },
-    });
+    //             }
+    //         }
+    //     },
+    //     onError: (error) => {
+    //         console.error("insert genre Error:", error);
+    //     },
+    // });
 
     const fetchLanguage = useQuery(gql`
         query Language {
@@ -246,7 +246,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         notifyOnNetworkStatusChange: true,
     });
 
-    const [mutateInsertLanguage, insertLanguage] = useMutation(gql`
+    const [mutateInsertLanguage] = useMutation(gql`
         mutation AddLanguage(
             $date: String!
             $data: [LANGUAGE_DATA_INPUT]!
@@ -283,44 +283,44 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         },
     });
 
-    const [mutateUpdateLanguage, updateLanguage] = useMutation(gql`
-        mutation UpdateLanguage(
-            $date: String!
-            $data: [LANGUAGE_DATA_INPUT]!
-        ) {
-            updateLanguage(
-                date: $date
-                data: $data
-            ){
-                date
-                data {
-                    iso_639_1
-                    english_name
-                    name  
-                }
-                success
-                error
-            }
-        }
-    `,
-    {
-        onCompleted: (data) => {
-            if (data.updateLanguage.success) {
-                // Refetch the query to get updated data
-                if (data && data.addLanguage.success) {
-                    // Refetch the query to get updated data
-                    fetchLanguage.refetch().then((refetched) => {
-                        const typeGetLanguageData = [...refetched.data.language.data]
-                        setLanguage(() => typeGetLanguageData)
-                    })
+    // const [mutateUpdateLanguage, updateLanguage] = useMutation(gql`
+    //     mutation UpdateLanguage(
+    //         $date: String!
+    //         $data: [LANGUAGE_DATA_INPUT]!
+    //     ) {
+    //         updateLanguage(
+    //             date: $date
+    //             data: $data
+    //         ){
+    //             date
+    //             data {
+    //                 iso_639_1
+    //                 english_name
+    //                 name  
+    //             }
+    //             success
+    //             error
+    //         }
+    //     }
+    // `,
+    // {
+    //     onCompleted: (data) => {
+    //         if (data.updateLanguage.success) {
+    //             // Refetch the query to get updated data
+    //             if (data && data.addLanguage.success) {
+    //                 // Refetch the query to get updated data
+    //                 fetchLanguage.refetch().then((refetched) => {
+    //                     const typeGetLanguageData = [...refetched.data.language.data]
+    //                     setLanguage(() => typeGetLanguageData)
+    //                 })
     
-                }
-            }
-        },
-        onError: (error) => {
-            console.error("insert language Error:", error);
-        },
-    });
+    //             }
+    //         }
+    //     },
+    //     onError: (error) => {
+    //         console.error("insert language Error:", error);
+    //     },
+    // });
 
     const removeGenre = (n) => {
         function runMain(){
@@ -334,7 +334,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                 intitializeMovies({runContent:["discover movie"],page:1,genreId:'',regionId,languageId,yearId,jobId})
                 runMain()
             }else if(n === "tv"){
-                intitializeMovies({runContent:["discover tv"],page:1,genreId:'',regionId,languageId,yearId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,genreId:genreTVId,regionId,languageId,yearId,jobId})
                 console.log("remove genre tv")
                 setGenreTVId('')
                 setGenreTVName('')
@@ -353,7 +353,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         if(personType === "movie")
             intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
         else if(personType === "tv")
-            intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
+            intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId,genreId:genreTVId,jobId:'Actor'})
         else
             intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
     }
@@ -365,7 +365,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             if(personType === "movie")
                 intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId:'',yearId,genreId,jobId})
             else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId:'',yearId,genreId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId:'',yearId,genreId:genreTVId,jobId})
             else
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId:'',yearId,genreId,jobId})
         }else
@@ -379,7 +379,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             if(personType === "movie")
                 intitializeMovies({runContent:["discover movie"],page:1,regionId:'',languageId,yearId,genreId,jobId})
             else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId:'',languageId,yearId,genreId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,regionId:'',languageId,yearId,genreId:genreTVId,jobId})
             else
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId:'',languageId,yearId,genreId,jobId})
         }else
@@ -387,13 +387,13 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     }
 
     const removeYear = () => {
-        setYearId((new Date).getFullYear())
+        setYearId((new Date()).getFullYear())
         setYearName('')
         if(type === "people"){
             if(personType === "movie")
                 intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId:0,genreId,jobId})
             else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId:0,genreId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId:0,genreId:genreTVId,jobId})
             else
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId:0,genreId,jobId})
         }else
@@ -440,7 +440,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             if(personType === "movie")
                 intitializeMovies({runContent:["discover movie"],page:1,regionId:id,languageId,yearId,genreId,jobId})
             else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId:id,languageId,yearId,genreId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,regionId:id,languageId,yearId,genreId:genreTVId,jobId})
             else
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId:id,languageId,yearId,genreId,jobId})
         }else
@@ -457,7 +457,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             if(personType === "movie")
                 intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId:id,yearId,genreId,jobId})
             else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId:id,yearId,genreId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId:id,yearId,genreId:genreTVId,jobId})
             else
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId:id,yearId,genreId,jobId})
         }else
@@ -473,7 +473,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             if(personType === "movie")
                 intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId:id,genreId,jobId})
             else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId:id,genreId,jobId})
+                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId:id,genreId:genreTVId,jobId})
             else
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId:id,genreId,jobId})
         }else
@@ -489,15 +489,13 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         if(personType === "movie")
             intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId,genreId,jobId:id})
         else if(personType === "tv")
-            intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:id})
+            intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId,genreId:genreTVId,jobId:id})
         else
             intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:id})
         // console.log("refresh")
         setJob(() => [])
         setSelectedJob(false)
     }
-
-
 
     const getLanguage = async() => {
         if(selectedLanguage){
@@ -701,7 +699,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             setSelectedYear(false)
             setYears([])
         }else{
-            const newYears = Array((new Date).getFullYear() - 1993 + 1)
+            const newYears = Array((new Date()).getFullYear() - 1993 + 1)
             .fill()
             .map((_,k) => k + 1993)
             setYears(() => [...newYears])

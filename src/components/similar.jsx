@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Carousel from "../midlleware/carousel";
@@ -110,11 +110,7 @@ const SIMILAR = () => {
         },
     });
 
-    useEffect(() => {
-        fetchMain(1)
-    },[])
-
-    const fetchMain = async(page) => {
+    const fetchMain = useCallback(async(page) => {
         try{
 
             const type = stream === "movies" ? "movie" : "tv"
@@ -142,11 +138,11 @@ const SIMILAR = () => {
             console.log(fetched)
             if (fetched.data && fetched.data.similarMovies.success) {
                 console.log("movies cached data:", fetched.data);
-                return setSimilar(() => ({...fetched.data.similarMovies}))
+                setSimilar(() => ({...fetched.data.similarMovies}))
     
             }else {
                 const similar_data = await freshFetch()
-                return setSimilar(() => ({...similar_data}))
+                setSimilar(() => ({...similar_data}))
             }
         }catch(error){
             console.log(error,"error")
@@ -155,7 +151,11 @@ const SIMILAR = () => {
             .then(data => data.json())
             .then(data => setSimilar(() => ({...data})))
         }
-    }
+    },[fetchMovie, similar.page, id, mutateInsertMovie, stream])
+
+    useEffect(() => {
+        fetchMain(1)
+    },[fetchMain])
 
     const intitializeMovies = async({page}) => {
         fetchMain(page)

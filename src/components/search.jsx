@@ -1,276 +1,39 @@
 import NAVBAR from "./nav";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useGraphMovies } from "../hooks/useGraphMovies";
+import { useGraphPerson } from "../hooks/useGraphPerson";
 import PICTURE from "../midlleware/picture";
 import { faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
-import Swal from "sweetalert2";
+// import Swal from "sweetalert2";
 import { NavLink } from "react-router-dom";
 import SWEETPAGE from "../midlleware/pages";
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
+// import { GRAPHMOVIES } from "../models/movies";
+// import { GRAPHPEOPLE } from "../models/people";
 
 const SEARCH = () => {
 
     const [search_content, setSearchContent] = useState([]);
     const [search, setSearch] = useState()
+    const {fetchMovies, mutateInsertMovies, intitializeMovies } = useGraphMovies();
+    const {fetchPerson, mutateInsertPerson } = useGraphPerson();
 
-    const FETCH_MOVIES_QUERY = gql`
-        query fetchMovie (
-            $page: Int!,
-            $search : String!,
-            $index : String!,
-            $type:String!
-        ){
-            fetchMovie(
-                search:$search,
-                page:$page,
-                index:$index,
-                type:$type
-            ) {
-                results {
-                    adult
-                    backdrop_path
-                    genre_ids
-                    id
-                    original_language
-                    original_title
-                    overview
-                    popularity
-                    poster_path
-                    release_date
-                    title
-                    video 
-                    vote_average
-                    vote_count
-                }
-                page
-                total_pages
-                total_results                
-                success
-                error
-                message
-            }
-        }
-    `
-    const [fetchMovies,fetchedMoviesData] = useLazyQuery(FETCH_MOVIES_QUERY,{
-        // pollInterval: 500, // fetches new data at that interval
-        notifyOnNetworkStatusChange: true,
-    });
+    // useEffect(() => {
+    //     console.log("changing search...")
+    //     if(search){
 
-    const INSERT_MOVIES_MUTATION = gql`
-        mutation searchMovies(
-            $page:Int!,
-            $results:[SEARCH_MOVIE_RESULTS_INPUT],
-            $total_pages:Int!,
-            $total_results:Int!,
-            $data :SEARCH_DATA_INPUT,
-            $type:String!,
-        ) {
-            searchMovies(
-                page:$page,
-                results:$results,
-                total_pages:$total_pages,
-                total_results:$total_results,
-                data:$data,
-                type:$type,
-            ) {
-                success
-                message
-            }
-        }
-    `;
-
-    const [mutateInsertMovies] = useMutation(INSERT_MOVIES_MUTATION, {
-        onCompleted: (data) => {
-            console.log(data)
-            if (data.searchMovies.success) {
-                if(data.searchMovies.message === "already inserted")
-                    console.log("movie inserting already started...")
-                console.log("Movies successfully inserted into MySQL:", data.searchMovies.message);
-                fetchedMoviesData.refetch()
-                .then(status => console.log(status,"status"))
-            } else {
-                console.error("Failed to insert movies into MySQL:", data.searchMovies.message, data.searchMovies.error);
-            }
-        },
-        onError: (error) => {
-            console.error("Error inserting movies into MySQL:", error.message);
-        },
-    });
-
-    const FETCH_PERSON_QUERY = gql`
-        query FetchPerson (
-            $page: Int!,
-            $index : String!,
-            $search:String!,
-        ){
-            fetchPerson(
-                page:$page,
-                search:$search,
-                index:$index,
-            ) {
-                results {
-                    adult
-                    gender
-                    profile_path
-                    id
-                    known_for_department
-                    name
-                    original_name
-                    popularity
-
-                }
-                page
-                total_pages
-                total_results                
-                success
-                error
-                message
-            }
-        }
-    `
-    const [fetchPerson,fetchedPersonData] = useLazyQuery(FETCH_PERSON_QUERY,{
-        notifyOnNetworkStatusChange: true,
-    });
-
-    const INSERT_PERSON_MUTATION = gql`
-        mutation searchPerson(
-            $page:Int!,
-            $results:[SEARCH_PERSON_RESULTS_INPUT],
-            $total_pages:Int!,
-            $total_results:Int!,
-            $data :SEARCH_PERSON_DATA_INPUT,
-            $type:String!,
-        ) {
-            searchPerson(
-                page:$page,
-                results:$results,
-                total_pages:$total_pages,
-                total_results:$total_results,
-                data:$data,
-                type:$type,
-            ) {
-                success
-                message
-            }
-        }
-    `;
-
-    const [mutateInsertPerson] = useMutation(INSERT_PERSON_MUTATION, {
-        onCompleted: (data) => {
-            console.log(data)
-            if (data.searchPerson.success) {
-                if(data.searchPerson.message === "already inserted")
-                    // console.log("person inserting already started...")
-                fetchedPersonData.refetch()
-                .then(status => console.log(status,"status"))
-            } else {
-                console.error("Failed to insert person into MySQL:", data.searchPerson.message, data.searchPerson.error);
-            }
-        },
-        onError: (error) => {
-            console.error("Error inserting person into MySQL:", error.message);
-        },
-    });
-
-    const intitializeMovies = useCallback(({runContent}) => {
-        if(search){
-            runContent.forEach(async({index, api, page, select, insert, type, object}) => {
-  
-                async function freshFetch(){
-                    const response = await fetch(`${process.env.REACT_APP_movie_db}${api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&query=${search}&page=${page}`);
-                    const data = await response.json();
-        
-                    if (data.results.length > 0) {
-                        let key = search_content.findIndex((cont) => cont.index === index)
-                        if(key > -1){
-                            setSearchContent(prevSearch => {
-                                prevSearch[key] = {index, page, total_pages:data.total_pages, results: data.results, name: search, api}
-                                return [...prevSearch]
-                            })
-        
-                        }else
-                            setSearchContent(prevSearch => ([...prevSearch, {index, page, total_pages:data.total_pages, results: data.results, name: search, api}]));
-                    } else {
-                        setSearchContent([{index:"not found", results: [], name: search}]);
-                    }
-
-                    insert({
-                        variables: {
-                            page,
-                            results:data.results,
-                            total_pages:data.total_pages,
-                            total_results:data.total_results,
-                            data :{
-                                index:"search",
-                                search
-                            },                            
-                            type,
-                        },
-                    })
-                }
-
-                const fetched = await select({
-                    variables : {
-                        page,
-                        search,
-                        index: "search",
-                        type
-                }})
-                console.log(fetched)
-
-                if (fetched.data) {
-                    console.log("Using cached data:", fetched.data);
-                    if(fetched.data[object].error === "insert movies" || fetched.data[object].error === "no records found"){
-                        console.log("no records found")
-                        freshFetch()
-                    }else if(fetched.data[object].results && fetched.data[object].results.length > 0){
-                        console.log("finally using cached data")
-                        let key = search_content.findIndex((cont) => cont.index === index)
-                        if(key > -1){
-                            setSearchContent(prevSearch => {
-                                prevSearch[key] = {index, page, total_pages:fetched.data[object].total_pages, results: fetched.data[object].results, name: search, api}
-                                return [...prevSearch]
-                            })
-        
-                        }else
-                            setSearchContent(prevSearch => ([...prevSearch, {index, page, total_pages:fetched.data[object].total_pages, results: fetched.data[object].results, name: search, api}])); 
-                    }
-
-                } else {
-                    freshFetch()
-                }
-            })
-        }else{
-            Swal.fire({
-                title: "Input search field",
-                text: "Please enter a value in the search field.",
-                icon: "warning", // Specify the type of alert
-                confirmButtonText: "OK", // Optional: Add a confirm button
-            });
-        }
-
-    },[search,search_content])
-
-    useEffect(() => {
-        console.log("changing search...")
-        if(search){
-            intitializeMovies({runContent:[
-                {"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
-                {"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
-                {"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
-            ]})
-        }
-    },[search,intitializeMovies,fetchMovies,mutateInsertMovies,fetchPerson,mutateInsertPerson])
+    //     }
+    // },[search,fetchMovies,mutateInsertMovies,intitializeMovies])
     
     const searchMachine = async (e) => {
         try{
             e.preventDefault();
             intitializeMovies({runContent:[
-                {"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
-                {"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
-                {"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
-            ]})
+                {setSearchContent,search_content,"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
+                {setSearchContent,search_content,"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
+                {setSearchContent,search_content,"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
+            ],search})
 
         }catch(error){
             console.log(error,"error")
@@ -279,8 +42,13 @@ const SEARCH = () => {
     }
 
     const editMachine = (e) => {
-        setSearch(() => e.target.value);
-        // sessionStorage.setItem("search",e.target.value)
+        const searchValue = e.target.value
+        setSearch(() => searchValue);
+        intitializeMovies({runContent:[
+            {setSearchContent,search_content,"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
+            {setSearchContent,search_content,"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
+            {setSearchContent,search_content,"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
+        ],search:searchValue})
     }
 
     return (

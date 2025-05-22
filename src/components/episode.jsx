@@ -8,10 +8,15 @@ import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 const EPISODE = () => {
-    const { id, season, episode, background } = useParams();
+    const { id, season, episodeID, episode, name, background } = useParams();
+    // console.log({
+    //     season,episode,name
+        
+    // })
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
+    const [imdb,setIMDB] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
 
     const FETCH_IMAGE_QUERY = gql`
@@ -187,9 +192,6 @@ const EPISODE = () => {
                 id:$id
             ) {
 
-                adult
-                backdrop_path
-                episodes {
                     air_date
                     episode_number
                     episode_type
@@ -199,21 +201,10 @@ const EPISODE = () => {
                     production_code
                     runtime
                     season_number,
-                    show_id
+                    
                     still_path
                     vote_average
                     vote_count
-
-                }
-                air_date
-                id
-                name
-                overview
-                popularity
-                poster_path
-                vote_average
-                vote_count
-                season_number
             }
         }
     `
@@ -239,6 +230,7 @@ const EPISODE = () => {
 
     const [mutateInsertTV] = useMutation(INSERT_MOVIE_MUTATION, {
         onCompleted: (data) => {
+            console.log(data.addEpisode,"checking insert...")
             if (data.addEpisode.success) {
                 if(data.addEpisode.message === "already inserted")
                     console.log("episode inserting already started...")
@@ -368,6 +360,64 @@ const EPISODE = () => {
         },
     });
 
+    const FETCH_IMDB_QUERY = gql`
+        query IMDB(
+            $id: Int!
+        ){
+            imdb(
+                id:$id
+            ){
+                id
+                success
+                error
+                message
+            }
+        }
+    `
+    const [fetchIMDBData,fetchedIMDB] = useLazyQuery(FETCH_IMDB_QUERY,{
+    // pollInterval: 500, // fetches new data at that interval
+        notifyOnNetworkStatusChange: true,
+    });
+
+    const UPDATE_IMDB_MUTATION = gql`
+        mutation UpdateIMDB(
+            $id:ID!
+            $external_ids:EXTERNAL_INPUT
+        ) {
+            updateIMDB(
+                id:$id
+                external_ids:$external_ids
+            ) {
+                success
+                message
+            }
+        }
+    `;
+
+    const [mutateUpdateIMDB] = useMutation(UPDATE_IMDB_MUTATION, {
+        onCompleted: (data) => {
+            if (data && data.updateIMDB.success) {
+                // Refetch the query to get updated data
+                fetchedIMDB.refetch().then((refetched) => {
+                    console.log(refetched)
+                    if(refetched.data.imdb.success){
+                        const ref = refetched?.data?.imdb
+                        const typeGetImageData = {...ref}
+                        setCredit(() => ({...typeGetImageData}))
+                    }
+
+                })
+
+            } else {
+                console.error("Failed to insert credits into MySQL:", data.updateIMDB.message, data.updateIMDB.error);
+            }
+        },
+        onError: (error) => {
+            console.log(error,"error")
+            console.error("Error inserting credits into MySQL:", error.message);
+        },
+    });
+
     const graphImages = useCallback(async() => {
         try{
 
@@ -420,7 +470,7 @@ const EPISODE = () => {
             delete newData.guest_stars
             delete newData.cast
             // newData.episodes = newData.episodes.map(({crew,guest_stars,cast, ...rest}) => rest)
-            // console.log(newData,"newData")
+            console.log(newData,"newData")
             mutateInsertTV({
                 variables: {
                     single : {...newData}
@@ -430,7 +480,11 @@ const EPISODE = () => {
         } 
 
         const fetched = await fetchEpisode({
-            variables : { id, season, episode }})
+            variables : { 
+                id:episodeID
+                // season:season ? parseInt(season):-1,
+                // episode: episode? parseInt(episode):-1
+            }})
         if (fetched.data && fetched.data.episode.air_date === null) {
             console.log("first time...")
             const tv = await freshFetch()
@@ -443,22 +497,22 @@ const EPISODE = () => {
             setSerie(() => ({...tv}))
         }
 
-    },[id, season, episode, fetchEpisode, mutateInsertTV])
+    },[id, season, episode, episodeID, fetchEpisode, mutateInsertTV])
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/credits?api_key=${process.env.REACT_APP_api_key}`);
             const credits_data = await response.json();
             mutateInsertCredits({
                 variables: {...credits_data,id:id?parseInt(id):0},
-            });
+            })
             return {...credits_data}
         } 
 
         const current_date = new Date().toISOString().split("T")[0]
         const fetched = await fetchCreditsData({
             variables : { id:id?parseInt(id):0, date:current_date }})
-        console.log(fetched)
+        // console.log(fetched)
         if(fetched.data && fetched.data.credits.success){
             console.log("Using cached data:", fetched.data);
             setCredit(() => ({...fetched.data.credits}));
@@ -467,6 +521,35 @@ const EPISODE = () => {
             setCredit(() => ({...credits}));
         }
     },[id, season, episode, fetchCreditsData, mutateInsertCredits])
+
+    const fetchID = useCallback(async() => {
+
+        async function freshFetch(){
+            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/external_ids?api_key=${process.env.REACT_APP_api_key}`);
+            const imdb_data = await response.json();
+            console.log(imdb_data,"imdb")
+            mutateUpdateIMDB({
+                variables: {external_id:imdb_data,id:id?parseInt(id):0,type:"tv"},
+            });
+            return {...imdb_data}
+        } 
+
+        const current_date = new Date().toISOString().split("T")[0]
+        const fetched = await fetchIMDBData({
+            variables : { id:id?parseInt(id):0, date:current_date }})
+        console.log(fetched)
+        if(fetched.data && fetched.data.imdb.success){
+            console.log("Using cached data:", fetched.data);
+            setIMDB(() => ({...fetched.data.imdb}));
+        }else {
+            const imdb = await freshFetch()
+            setIMDB(() => ({...imdb}));
+        }
+    },[id, season, episode, fetchIMDBData, mutateUpdateIMDB])
+
+    useEffect(() => {
+        fetchID()
+    },[fetchID])
 
     useEffect(() => {
         graphImages()
@@ -501,11 +584,11 @@ const EPISODE = () => {
             }
             <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                 {
-                    credits && serie && images ? 
+                    credits && serie && images && imdb ? 
                         <>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[auto]":"w-[100%] h-[300px]"}>
-                                <PICTURE picture={serie.still_path} classes={"shadow-lg shadow-blue-500/50"} />
+                            <div className={windowWidth > 800 ? "w-[37%] h-[300px]":"w-[100%] h-[300px]"}>
+                                <PICTURE picture={serie.still_path} classes={"shadow-lg h-[100%] shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>
@@ -535,7 +618,7 @@ const EPISODE = () => {
                                         trailors
                                     </NavLink>
                                     <NavLink
-                                        to={`/series/stream/${serie.title || serie.original_title}`}
+                                        to={`/video/episode/${serie.id}/${name}/${serie.season_number}/${serie.episode_number}/${imdb.imdb_id}/${background}`}
                                         className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         play <FontAwesomeIcon icon={faPlayCircle} />
@@ -547,7 +630,8 @@ const EPISODE = () => {
                                         similar series
                                     </NavLink>
                                     <NavLink
-                                        to={`/series/recommendations/series/${id}/${background}`}
+                                        to={`/series/
+                                            commendations/series/${id}/${background}`}
                                         className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         recommended series
@@ -568,26 +652,15 @@ const EPISODE = () => {
                                         )
                                     }
                                 </div> */}
-                                <div className="w-[90%] ml-[1%] movie-scene flex flex-col h-[180px] overflow-x-auto overflow-y-hidden flex-wrap">
-                                    {
-                                        Object.entries(images).map(([key,value],node) => 
-                                            value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                                <div className="m-[0.5%] min-w-[18%] h-[100%]" key={node + index}>
-                                                    <PICTURE picture={file_path} classes={"object-cover"} />
-                                                </div>
-                                            )
-                                        )
-                                    }
 
-                                </div>
                             </div>
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&
-                            <div className="w-[80%] h-[320px] mx-[10%] my-[2%]">
+                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
-                                <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden">
+                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -596,7 +669,7 @@ const EPISODE = () => {
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         <h3 style={{fontStyle:"italic"}}>{character}</h3>
                                                     </div>
                                                 </div>
@@ -608,10 +681,10 @@ const EPISODE = () => {
                         }
                         {
                             credits.crew && credits.crew.length > 0 &&
-                            <div className="w-[80%] h-[320px] mx-[10%] my-[2%]">
+                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
-                                <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden">
+                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.crew.map(({profile_path,popularity,job,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -620,7 +693,7 @@ const EPISODE = () => {
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         <h3>{job}</h3>
                                                     </div>
                                                 </div>
@@ -632,10 +705,10 @@ const EPISODE = () => {
                         }
                         {
                             credits.guest_stars && credits.guest_stars.length > 0 &&
-                            <div className="w-[80%] h-[320px] mx-[10%] my-[2%]">
+                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>GUEST STARS</h1>
-                                <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden">
+                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.guest_stars.map(({profile_path,popularity,character,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -644,7 +717,7 @@ const EPISODE = () => {
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         <h3>{character}</h3>
                                                     </div>
                                                 </div>
@@ -654,6 +727,18 @@ const EPISODE = () => {
                                 </div>
                             </div>
                         }
+                        <div className="w-[90%] mx-[5%] mt-[1%] flex flex-row h-[auto] flex-wrap">
+                            {
+                                Object.entries(images).map(([key,value],node) => 
+                                    value && typeof(value) === "object" && value.map(({file_path},index) => 
+                                        <div className="m-[0.5%] min-w-[48%] h-[200px]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-cover"} />
+                                        </div>
+                                    )
+                                )
+                            }
+
+                        </div>
                         </>
                     :
                         <LOAD/>

@@ -8,11 +8,13 @@ import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 const SEASON = () => {
-    const { id, season, background } = useParams();
+    const { seasonID, id, season, name, background } = useParams();
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+
+    const serie_name = name
 
     useEffect(() => {
         const handleResize = () => {
@@ -417,7 +419,7 @@ const SEASON = () => {
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}?api_key=${process.env.REACT_APP_api_key}`);
             const data = await response.json();
             const newData = {...data }
-            newData.episodes = newData.episodes.map(({crew,guest_stars,cast, ...rest}) => rest)
+            newData.episodes = newData?.episodes.map(({crew,guest_stars,cast, ...rest}) => rest) || []
 
             // console.log(newData,"new data")
             mutateInsertTV({
@@ -429,7 +431,7 @@ const SEASON = () => {
         } 
 
         const fetched = await fetchSeason({
-            variables : { id, season }})
+            variables : { id:seasonID }})
         if (fetched.data && fetched.data.season.air_date === null) {
             console.log("first time...")
             const tv = await freshFetch()
@@ -442,7 +444,7 @@ const SEASON = () => {
             setSerie(() => ({...tv}));
         }
 
-    },[fetchSeason, id, season, mutateInsertTV]);
+    },[fetchSeason, id, season, seasonID, mutateInsertTV]);
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
@@ -515,58 +517,47 @@ const SEASON = () => {
                                 <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
                                     <NavLink
                                         to={`/series/video/series/${id}/${serie.season_number}/${background}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"min-w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         trailors
                                     </NavLink>
                                     <NavLink
                                         to={`/series/similar/series/${id}/${background}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"min-w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         similar series
                                     </NavLink>
                                     <NavLink
                                         to={`/series/recommendations/series/${id}/${background}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"min-w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         recommended series
                                     </NavLink>
                                 </div>
                                 <div className="w-[100%] h-[100px] movie-scene overflow-x-auto flex flex-col flex-wrap">
                                     {
-                                        serie?.episodes.map(({vote_average,name,episode_number,season_number},node) => 
+                                        serie?.episodes && serie?.episodes.map((episode,node) => 
                                             <NavLink
-                                                to={`/series/${id}/${season_number}/${episode_number}/${background}`}
+                                                to={`/series/${id}/${episode.id}/${episode.season_number}/${episode.episode_number}/${serie_name}/${background}`}
                                                 key={node}
-                                                className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}
+                                                className={windowWidth > 800 ? "min-w-[24%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"min-w-[48%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]"}
                                             >
-                                                <p>{name}</p>
-                                                <p>episode {episode_number}</p>
-                                                <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {vote_average}</p>
+                                                <p>{episode.name}</p>
+                                                <p>episode {episode.episode_number}</p>
+                                                <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {(parseFloat(episode.vote_average)).toFixed(1)}</p>
                                             </NavLink>
                                         )
                                     }
                                 </div>
-                                <div className="w-[90%] ml-[1%] movie-scene flex flex-col h-[180px] overflow-x-auto overflow-y-hidden flex-wrap">
-                                    {
-                                        Object.entries(images).map(([key,value],node) => 
-                                            value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                                <div className="m-[0.5%] min-w-[18%] h-[100%]" key={node + index}>
-                                                    <PICTURE picture={file_path} classes={"object-cover"} />
-                                                </div>
-                                            )
-                                        )
-                                    }
 
-                                </div>
                             </div>
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&
-                            <div className="w-[80%] h-[320px] mx-[10%] my-[2%]">
+                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
-                                <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden">
+                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.cast.map(({roles,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -575,9 +566,9 @@ const SEASON = () => {
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         {
-                                                            roles.map(({character,episode_count},node) => 
+                                                            roles && roles.map(({character,episode_count},node) => 
                                                                 <div className="" key={node}>
                                                                     <h3 style={{fontStyle:"italic"}}>{character}</h3>
                                                                     <p>{episode_count} episodes</p>
@@ -594,10 +585,10 @@ const SEASON = () => {
                         }
                         {
                             credits.crew && credits.crew.length > 0 &&
-                            <div className="w-[80%] h-[320px] mx-[10%] my-[2%]">
+                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
-                                <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden">
+                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.crew.map(({profile_path,popularity,jobs,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -606,9 +597,9 @@ const SEASON = () => {
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         {
-                                                            jobs.map(({job,episode_count},node) => 
+                                                            jobs && jobs.map(({job,episode_count},node) => 
                                                                 <div className="" key={node}>
                                                                     <h3>{job}</h3>
                                                                     <p>{episode_count} episodes</p>
@@ -623,6 +614,18 @@ const SEASON = () => {
                                 </div>
                             </div>
                         }
+                        <div className="w-[90%] mx-[5%] mt-[1%] flex flex-row flex-wrap h-[auto]">
+                            {
+                                Object.entries(images).map(([key,value],node) => 
+                                    value && typeof(value) === "object" && value.map(({file_path},index) => 
+                                        <div className="m-[0.5%] min-w-[48%] h-[200px]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-cover"} />
+                                        </div>
+                                    )
+                                )
+                            }
+
+                        </div>
                         
 
                     </div>

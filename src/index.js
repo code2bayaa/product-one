@@ -20,7 +20,10 @@ import SEASON from './components/season.jsx';
 import EPISODE from './components/episode.jsx';
 import TRAILER from './components/trailer.jsx';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+import PLAY from './components/play.jsx';
+import PLAYER from './components/player.jsx';
 // import reportWebVitals from './reportWebVitals';
+// import MUX from './components/mux.jsx';
 
 const router = createBrowserRouter([
   {
@@ -54,6 +57,11 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
+    path : "/video/:stream/:id/:name/:year/:imdbId/:background",
+    element : <PLAY/>,
+    errorElement : <ERROR/>
+  },
+  {
     path : "/movies/:stream/:name",
     element : <MOVIE/>,
     errorElement : <ERROR/>
@@ -75,11 +83,6 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/series/video/:stream/:id/:season/:background",
-    element : <TRAILER/>,
-    errorElement : <ERROR/>
-  },
-  {
     path : "/series/video/:stream/:id/:season/:episode/:background",
     element : <TRAILER/>,
     errorElement : <ERROR/>
@@ -95,13 +98,18 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/series/:id/:season/:background",
+    path : "/series/:id/:seasonID/:season/:name/:background",
     element : <SEASON/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/:id/:season/:episode/:background",
+    path : "/series/:id/:episodeID/:season/:episode/:name/:background",
     element : <EPISODE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/video/:stream/:id/:name/:season/:episode/:imdbId/:background",
+    element : <PLAY/>,
     errorElement : <ERROR/>
   },
   {
@@ -119,6 +127,11 @@ const router = createBrowserRouter([
     element : <SEARCH/>,
     errorElement : <ERROR/>
   },
+  {
+    path:"/play/:host/:index/:type/:background",
+    element:<PLAYER/>,
+    elementError:<ERROR/>
+  }
 ])
 const client = new ApolloClient({
 

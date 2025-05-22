@@ -1,6 +1,6 @@
 import NAVBAR from "./nav";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGraphMovies } from "../hooks/useGraphMovies";
 import { useGraphPerson } from "../hooks/useGraphPerson";
 import PICTURE from "../midlleware/picture";
@@ -18,6 +18,7 @@ const SEARCH = () => {
     const [search, setSearch] = useState()
     const {fetchMovies, mutateInsertMovies, intitializeMovies } = useGraphMovies();
     const {fetchPerson, mutateInsertPerson } = useGraphPerson();
+    const [windowWidth, setWindowWidth] = useState(0);
 
     // useEffect(() => {
     //     console.log("changing search...")
@@ -25,6 +26,16 @@ const SEARCH = () => {
 
     //     }
     // },[search,fetchMovies,mutateInsertMovies,intitializeMovies])
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        window.addEventListener("resize", handleResize);
+        handleResize(); // Call it once to set the initial value
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    },[])
     
     const searchMachine = async (e) => {
         try{
@@ -86,7 +97,7 @@ const SEARCH = () => {
                                 <h1 className="my-t-[5%]">{index}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                 <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/>
-                                <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
+                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
                                             <NavLink key={search_key} to={`/${index}/${id}`} className="w-[24%] h-[100%] m-[0.5%] hover:contrast-150">

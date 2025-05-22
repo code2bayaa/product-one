@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { useEffect, useState } from "react"
+import { COLLECT } from "../midlleware/report";
 const NAVBAR = () => {
 
     const [windowWidth, setWindowWidth] = useState(0);
@@ -13,6 +14,11 @@ const NAVBAR = () => {
             window.removeEventListener("resize", handleResize);
         };
     },[])
+
+    useEffect(() => {
+        COLLECT()
+    },[])
+
 
     return (
         <div className="w-[100%] h-[100%]">

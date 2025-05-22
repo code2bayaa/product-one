@@ -115,7 +115,7 @@ const SIMILAR = () => {
 
             const type = stream === "movies" ? "movie" : "tv"
             
-            const api = `${process.env.REACT_APP_movie_db}${type}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page || similar.page}`
+            const api = `${process.env.REACT_APP_movie_db}${type}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
             async function freshFetch(){
                 const response = await fetch(`${api}`);
                 const similar_data = await response.json();
@@ -146,12 +146,12 @@ const SIMILAR = () => {
             }
         }catch(error){
             console.log(error,"error")
-            const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page || similar.page}`
+            const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
             fetch(`${api}`)
             .then(data => data.json())
             .then(data => setSimilar(() => ({...data})))
         }
-    },[fetchMovie, similar.page, id, mutateInsertMovie, stream])
+    },[fetchMovie, id, mutateInsertMovie, stream])
 
     useEffect(() => {
         fetchMain(1)
@@ -160,7 +160,6 @@ const SIMILAR = () => {
     const intitializeMovies = async({page}) => {
         fetchMain(page)
     }
-
 
     const getPoster = (n) => {
         let received = null
@@ -190,25 +189,25 @@ const SIMILAR = () => {
         {
             similar ? 
                 <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
-                    <div className={windowWidth > 800 ? "w-[100%] h-[600px] flex flex-wrap flex-row":"w-[100%] h-[auto] flex flex-wrap flex-row"} style={{boxShadow:"0px 4px 10px #fff"}}>
-                        <div className={windowWidth > 800 ? "w-[70%] h-[60%]": "w-[100%] h-[60%]"}>
-                        {
-                            similar.results.length > 2  &&<Carousel images={[...similar.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
-                        }
-                        </div>
+                    <div className={windowWidth > 800 ? "w-[100%] h-[auto] flex flex-wrap flex-row":"w-[100%] h-[auto] flex flex-wrap flex-row"} style={{boxShadow:"0px 4px 10px #fff"}}>
                         <div className={windowWidth > 800 ? "w-[60%] h-[60%]": "w-[100%] h-[60%]"}>
+                            {
+                                similar.results.length > 2  &&<Carousel images={[...similar.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                            }
+                        </div>
+                        <div className={windowWidth > 800 ? "w-[40%] h-[60%]": "w-[100%] h-[60%]"}>
                             <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 1].id}`} className="w-[100%] h-[100%] hover:contrast-150">
-                                <PICTURE picture={getPoster(1)} classes={""} />
+                                <PICTURE picture={getPoster(1)} classes={"h-[400px]"} />
                             </NavLink>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[60%] h-[60%]": "w-[100%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[60%]": "w-[50%] h-[60%]"}>
                             <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 2].id}`} className="w-[100%] h-[100%] hover:contrast-150">
-                                <PICTURE picture={getPoster(2)} classes={"object-cover bg-top"} />
+                                <PICTURE picture={getPoster(2)} classes={"h-[400px] object-cover bg-top"} />
                             </NavLink>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[60%] h-[60%]": "w-[100%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[60%]": "w-[50%] h-[60%]"}>
                             <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 3].id}`} className="w-[100%] h-[100%] hover:contrast-150">
-                                <PICTURE picture={getPoster(3)} classes={"object-cover bg-top"} />
+                                <PICTURE picture={getPoster(3)} classes={"h-[400px] object-cover bg-top"} />
                             </NavLink>
                         </div>
                     </div>
@@ -217,7 +216,7 @@ const SIMILAR = () => {
                         <h1 style={{textAlign:"center",textDecoration:"underline"}}>SIMILAR {stream === "movies" ? "MOVIES" : "TV"}</h1>
                         <SWEETPAGE intitializeMovies={intitializeMovies} page={similar?.page} index={""} total_pages={similar?.total_pages}/>
 
-                        <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden">
+                        <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                             
                             {
                                 similar.results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 

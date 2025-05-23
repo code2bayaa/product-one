@@ -643,18 +643,7 @@ const MOVIE = () => {
                                         recommended movies
                                     </NavLink>
                                 </div>
-                                <div className="w-[90%] ml-[1%] movie-scene flex flex-col h-[180px] overflow-x-auto overflow-y-hidden flex-wrap">
-                                    {
-                                        Object.entries(images).map(([key,value],node) => 
-                                            value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                                <div className="m-[0.5%] min-w-[18%] h-[100%]" key={node + index}>
-                                                    <PICTURE picture={file_path} classes={"object-cover"} />
-                                                </div>
-                                            )
-                                        )
-                                    }
 
-                                </div>
                             </div>
                         </div>
                         {
@@ -708,7 +697,18 @@ const MOVIE = () => {
                                 </div>
                             </div>
                         }
+                        <div className="w-[90%] mx-[5%] mt-[1%] movie-scene flex flex-row h-[200px] flex-wrap">
+                            {
+                                Object.entries(images).map(([key,value],node) => 
+                                    value && typeof(value) === "object" && value.map(({file_path},index) => 
+                                        <div className="m-[0.5%] min-w-[48%] h-[200px]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-cover"} />
+                                        </div>
+                                    )
+                                )
+                            }
 
+                        </div>
                     </div>
                 </div>
             :

@@ -12,6 +12,7 @@ const PLAY = () => {
     const [play, setPlay] = useState([])
     const [fetchedPlay, setFetchedPlay] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0)
+    const [loading,setLoading] = useState(false)
 
     useEffect(() => {
         const handleResize = () => {
@@ -137,28 +138,33 @@ const PLAY = () => {
                         console.log("fresh play")
                         return movies
                     }
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'fesh fetch Oops...',
-                        text: error,
-                        showConfirmButton: false,
-                        timer: 3000
-                    })
+                    console.log(error,status)
+                    // Swal.fire({
+                    //     icon: 'error',
+                    //     title: 'fesh fetch Oops...',
+                    //     text: error,
+                    //     showConfirmButton: false,
+                    //     timer: 3000
+                    // })
+                    return null
                     
                 }
                 console.log(fetchPlay)
 
                 if (fetchPlay.loading) console.log("fetching token Loading...");
-                if((!fetchPlay) || (fetchPlay && fetchPlay.error) || !fetchPlay.data || (fetchPlay && fetchPlay.hasOwnProperty("data") && fetchPlay.data && (fetchPlay.data.play.error === "no records found" || fetchPlay.data.play.error === "no token found"))){
+                if((!fetchPlay) || (fetchPlay && fetchPlay.error) || !fetchPlay.data || (fetchPlay && fetchPlay.hasOwnProperty("data") && fetchPlay.data && (fetchPlay.data.play.error === "no records found" || fetchPlay.data.play.error === "no token found" || !fetchPlay.data.play.tokens))){
                     const getToken = await fetchFresh()    
-                    console.log("inserting...")
-                    mutateUpdatePlay({ variables: {
-                        type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
-                        season:season ? parseInt(season) : -1,
-                        episode:episode ? parseInt(episode) : -1,
-                        id:id?parseInt(id):-1,
-                        tokens:getToken
-                    }})
+                    console.log("inserting...",getToken)
+                    if(getToken && getToken.length > 0){
+                        mutateUpdatePlay({ variables: {
+                            type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
+                            season:season ? parseInt(season) : -1,
+                            episode:episode ? parseInt(episode) : -1,
+                            id:id?parseInt(id):-1,
+                            tokens:getToken
+                        }})
+                    }
+
 
                 }else{
                     //every other user --- most fetch
@@ -214,8 +220,11 @@ const PLAY = () => {
 
     },[fetchToken])
 
-    const runStream = async token => { 
+    const runStream = async(e,token) => { 
         if (token) {
+            setLoading(true)
+            const HTMLMARK = e.target.innerHTML
+            e.target.innerHTML = "loading..."
             const response = await fetch(`${process.env.REACT_APP_play}`,{
                 method:"POST",
                 headers:{
@@ -234,14 +243,14 @@ const PLAY = () => {
             if(status){
                 const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
                 const type = video.name.split(".").pop()
-                // console.log("type",type)
-                // console.log(`playing...${url}/${video.index}`)
+                
                 setPlay(null)
                 // setPlaying(`${url}/${video.index}`)
                 // router(`/play/${url}/${video.index}/${type}/${background}`)
-                window.location.href = `/play/${url}/${video.index}/${type}/${background}`
+                window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
                 setFetchedPlay(() => true)
-                
+                setLoading(false)
+                e.target.innerHTML = HTMLMARK
             }else{
                 Swal.fire({
                     icon: 'error',
@@ -279,7 +288,8 @@ const PLAY = () => {
                         {
                             play.map(({quality,title,token},index) => 
                                     <button
-                                    onClick={() => runStream(token)}
+                                    disabled={loading}
+                                    onClick={(e) => runStream(e,token)}
                                     key={index}
                                     className="bg-[transparent] m-[1%] border-[2px] text-white w-[48%] h-[auto] text-[20px] font-bold"
                                     >{quality}</button>

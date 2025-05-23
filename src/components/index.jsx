@@ -82,6 +82,7 @@ const EMPIRE = () => {
                 <MOBILE/>
             }
             <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[auto]" }`}>
+                <h2>STILL UNDER CONSTRUCTION</h2>
                 <div className={`${windowWidth > 800 ? "w-[90%] home text-[#000] h-[95%] mx-[5%] overflow-y-auto movie-scene":"w-[100%] text-[#000] home h-[auto]"}`}>
                     {
                         home.map(({title, article, image}, index) => 

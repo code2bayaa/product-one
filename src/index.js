@@ -22,6 +22,7 @@ import TRAILER from './components/trailer.jsx';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import PLAY from './components/play.jsx';
 import PLAYER from './components/player.jsx';
+import SIGNIN from './components/signin.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
 
@@ -128,8 +129,13 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path:"/play/:host/:index/:type/:background",
+    path:"/play/:id/:host/:index/:type/:background",
     element:<PLAYER/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/signin",
+    element:<SIGNIN/>,
     elementError:<ERROR/>
   }
 ])

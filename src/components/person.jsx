@@ -529,7 +529,7 @@ const PERSON = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] duration-100 min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] duration-100 min-h-[100%] flex flex-col"}>
             {
                 series && movies && person && images ?
                 <>
@@ -560,10 +560,10 @@ const PERSON = () => {
                                                     series.cast && series.cast.length > 0 && 
                                                     <>
                                                         <h2>PLAYED AS CAST</h2> 
-                                                        <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             series.cast && series.cast.map(({adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                                                <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -582,10 +582,10 @@ const PERSON = () => {
                                                     series.crew && series.crew.length > 0 &&  
                                                     <>
                                                         <h2>PLAYED AS CREW</h2>
-                                                        <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                             {
                                                                 series.crew && series.crew.map(({adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                    <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                                                    <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                                         <div className="w-[100%] h-[100%]">
                                                                             <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
                                                                             <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -611,10 +611,10 @@ const PERSON = () => {
                                                 movies.cast && movies.cast.length > 0 && 
                                                 <>
                                                     <h2>PLAYED AS CAST</h2>
-                                                    <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             movies.cast && movies.cast.map(({adult,backdrop_path,genre_ids,name,id,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                                                <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -632,10 +632,10 @@ const PERSON = () => {
                                                 movies.crew && movies.crew.length > 0 && 
                                                 <>
                                                     <h2>PLAYED AS CREW</h2>
-                                                    <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             movies.crew && movies.crew.map(({adult,backdrop_path,genre_ids,id,original_language,name,original_name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                                                <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

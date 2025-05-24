@@ -225,6 +225,11 @@ const PLAY = () => {
             setLoading(true)
             const HTMLMARK = e.target.innerHTML
             e.target.innerHTML = "loading..."
+            
+            // <>
+            //   <svg class="mr-3 size-5 animate-spin ..." viewBox="0 0 24 24"></svg>
+            // </>
+            
             const response = await fetch(`${process.env.REACT_APP_play}`,{
                 method:"POST",
                 headers:{

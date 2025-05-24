@@ -291,7 +291,7 @@ const SERIES = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] duration-100 min-h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-150 mx-[1%] min-h-[100%] flex flex-col"}>
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"tv"}/>
                 </div>
@@ -301,10 +301,10 @@ const SERIES = () => {
                             <h1 className="my-t-[5%]">{index}</h1>
                             <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
-                            <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                            <div className={`w-[100%] movie-scene duration-50 ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                        <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

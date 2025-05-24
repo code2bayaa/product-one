@@ -493,13 +493,13 @@ const MOVIE = () => {
 
         const fetched = await fetchSingleMovie({
             variables : { id }})
-        // console.log(fetched)
+        console.log(fetched)
         if (fetched.data && fetched.data.single.runtime === null) {
-            // console.log("first time...")
+            console.log("first time...")
             const movie = await freshFetch()
             setMovie(() => ({...movie}));
         }else if(fetched.data && fetched.data.single.success){
-            // console.log("Using cached data:", fetched.data);
+            console.log("Using cached data:", fetched.data);
             setMovie(() => ({...fetched.data.single}));
         }else {
             const movie = await freshFetch()
@@ -592,7 +592,7 @@ const MOVIE = () => {
         <>
         {
             credits && movie && images ? 
-                <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
+                <div className="w-[100%] duration-150 min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
                 {
                     windowWidth > 800 ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -653,11 +653,11 @@ const MOVIE = () => {
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
                                 {/* <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/> */}
 
-                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},movie_key) => 
-                                            <NavLink key={movie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={movie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -678,11 +678,11 @@ const MOVIE = () => {
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
 
-                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.crew.map(({job,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},movie_key) => 
-                                            <NavLink key={movie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={movie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -697,7 +697,7 @@ const MOVIE = () => {
                                 </div>
                             </div>
                         }
-                        <div className="w-[90%] mx-[5%] mt-[1%] movie-scene flex flex-row h-[200px] flex-wrap">
+                        <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row h-[200px] flex-wrap">
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 

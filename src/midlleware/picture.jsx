@@ -27,9 +27,14 @@ const PICTURE = ({picture,classes}) => {
 
     return (
         // <>
-            <img src={img} onError={loadImg} alt="https://late-developers.com" 
+            <img 
+                src={img} 
+                onError={loadImg} 
+                alt="https://late-developers.com" 
+                loading="lazy"
                 onLoad={(e) => editImg(e)}
-                className={`w-[100%] ${classes} ${ isLoaded ? "blur-0" : "blur-md scale-105"}`}/>
+                className={`w-[100%] ${classes} ${ isLoaded ? "blur-0" : "blur-md scale-105"}`}
+            />
 
         // </>
     )

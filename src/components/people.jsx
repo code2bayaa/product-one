@@ -286,7 +286,7 @@ const PEOPLE = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] duration-150 min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] duration-100 flex flex-col"}>
             {
                 people && people.length > 0 ?
                 <>
@@ -298,10 +298,10 @@ const PEOPLE = () => {
                             <div className="w-[100%] h-[auto] flex flex-wrap flex-col" key={node}>
                                 <h1 style={{marginLeft:"10%"}} className="my-t-[5%]">{index}</h1>
                                 <div style={{marginLeft:"10%"}} className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
-                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

@@ -97,10 +97,10 @@ const SEARCH = () => {
                                 <h1 className="my-t-[5%]">{index}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                 <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/>
-                                <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
-                                            <NavLink key={search_key} to={`/${index}/${id}`} className="w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
+                                            <NavLink key={search_key} to={`/${index}/${id}`} className="w-[24%] h-[100%] m-[0.5%] hover:skew-4 hover:contrast-150">
 
                                                 <div key={search_key} className="w-[100%] h-[100%]">
                                                     <PICTURE picture={poster_path || backdrop_path || profile_path} />

@@ -11,7 +11,7 @@ const NAVBAR = () => {
     const api_url = process.env.REACT_APP_api_url
     const linkUrl = process.env.REACT_APP_signup
 
-    console.log(linkUrl,"link")
+    // console.log(linkUrl,"link")
 
     useEffect(() => {
         const handleResize = () => {
@@ -30,7 +30,7 @@ const NAVBAR = () => {
 
     useEffect(() => {
       async function authentication(){
-        const res = await fetch(`${api_url}/user/authentication`,{credentials: "include"})
+        const res = await fetch(`${api_url}`,{credentials: "include"})
         const {status,message} = await res.json()
         console.log(message)
         if(status){

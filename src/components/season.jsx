@@ -494,7 +494,7 @@ const SEASON = () => {
             }
         {
             credits && serie && images ? 
-                    <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
+                    <div className={windowWidth > 800 ? "w-[80%] duration-100 min-h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 mx-[1%] min-h-[100%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
                             <div className={windowWidth > 800 ? "w-[37%] h-[auto]":"w-[100%] h-[300px]"}>
                                 <PICTURE picture={serie.poster_path} classes={"shadow-lg shadow-blue-500/50"} />
@@ -534,7 +534,7 @@ const SEASON = () => {
                                         recommended series
                                     </NavLink>
                                 </div>
-                                <div className="w-[100%] h-[100px] movie-scene overflow-x-auto flex flex-col flex-wrap">
+                                <div className="w-[100%] h-[100px] movie-scene duration-50 overflow-x-auto flex flex-col flex-wrap">
                                     {
                                         serie?.episodes && serie?.episodes.map((episode,node) => 
                                             <NavLink
@@ -561,7 +561,7 @@ const SEASON = () => {
                                     
                                     {
                                         credits.cast.map(({roles,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -592,7 +592,7 @@ const SEASON = () => {
                                     
                                     {
                                         credits.crew.map(({profile_path,popularity,jobs,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

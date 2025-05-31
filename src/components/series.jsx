@@ -7,13 +7,12 @@ import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
-import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 
 const SERIES = () => {
 
-    const [movies, setMovies] = useState([])
+    const [movies, setMovies] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
 
     useEffect(() => {
@@ -119,6 +118,7 @@ const SERIES = () => {
     const intitializeMovies = useCallback(async ({
         runContent,
         page,
+        adjustable = false,
         genreId = '',
         regionId = '',
         languageId='',
@@ -146,6 +146,7 @@ const SERIES = () => {
 
                     // Update the movies state
                     setMovies((prevMovies) => {
+                        prevMovies = prevMovies || [];
                         const updatedMovies = [...prevMovies];
                         const existingIndex = updatedMovies.findIndex(
                             (movie) => movie.index === actual_index
@@ -203,73 +204,71 @@ const SERIES = () => {
                 temp_movies[key].page = page;
             }
 
-            const fetched = await fetchMovies({
-                variables : {
-                page: temp_movies[key].page,
-                genre: genreId,
-                region: regionId,
-                language: languageId,
-                year: yearId,
-                index: actual_index,
-                date: current_date,  
-            }})
-            console.log(fetched)
+            if(!movies || adjustable || genreId || regionId || languageId || yearId){
+                const fetched = await fetchMovies({
+                    variables : {
+                    page: temp_movies[key].page,
+                    genre: genreId,
+                    region: regionId,
+                    language: languageId,
+                    year: yearId,
+                    index: actual_index,
+                    date: current_date,  
+                }})
+                console.log(fetched)
 
-            if (fetched.data) {
-                console.log("Using cached data:", fetched.data);
-                if(fetched.data.tv.success && fetched.data.tv.results &&  fetched.data.tv.results.length < 20){
-                    console.log("less items")
+                if (fetched.data) {
+                    console.log("Using cached data:", fetched.data);
+                    if(fetched.data.tv.success && fetched.data.tv.results &&  fetched.data.tv.results.length < 20){
+                        console.log("less items")
+                        return await freshFetch()
+                    }else if(fetched.data.tv.error === "insert tv" || fetched.data.tv.error === "no records found"){
+                        console.log("no records found")
+                        return await freshFetch()
+                    }else{
+                        console.log("finally using cached data")
+                        setMovies((prevMovies) => {
+                            prevMovies = prevMovies || [];
+                            const updatedMovies = [...prevMovies]
+                            const existingIndex = updatedMovies.findIndex(
+                                (tv) => tv.index === actual_index
+                            );
+
+                            if (existingIndex > -1) {
+                                updatedMovies[existingIndex].results = [
+                                    // ...updatedMovies[existingIndex].results,
+                                    ...fetched.data.tv.results,
+                                ];
+                            } else {
+                                updatedMovies.push({
+                                    index: actual_index,
+                                    results: fetched.data.tv.results,
+                                    page: fetched.data.tv.page,
+                                    total_pages: fetched.data.tv.total_pages,
+                                    total_results:fetched.data.tv.total_results
+                                });
+                            }
+
+                            return updatedMovies;
+                        });
+                        return true
+                    }
+
+                } else {
                     return await freshFetch()
-                }else if(fetched.data.tv.error === "insert tv" || fetched.data.tv.error === "no records found"){
-                    console.log("no records found")
-                    return await freshFetch()
-                }else{
-                    console.log("finally using cached data")
-                    setMovies((prevMovies) => {
-                        const updatedMovies = [...prevMovies]
-                        const existingIndex = updatedMovies.findIndex(
-                            (tv) => tv.index === actual_index
-                        );
-
-                        if (existingIndex > -1) {
-                            updatedMovies[existingIndex].results = [
-                                // ...updatedMovies[existingIndex].results,
-                                ...fetched.data.tv.results,
-                            ];
-                        } else {
-                            updatedMovies.push({
-                                index: actual_index,
-                                results: fetched.data.tv.results,
-                                page: fetched.data.tv.page,
-                                total_pages: fetched.data.tv.total_pages,
-                                total_results:fetched.data.tv.total_results
-                            });
-                        }
-
-                        return updatedMovies;
-                    });
-                    return true
                 }
-
-            } else {
-                return await freshFetch()
             }
+
         };
         runContent.forEach((index) => {
             fetchMoviesFromAPI(index)
             .then(status => {
                 if(!status){
-                    Swal.fire({
-                        title:"internet connection error",
-                        text: "Please try again.",
-                        icon: "error", // Set the icon to "error"
-                        confirmButtonText: "OK",
-                        
-                    })
+
                 }
             })
         })
-    },[fetchMovies,mutateInsertMovies])
+    },[fetchMovies,mutateInsertMovies,movies])
 
     useEffect(() => {
         intitializeMovies(
@@ -306,7 +305,7 @@ const SERIES = () => {
                                     results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
+                                                <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                     <h2 className="text-[15px] font-bold">{name || original_name}</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>

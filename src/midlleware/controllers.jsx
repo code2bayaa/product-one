@@ -5,11 +5,11 @@ import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 
 const CONTROLLERS = ({intitializeMovies,type}) => {
 
-    const [genre, setGenre] = useState([])
-    const [region, setRegion] = useState([])
-    const [language, setLanguage] = useState([])
-    const [years, setYears] = useState([])
-    const [jobs, setJob] = useState([])
+    const [genre, setGenre] = useState(null)
+    const [region, setRegion] = useState(null)
+    const [language, setLanguage] = useState(null)
+    const [years, setYears] = useState(null)
+    const [jobs, setJob] = useState(null)
     const [selectedGenre, setSelectedGenre] = useState(false)
     const [selectedRegion, setSelectedRegion] = useState(false)
     const [selectedLanguage, setSelectedLanguage] = useState(false)
@@ -80,12 +80,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             // console.log("inserted genre", data);
             if (data.addGenre.success) {
                 // Refetch the query to get updated data
-                fetchGenre.refetch().then((refetched) => {
-                    // console.log(refetched)
-                    const typeGetGenreData = [...refetched.data.genre.data]
-                    console.log("updating genre insert onComplete")
-                    setGenre(() => typeGetGenreData)
-                })
+                fetchGenre.refetch()
 
             }
         },
@@ -118,13 +113,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         onCompleted: (data) => {
             if (data.updateGenre.success) {
                 // Refetch the query to get updated data
-                fetchGenre.refetch().then((refetched) => {
-                    console.log(refetched)
-                    const typeGetGenreData = [...refetched.data.genre.data.filter(({mode}) => mode === type)]
-                    console.log(typeGetGenreData)
-                    console.log("updating genre update onComplete")
-                    setGenre(() => typeGetGenreData)
-                })
+                fetchGenre.refetch()
 
             }
         },
@@ -177,10 +166,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             // console.log(data)
             if (data && data.addRegion.success) {
                 // Refetch the query to get updated data
-                fetchRegion.refetch().then((refetched) => {
-                    const typeGetRegionData = [...refetched.data.region.data]
-                    setRegion(() => typeGetRegionData)
-                })
+                fetchRegion.refetch()
 
             }
         },
@@ -271,10 +257,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             // console.log(data)
             if (data && data.addLanguage.success) {
                 // Refetch the query to get updated data
-                fetchLanguage.refetch().then((refetched) => {
-                    const typeGetLanguageData = [...refetched.data.language.data]
-                    setLanguage(() => typeGetLanguageData)
-                })
+                fetchLanguage.refetch()
 
             }
         },
@@ -422,12 +405,14 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
 
             // setPersonType(null)
         }else{
+            console.log("set discover..",id)
             intitializeMovies({runContent:["discover"],page:1,genreId:id.toString(),regionId,languageId,yearId})
             runMain()
+            // return null
         }
           
         console.log("filter genre")
-        setGenre([])
+        setGenre(null)
         setSelectedGenre(false)
         
     }
@@ -445,7 +430,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId:id,languageId,yearId,genreId,jobId})
         }else
             intitializeMovies({runContent:["discover"],page:1,regionId:id,languageId,yearId,genreId})
-        setRegion([])
+        setRegion(null)
         setSelectedRegion(false)
     }
 
@@ -462,7 +447,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                 intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId:id,yearId,genreId,jobId})
         }else
             intitializeMovies({runContent:["discover"],page:1,regionId,languageId:id,yearId,genreId})
-        setLanguage([])
+        setLanguage(null)
         setSelectedLanguage(false)
     }
 
@@ -479,7 +464,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         }else
             intitializeMovies({runContent:["discover"],page:1,regionId,languageId,yearId:id,genreId})
         // console.log("refresh")
-        setYears(() => [])
+        setYears(null)
         setSelectedYear(false)
     }
 
@@ -493,14 +478,14 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         else
             intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:id})
         // console.log("refresh")
-        setJob(() => [])
+        setJob(null)
         setSelectedJob(false)
     }
 
     const getLanguage = async() => {
         if(selectedLanguage){
             setSelectedLanguage(() => false)
-            setLanguage([])
+            setLanguage(null)
         }else{
             try{
 
@@ -521,7 +506,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
 
                         if(fetchLanguage.data.language.error === "no records found"){
                             const getLanguageData = await fetchFresh()    
-                                
+                            setLanguage(() => [...getLanguageData])
                             mutateInsertLanguage({ variables: { date, data:[...getLanguageData] } })
 
                         }else{
@@ -555,7 +540,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     const getRegion = async() => {
         if(selectedRegion){
             setSelectedRegion(() => false)
-            setRegion([])
+            setRegion(null)
         }else{
             try{
 
@@ -576,7 +561,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
 
                         if(fetchRegion.data.region.error === "no records found"){
                             const getRegionData = await fetchFresh()    
-                                
+                            setRegion(() => [...getRegionData])
                             mutateInsertRegion({ variables: { date, data:[...getRegionData] } })
 
                         }else{
@@ -611,7 +596,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         if(selectedGenre){
             // setSelectedGenre(false)
             console.log("get genre")
-            setGenre([])
+            setGenre(null)
         }else{
             try{
 
@@ -642,7 +627,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                             const getGenreData = await fetchFresh()
                             // setGenre(() => [...getGenreData])
                             const typeGetGenreData = getGenreData.map((genres) => ({...genres, mode:n || type}))
-    
+                            setGenre(() => [...typeGetGenreData])
                                 
                             mutateInsertGenre({ variables: { date, data:[...typeGetGenreData] } })
 
@@ -654,6 +639,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
 
                             const jointGenre = [...fetchGenre.data.genre.data.map(old => ({...old,__typename:undefined})),...typeGetGenreData]
                             console.log(jointGenre)
+                            setGenre(() => [...jointGenre])
                             mutateUpdateGenre({ variables: { date, data:[...jointGenre] } })
                         }else{
                             //every other user --- most fetch
@@ -697,7 +683,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     const getYears = () => {
         if(selectedYear){
             setSelectedYear(false)
-            setYears([])
+            setYears(null)
         }else{
             const newYears = Array((new Date()).getFullYear() - 1993 + 1)
             .fill()
@@ -710,7 +696,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     const getJobs = () => {
         if(selectedJob){
             setSelectedJob(false)
-            setJob([])
+            setJob(null)
         }else{
             try{
                 fetch(`${process.env.REACT_APP_movie_db}configuration/jobs?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
@@ -831,62 +817,62 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                 </div>
                 <div className="w-[100%] h-[auto] flex flex-row flex-wrap">
                     {
-                        genre && genre.map(({id, name}, node) => (
+                        genre && genre.map(({id, name}, node) => 
                             <button 
                                 className="w-[24%] min-h-[60px] m-[0.5%] flex flex-col justify-center items-center"
-                                key={node}
+                                key={`genre${node}`}
                                 onClick={() => filterGenre(id,name)}
                             >
                                 <h1 className="w-[100%]">{name}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             </button>
-                        ))
+                        )
                     }
                     {
-                        region && region.map(({iso_3166_1, english_name, native_name}, node) => (
+                        region && region.map(({iso_3166_1, english_name, native_name}, node) => 
                             <button 
                                 className="w-[24%] min-h-[60px] m-[0.5%] flex flex-col justify-center items-center"
-                                key={node}
+                                key={`region${node}`}
                                 onClick={() => filterRegion(iso_3166_1,english_name)}
                             >
                                 <h1 className="w-[100%]">{english_name}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             </button>
-                        ))
+                        )
                     }
                     {
-                        language && language.map(({iso_639_1, english_name, name}, node) => (
+                        language && language.map(({iso_639_1, english_name, name}, node) => 
                             <button 
                                 className="w-[24%] min-h-[60px] m-[0.5%] flex flex-col justify-center items-center"
-                                key={node}
+                                key={`language${node}`}
                                 onClick={() => filterLanguage(iso_639_1,english_name)}
                             >
                                 <h1 className="w-[100%]">{english_name}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             </button>
-                        ))
+                        )
                     }
                     {
-                        years && years.map((year, node) => (
+                        years && years.map((year, node) => 
                             <button 
                                 className="w-[24%] min-h-[60px] m-[0.5%] flex flex-col justify-center items-center"
-                                key={node}
+                                key={`year${node}`}
                                 onClick={() => filterYear(year)}
                             >
                                 <h1 className="w-[100%]">{year}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             </button>
-                        ))
+                        )
                     }
-                                        {
-                        jobs && jobs.map(({department,jobs}, node) => (
-                            <>
+                    {
+                        jobs && jobs.map(({department,jobs}, node) => 
+                            <div className="min-w-30%" key={node}>
                                 <h2>{department}</h2>
                                 {
-                                    jobs.map(job => 
+                                    jobs.map((job, node_two) => 
                                         <button 
                                             className="w-[24%] min-h-[60px] m-[0.5%] flex flex-col justify-center items-center"
-                                            key={node}
+                                            key={`job${node}${node_two}`}
                                             onClick={() => filterJob(job)}
                                         >
                                             <h1 className="w-[100%]">{job}</h1>
@@ -894,9 +880,9 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                                         </button>
                                     )
                                 }
-                            </>
+                            </div>
 
-                        ))
+                        )
                     }
                 </div>
             </div>

@@ -128,46 +128,50 @@ const TRAILER = () => {
                 
             }
             console.log(fetchVideo)
-
-            if (fetchVideo.loading) console.log("fetching video Loading...");
-            if (fetchVideo.error){
-                console.log(fetchVideo.error.message)
-                const getVideoData = await fetchFresh()
-                setTrailor(() => ({...getVideoData}))
-            }else{
-                if(fetchVideo.hasOwnProperty("data") && fetchVideo.data){
-
-                    if(fetchVideo.data.video.error === "no records found"){
-                        const getVideoData = await fetchFresh()    
-                        // console.log(getVideoData)
-                        console.log("inserting...")
-                        mutateInsertVideo({ variables: { meta_data : {
-                            type:stream === "series" ? "tv" : "movie",
-                            season:season ? parseInt(season) : -1,
-                            episode:episode ? parseInt(episode) : -1,
-                            id:id?parseInt(id):0
-                        }, data:{...getVideoData} } })
-
-                    }else{
-                        //every other user --- most fetch
-                        console.log("ordinarily...")
-                        setTrailor(() => ({...fetchVideo.data?.video?.data}))
-                    } 
-                }else{
+            if(!trailor){
+                if (fetchVideo.loading) console.log("fetching video Loading...");
+                if (fetchVideo.error){
+                    console.log(fetchVideo.error.message)
                     const getVideoData = await fetchFresh()
                     setTrailor(() => ({...getVideoData}))
-                    console.log("error fetching graph")
+                }else{
+                    if(fetchVideo.hasOwnProperty("data") && fetchVideo.data){
+
+                        if(fetchVideo.data.video.error === "no records found"){
+                            const getVideoData = await fetchFresh()    
+                            // console.log(getVideoData)
+                            console.log("inserting...")
+                            mutateInsertVideo({ variables: { meta_data : {
+                                type:stream === "series" ? "tv" : "movie",
+                                season:season ? parseInt(season) : -1,
+                                episode:episode ? parseInt(episode) : -1,
+                                id:id?parseInt(id):0
+                            }, data:{...getVideoData} } })
+
+                        }else{
+                            //every other user --- most fetch
+                            console.log("ordinarily...")
+                            setTrailor(() => ({...fetchVideo.data?.video?.data}))
+                        } 
+                    }else{
+                        const getVideoData = await fetchFresh()
+                        setTrailor(() => ({...getVideoData}))
+                        console.log("error fetching graph")
+                    }
                 }
             }
 
         }catch(err){
             console.log(err)
-            fetch(`${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}${season && `/season/${season}`}${episode && `/episode/${episode}`}/videos?api_key=${process.env.REACT_APP_api_key}`)
-            .then(data => data.json())
-            .then(data => setTrailor(() => ({...data})))
+            if(!trailor){
+                fetch(`${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}${season && `/season/${season}`}${episode && `/episode/${episode}`}/videos?api_key=${process.env.REACT_APP_api_key}`)
+                .then(data => data.json())
+                .then(data => setTrailor(() => ({...data})))
+            }
+
         }
         setFetchedVideo(true)
-    },[mutateInsertVideo,fetchVideo,fetchedVideo,stream,id,season,episode])
+    },[mutateInsertVideo,fetchVideo,fetchedVideo,stream,id,season,episode,trailor])
 
     // const getBackground = () => {
     //     console.log(process.env.REACT_APP_img_poster + "/" + backgroundImg + ".jpg")

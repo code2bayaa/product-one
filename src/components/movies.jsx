@@ -7,13 +7,13 @@ import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
-import Swal from "sweetalert2"
+// import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 
 const MOVIES = () => {
 
-    const [movies, setMovies] = useState([])
+    const [movies, setMovies] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     // const [variables,setVariables] = useState({})
     // const client = useApolloClient(); // Apollo Client instance for accessing the cache
@@ -162,6 +162,7 @@ const MOVIES = () => {
     const intitializeMovies = useCallback(async({
         runContent,
         page,
+        adjustable = false,
         genreId = '',
         regionId = '',
         languageId='',
@@ -190,6 +191,7 @@ const MOVIES = () => {
 
                     // Update the movies state
                     setMovies((prevMovies) => {
+                        prevMovies = prevMovies || [];
                         const updatedMovies = [...prevMovies];
                         const existingIndex = updatedMovies.findIndex(
                             (movie) => movie.index === actual_index
@@ -320,75 +322,79 @@ const MOVIES = () => {
             //         date: current_date,
             //     },
             // })
-
-            const fetched = await fetchMovies({
-                variables : {
-                page: temp_movies[key].page,
-                genre: genreId,
-                region: regionId,
-                language: languageId,
-                year: yearId,
-                index: actual_index,
-                date: current_date,  
-            }})
-            console.log(fetched)
             // console.log(fetchedMoviesData)
 
-            if (fetched.data) {
-                // console.log("Using cached data:", fetched.data);
-                if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
-                    // console.log("less items")
-                    return await freshFetch()
-                }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
-                    // console.log("no records found")
-                    return await freshFetch()
-                }else{
-                    // console.log("finally using cached data")
-                    setMovies((prevMovies) => {
-                        const updatedMovies = [...prevMovies]
-                        const existingIndex = updatedMovies.findIndex(
-                            (movie) => movie.index === actual_index
-                        );
-    
-                        if (existingIndex > -1) {
-                            updatedMovies[existingIndex].results = [
-                                // ...updatedMovies[existingIndex].results,
-                                ...fetched.data.movie.results,
-                            ];
-                        } else {
-                            updatedMovies.push({
-                                index: actual_index,
-                                results: fetched.data.movie.results,
-                                page: fetched.data.movie.page,
-                                total_pages: fetched.data.movie.total_pages,
-                                total_results:fetched.data.movie.total_results
-                            });
-                        }
-    
-                        return updatedMovies;
-                    });
-                    return true
-                }
+            if(!movies || adjustable || genreId || regionId || languageId || yearId){
+                console.log(genreId,"genreId")
+                const fetched = await fetchMovies({
+                    variables : {
+                    page: temp_movies[key].page,
+                    genre: genreId,
+                    region: regionId,
+                    language: languageId,
+                    year: yearId,
+                    index: actual_index,
+                    date: current_date,  
+                }})
+                console.log(fetched)
+                if (fetched.data) {
+                    // console.log("Using cached data:", fetched.data);
+                    if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
+                        // console.log("less items")
+                        return await freshFetch()
+                    }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
+                        // console.log("no records found")
+                        return await freshFetch()
+                    }else{
+                        // console.log("finally using cached data")
+                        setMovies((prevMovies) => {
+                            prevMovies = prevMovies || [];
+                            const updatedMovies = [...prevMovies]
+                            const existingIndex = updatedMovies.findIndex(
+                                (movie) => movie.index === actual_index
+                            );
+        
+                            if (existingIndex > -1) {
+                                updatedMovies[existingIndex].results = [
+                                    // ...updatedMovies[existingIndex].results,
+                                    ...fetched.data.movie.results,
+                                ];
+                            } else {
+                                updatedMovies.push({
+                                    index: actual_index,
+                                    results: fetched.data.movie.results,
+                                    page: fetched.data.movie.page,
+                                    total_pages: fetched.data.movie.total_pages,
+                                    total_results:fetched.data.movie.total_results
+                                });
+                            }
+        
+                            return updatedMovies;
+                        });
+                        return true
+                    }
 
-            } else {
-                return await freshFetch()
+                } else {
+                    return await freshFetch()
+                }
             }
+
         };
         runContent.forEach((index) => {
             fetchMoviesFromAPI(index)
             .then(status => {
-                if(!status){
-                    Swal.fire({
-                        title:"internet connection error",
-                        text: "Please try again.",
-                        icon: "error", // Set the icon to "error"
-                        confirmButtonText: "OK",
+                // if(!status){
+                //     Swal.fire({
+                //         title:"internet connection error",
+                //         text: "Please try again.",
+                //         icon: "error", // Set the icon to "error"
+                //         confirmButtonText: "OK",
                         
-                    })
-                }
+                //     })
+                // }
             })
         })
-    },[fetchMovies,mutateInsertMovies]);
+    },[fetchMovies,mutateInsertMovies,movies]);
 
     useEffect(() => {
         intitializeMovies(
@@ -425,7 +431,7 @@ const MOVIES = () => {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
+                                                <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                     <h2 className="text-[15px] font-bold">{title ? title : original_title ? original_title : title}</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>

@@ -10,13 +10,41 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 
 const PLAYER = () => {
-    const { host, index, id, background } = useParams();
+    const { host, index, id, type, background } = useParams();
     const [rating, setRating] = useState(3.2)
     const [stars,setStars] = useState(0)
     const [users, setUsers] = useState(0)
+    // const [mkv, setMKV] = useState(false)
     // const [playID,setPlayID] = useState(null)
-    const api_url = process.env.REACT_APP_api_url
+    // const api_url = process.env.REACT_APP_api_url
     
+    useEffect(() => {
+        if(type === "mkv"){
+            // setMKV(true)   
+            async function runVLC() { 
+                const streamUrl = `${process.env.REACT_APP_player_env}${host}/${index}`
+
+                const response = await fetch(`${process.env.REACT_APP_playing}`,{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json",
+                        "Accept":"application/json"
+                    },
+                    body:JSON.stringify({
+                        url:streamUrl,
+                        id
+
+                    })
+                })
+                const {status, error, message, url} = await response.json()
+                console.log(status,message,url,error)
+            }
+            runVLC()
+
+                
+        }
+    },[type,host,index,id])
+
     useEffect(() => {
 
         // return () => {
@@ -24,37 +52,40 @@ const PLAYER = () => {
         // }
         if(host && index){
             // console.log(("playID",`${process.env.REACT_APP_player_env}${host}/${index}`))
-            new Plyr('#plyr-video', {
-                autoplay: false,
-                muted: false,
-                controls: [
-                    "play",
-                    "volume",
-                    "fullscreen",
-                    'play-large',
-                    'progress',
-                    'duration',
-                    'mute',
-                    'captions'
-                ],
-                // settings: ['quality', 'speed', 'loop'],
-                // quality: {
-                //     default: 720,
-                //     options: [
-                //         { value: 1080, label: '1080p' },
-                //         { value: 720, label: '720p' },
-                //         { value: 480, label: '480p' },
-                //         { value: 360, label: '360p' },
-                //     ],
-                // },
-            });
+            const mkvCheck = document.querySelector("#plyr-video source");
+            if(mkvCheck && mkvCheck.src){
+                new Plyr('#plyr-video', {
+                    autoplay: false,
+                    muted: false,
+                    controls: [
+                        "play",
+                        "volume",
+                        "fullscreen",
+                        'play-large',
+                        'progress',
+                        'duration',
+                        'mute',
+                        'captions'
+                    ],
+                    // settings: ['quality', 'speed', 'loop'],
+                    // quality: {
+                    //     default: 720,
+                    //     options: [
+                    //         { value: 1080, label: '1080p' },
+                    //         { value: 720, label: '720p' },
+                    //         { value: 480, label: '480p' },
+                    //         { value: 360, label: '360p' },
+                    //     ],
+                    // },
+                });
+            }
             // setPlayID(`${process.env.REACT_APP_player_env}${host}/${index}`)
         }
     },[host,index])
 
     useEffect(() => {
         const getRate = async() => {
-            const response = await fetch(`${api_url}/rate/pull`, {
+            const response = await fetch(`${process.env.REACT_APP_pull}`, {
                 method: "POST",
                 credentials: "include",
                 body:JSON.stringify({
@@ -72,11 +103,11 @@ const PLAYER = () => {
             setUsers(human)
         }
         getRate()
-    },[api_url,id])
+    },[id])
 
     const ratingChanged = async(rating) => {
         // console.log(rating,"rating")
-        const response = await fetch(`${api_url}/rate/add`, {
+        const response = await fetch(`${process.env.REACT_APP_rate_add}`, {
           method: "POST",
           credentials: "include",
           body:JSON.stringify({
@@ -112,14 +143,17 @@ const PLAYER = () => {
     }
 
     return (
-        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
-            
-            <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">
-                <source src={`${process.env.REACT_APP_player_env}${host}/${index}`} type="video/mp4" />
-                Your browser does not support the video tag.
+        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(135deg, hsl(250, 70%, 15%), hsl(220, 70%, 10%)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+            <div className='w-[100%] text-[#ffd800] h-[60px] flex flex-row flex-wrap'>
+                {
+                    (type === "mkv") ? <h2>Check your VLC</h2> : ""
+                }
                 
-            </video>
-            <div className='w-[100%] text-[#ffd800] h-[60px] inline-block flex flex-row flex-wrap'>
+                <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">
+                    <source src={`${process.env.REACT_APP_player_env}${host}/${index}`} type="video/mp4" />
+                    Your browser does not support the video tag.
+                    
+                </video>
                 <Rating
                     onClick={ratingChanged}
                     initialValue={rating}

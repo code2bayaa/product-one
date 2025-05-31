@@ -387,31 +387,35 @@ const SEASON = () => {
             return {...getImageData}
         } 
 
-        
+        if(!images){
+            const fetched = await fetchImage({
+                variables : {
+                type:"tv",
+                episode:-1,
+                season:season?parseInt(season):-1,
+                id:id?parseInt(id):-1
+            }})
+            // console.log(fetched)
+            if (fetched.data && fetched.data.image.success) {
+                console.log("image cached data:", fetched.data);
+                setImages(() => ({...fetched.data.image.data}))
 
-        const fetched = await fetchImage({
-            variables : {
-            type:"tv",
-            episode:-1,
-            season:season?parseInt(season):-1,
-            id:id?parseInt(id):-1
-        }})
-        // console.log(fetched)
-        if (fetched.data && fetched.data.image.success) {
-            console.log("image cached data:", fetched.data);
-            setImages(() => ({...fetched.data.image.data}))
-
-        }else {
-            const getImageData = await freshFetch()
-            setImages(() => ({...getImageData}))
+            }else {
+                const getImageData = await freshFetch()
+                setImages(() => ({...getImageData}))
+            }
         }
+
     }catch(error){
         console.log(error)
-        fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/images?api_key=${process.env.REACT_APP_api_key}`)
-        .then(data => data.json())
-        .then(data => setImages(() => ({...data})))
+        if(!images){
+            fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/images?api_key=${process.env.REACT_APP_api_key}`)
+            .then(data => data.json())
+            .then(data => setImages(() => ({...data})))
+        }
+
     }
-    },[fetchImage, id, season, mutateInsertImage]);
+    },[fetchImage, id, season, mutateInsertImage, images]);
 
     const fetchTV = useCallback(async() => {
 
@@ -430,21 +434,24 @@ const SEASON = () => {
             return {...data}
         } 
 
-        const fetched = await fetchSeason({
-            variables : { id:seasonID }})
-        if (fetched.data && fetched.data.season.air_date === null) {
-            console.log("first time...")
-            const tv = await freshFetch()
-            setSerie(() => ({...tv}));
-        }else if(fetched.data && fetched.data.season.success){
-            console.log("Using cached data:", fetched.data);
-            setSerie(() => ({...fetched.data.season}));
-        }else {
-            const tv = await freshFetch()
-            setSerie(() => ({...tv}));
+        if(!serie){
+            const fetched = await fetchSeason({
+                variables : { id:seasonID }})
+            if (fetched.data && fetched.data.season.air_date === null) {
+                console.log("first time...")
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}));
+            }else if(fetched.data && fetched.data.season.success){
+                console.log("Using cached data:", fetched.data);
+                setSerie(() => ({...fetched.data.season}));
+            }else {
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}));
+            }
         }
 
-    },[fetchSeason, id, season, seasonID, mutateInsertTV]);
+
+    },[fetchSeason, id, season, seasonID, mutateInsertTV, serie]);
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
@@ -456,18 +463,21 @@ const SEASON = () => {
             return {...credits_data}
         } 
 
-        const current_date = new Date().toISOString().split("T")[0]
-        const fetched = await fetchCreditsData({
-            variables : { id:id?parseInt(id):0, date:current_date }})
-        console.log(fetched)
-        if(fetched.data && fetched.data.credits.success){
-            console.log("Using cached data:", fetched.data);
-            setCredit(() => ({...fetched.data.credits}));
-        }else {
-            const credits = await freshFetch()
-            setCredit(() => ({...credits}));
+        if(!credits){
+            const current_date = new Date().toISOString().split("T")[0]
+            const fetched = await fetchCreditsData({
+                variables : { id:id?parseInt(id):0, date:current_date }})
+            console.log(fetched)
+            if(fetched.data && fetched.data.credits.success){
+                console.log("Using cached data:", fetched.data);
+                setCredit(() => ({...fetched.data.credits}));
+            }else {
+                const credits = await freshFetch()
+                setCredit(() => ({...credits}));
+            }
         }
-    },[fetchCreditsData, id, season, mutateInsertCredits]);
+
+    },[fetchCreditsData, id, season, mutateInsertCredits, credits]);
 
     useEffect(() => {
         graphImages()
@@ -563,7 +573,7 @@ const SEASON = () => {
                                         credits.cast.map(({roles,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
@@ -594,7 +604,7 @@ const SEASON = () => {
                                         credits.crew.map(({profile_path,popularity,jobs,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>

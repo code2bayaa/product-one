@@ -9,70 +9,126 @@ const EMPIRE = () => {
         
     const divRefs = useRef([]);
     const [windowWidth, setWindowWidth] = useState(0);
+    const [layouts, setLayouts] = useState(false);
 
+    useEffect(() => {
+
+        const sendForm = async({url,options}) => {
+
+            const response = await fetch(
+                url,
+                options,
+                {credentials:"initial"}
+            )
+
+            
+            return await response.json()
+
+        }
+
+        async function runLocale(){
+            let user_location = localStorage.getItem("location") || null;
+            if(!user_location){
+                const urls = [
+                    "https://ipinfo.io/json",
+                    // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
+                    "https://ipapi.co/json/",
+                    "https://api.ipgeolocation.io/ipgeo?apiKey=02be68312fd5432fa07048f4b27b6542"
+                ]
+
+                const locations = await Promise.all(urls.map(async(url) => {
+                    return await sendForm({url, options : {
+                        method:"GET",
+                        headers : {'Content-type': 'application/json; charset=UTF-8'},
+                    }})
+                }))
+
+                user_location = locations
+            }else{
+                user_location = JSON.parse(user_location);
+            }
+            // return user_location;
+            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa"){
+                setLayouts(true)
+            }  
+            console.log(user_location,"user location")
+        }
+
+        runLocale().then(() => {
+            gsap.registerPlugin(ScrollTrigger);
+            divRefs.current.forEach((divRef) => {
+                if (!divRef) return;
+                const h2Tag = divRef.querySelector("h2");
+                if(!h2Tag) return;
+                gsap.fromTo(
+                    h2Tag,
+                    { opacity: 0, y: 50 },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 1,
+                        ease: "power3.out",
+                        scrollTrigger: {
+                            trigger: divRef,
+                            scroller:".home",
+                            start: "top 30%",
+                            toggleActions: "play none none none",
+                            markers:false
+                        },
+                    }
+                );
+
+                const imgs = divRef.querySelectorAll("img");
+                imgs && imgs.length > 0 && imgs.forEach((img,index) => {
+                    if (!img) return;
+                    gsap.fromTo(
+                        img,
+                        {
+                            opacity: 0,
+                            x: index === 0 ? 0 : index % 2 === 0 ? "-100%" : "100%", // Left or right
+                            y: index === 0 ? "-100%" : "0%", // Top for center image
+                        },
+                        {
+                            opacity: 1,
+                            x: "0%",
+                            y: "0%",
+                            duration: 1.5,
+                            ease: "power3.out",
+                            delay: index * 0.2, // Stagger animation
+                            scrollTrigger: {
+                                trigger: divRef,
+                                scroller:".home",
+                                start: "top 35%",
+                                toggleActions: "play none none none",
+                                markers:false
+                            },
+                        }
+                    );
+                })
+            });
+        })
+    },[])
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
-        gsap.registerPlugin(ScrollTrigger);
-        divRefs.current.forEach((divRef) => {
-            if (!divRef) return;
-            const h2Tag = divRef.querySelector("h2");
-            if(!h2Tag) return;
-            gsap.fromTo(
-                h2Tag,
-                { opacity: 0, y: 50 },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 1,
-                    ease: "power3.out",
-                    scrollTrigger: {
-                        trigger: divRef,
-                        scroller:".home",
-                        start: windowWidth > 800 ? "top 30%" : "top 90%",
-                        toggleActions: "play none none none",
-                        markers:false
-                    },
-                }
-            );
-
-            const imgs = divRef.querySelectorAll("img");
-            imgs && imgs.length > 0 && imgs.forEach((img,index) => {
-                if (!img) return;
-                gsap.fromTo(
-                    img,
-                    {
-                        opacity: 0,
-                        x: index === 0 ? 0 : index % 2 === 0 ? "-100%" : "100%", // Left or right
-                        y: index === 0 ? "-100%" : "0%", // Top for center image
-                    },
-                    {
-                        opacity: 1,
-                        x: "0%",
-                        y: "0%",
-                        duration: 1.5,
-                        ease: "power3.out",
-                        delay: index * 0.2, // Stagger animation
-                        scrollTrigger: {
-                            trigger: divRef,
-                            scroller:".home",
-                            start: windowWidth > 800 ? "top 35%" : "top 90%",
-                            toggleActions: "play none none none",
-                            markers:false
-                        },
-                    }
-                );
-            })
-        });
-
 
     }, [windowWidth]);
     
     return (
-        <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
+        <>
+        {
+            layouts ?
+                <div className="w-[100%] h-[100%] text-black text-center" style={{background:"url(/image/grey.jpg)"}}>
+                    <h1>WELCOME TO LATE DEVELOPERS</h1>
+                    <h2>PRODUCT ONE</h2>
+                    <p>To invest or contact info@late-developers.com</p>
+                    <p>More information at https://late-developers.com/uko</p>
+                </div>
+            :
+        <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -152,7 +208,10 @@ const EMPIRE = () => {
                 </div>
             </div>
         </div>
+                }
+    </>
     )
+
 }
 
 export default EMPIRE;

@@ -451,31 +451,35 @@ const MOVIE = () => {
                 return {...getImageData}
             } 
     
-            
-    
-            const fetched = await fetchImage({
-                variables : {
-                type:"movie",
-                episode:-1,
-                season:-1,
-                id:id?parseInt(id):-1
-            }})
-            console.log(fetched)
-            if (fetched.data && fetched.data.image.success) {
-                console.log("image cached data:", fetched.data);
-                setImages(() => ({...fetched.data.image.data}))
-    
-            }else {
-                const getImageData = await freshFetch()
-                setImages(() => ({...getImageData}))
+            if(!images){
+                const fetched = await fetchImage({
+                    variables : {
+                    type:"movie",
+                    episode:-1,
+                    season:-1,
+                    id:id?parseInt(id):-1
+                }})
+                console.log(fetched)
+                if (fetched.data && fetched.data.image.success) {
+                    console.log("image cached data:", fetched.data);
+                    setImages(() => ({...fetched.data.image.data}))
+        
+                }else {
+                    const getImageData = await freshFetch()
+                    setImages(() => ({...getImageData}))
+                }
             }
+
         }catch(error){
             console.log(error)
-            fetch(`${process.env.REACT_APP_movie_db}movie/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-            .then(data => data.json())
-            .then(data => setImages(() => ({...data})))
+            if(!images){
+                fetch(`${process.env.REACT_APP_movie_db}movie/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
+                .then(data => data.json())
+                .then(data => setImages(() => ({...data})))
+            }
+
         }
-    },[fetchImage,id,mutateInsertImage])
+    },[fetchImage,id,mutateInsertImage,images])
 
     const fetchMovie = useCallback(async() => {
 
@@ -489,24 +493,26 @@ const MOVIE = () => {
             return {...data}
         } 
 
+    
         
-
-        const fetched = await fetchSingleMovie({
+        if(!movie){
+            const fetched = await fetchSingleMovie({
             variables : { id }})
-        console.log(fetched)
-        if (fetched.data && fetched.data.single.runtime === null) {
-            console.log("first time...")
-            const movie = await freshFetch()
-            setMovie(() => ({...movie}));
-        }else if(fetched.data && fetched.data.single.success){
-            console.log("Using cached data:", fetched.data);
-            setMovie(() => ({...fetched.data.single}));
-        }else {
-            const movie = await freshFetch()
-            setMovie(() => ({...movie}));
+            console.log(fetched)
+            if (fetched.data && fetched.data.single.runtime === null) {
+                console.log("first time...")
+                const movie = await freshFetch()
+                setMovie(() => ({...movie}));
+            }else if(fetched.data && fetched.data.single.success){
+                console.log("Using cached data:", fetched.data);
+                setMovie(() => ({...fetched.data.single}));
+            }else {
+                const movie = await freshFetch()
+                setMovie(() => ({...movie}));
+            }
         }
         
-    },[fetchSingleMovie,id,mutateInsertMovie])
+    },[fetchSingleMovie,id,mutateInsertMovie,movie])
 
     const fetchCredits = useCallback(async() => {
         // const credits_response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/credits?api_key=${process.env.REACT_APP_api_key}`);
@@ -523,19 +529,20 @@ const MOVIE = () => {
             return {...credits_data}
         } 
 
-        
-        const current_date = new Date().toISOString().split("T")[0]
-        const fetched = await fetchCreditsData({
-            variables : { id:id?parseInt(id):0, date:current_date }})
-        console.log(fetched)
-        if(fetched.data && fetched.data.credits.success){
-            console.log("Using cached data:", fetched.data);
-            return setCredit(() => ({...fetched.data.credits}));
-        }else {
-            const credits = await freshFetch()
-            return setCredit(() => ({...credits}));
+        if(!credits){
+            const current_date = new Date().toISOString().split("T")[0]
+            const fetched = await fetchCreditsData({
+                variables : { id:id?parseInt(id):0, date:current_date }})
+            console.log(fetched)
+            if(fetched.data && fetched.data.credits.success){
+                console.log("Using cached data:", fetched.data);
+                return setCredit(() => ({...fetched.data.credits}));
+            }else {
+                const credits = await freshFetch()
+                return setCredit(() => ({...credits}));
+            }
         }
-    },[fetchCreditsData,id,mutateInsertCredits])
+    },[fetchCreditsData,id,mutateInsertCredits,credits])
 
     useEffect(() => {
         graphImages()
@@ -625,7 +632,7 @@ const MOVIE = () => {
                                         trailors
                                     </NavLink>
                                     <NavLink
-                                        to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
+                                        to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
                                         className={windowWidth > 800 ? "text-[#ffd800] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         play <FontAwesomeIcon icon={faPlayCircle} />

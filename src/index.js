@@ -23,6 +23,8 @@ import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import PLAY from './components/play.jsx';
 import PLAYER from './components/player.jsx';
 import SIGNIN from './components/signin.jsx';
+import NETFLIX from './components/netflix.jsx';
+import DISNEY from './components/disney.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
 
@@ -58,7 +60,7 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/video/:stream/:id/:name/:year/:imdbId/:background",
+    path : "/video/:stream/:id/:name/:year/:date/:imdbId/:background",
     element : <PLAY/>,
     errorElement : <ERROR/>
   },
@@ -67,7 +69,16 @@ const router = createBrowserRouter([
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
-
+  {
+    path : "/netflix",
+    element : <NETFLIX/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/disney",
+    element : <DISNEY/>,
+    errorElement : <ERROR/>
+  },
   {
     path : "/series",
     element : <SERIES/>,
@@ -109,7 +120,7 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/video/:stream/:id/:name/:season/:episode/:imdbId/:background",
+    path : "/video/:stream/:id/:name/:season/:episode/:date/:imdbId/:background",
     element : <PLAY/>,
     errorElement : <ERROR/>
   },

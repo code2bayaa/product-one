@@ -24,7 +24,7 @@ const SWEETPAGE = ({intitializeMovies,page,index,total_pages}) => {
         setNewPage(changed)
         if(index.hasOwnProperty('page'))
             index.page = changed
-        intitializeMovies({runContent:[index],page:changed,genreId:'',regionId:'',languageId:'',yearId:0})
+        intitializeMovies({runContent:[index],adjustable:true,page:changed,genreId:'',regionId:'',languageId:'',yearId:0})
     }
     return (
         <div className="w-[100%] flex flex-col">

@@ -1,18 +1,19 @@
 import NAVBAR from "./nav"
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import { useQuery, gql, useMutation } from '@apollo/client';
+import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
+import COLLECTIONS from "../midlleware/collection";
 
 const PLAY = () => {
-    const { id, stream,  name, year, imdbId, season, episode, background } = useParams();
+    const { id, stream,  name, year,  date, imdbId, season, episode, background } = useParams();
     // console.log("play",id,stream,name,year,imdbId,season,episode)
-    const [play, setPlay] = useState([])
-    const [fetchedPlay, setFetchedPlay] = useState(null)
+    const [play, setPlay] = useState(null)
+    // const [fetchedPlay, setFetchedPlay] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0)
-    const [loading,setLoading] = useState(false)
+    // const [loading,setLoading] = useState(false)
 
     useEffect(() => {
         const handleResize = () => {
@@ -25,7 +26,7 @@ const PLAY = () => {
         };
     },[])
 
-    const fetchPlay = useQuery(gql`
+    const FETCH_PLAY_QUERY = gql`
         query Play (
             $type: String!
             $season: Int!
@@ -54,16 +55,13 @@ const PLAY = () => {
                 error
             }
         }
-    `,{
+    `
+    const [fetchPlaying,fetchedPlayData] = useLazyQuery(FETCH_PLAY_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
-        variables : {
-            type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
-            episode:episode ? parseInt(episode) : -1,
-            season:season ? parseInt(season) : -1,
-            id:id?parseInt(id):-1
-        }
-    });
+        // variables,
+        // skip: !variables.page, // Skip query execution if variables are not set
+    })
 
     const [mutateUpdatePlay] = useMutation(gql`
         mutation UpdatePlay(
@@ -72,6 +70,7 @@ const PLAY = () => {
             $season: Int!
             $episode: Int!
             $id : Int!
+            $token_expire: String
         ) {
             updatePlay(
                 tokens: $tokens
@@ -79,6 +78,7 @@ const PLAY = () => {
                 season: $season
                 episode: $episode
                 id: $id
+                token_expire: $token_expire
             ){
                 success
                 error
@@ -90,11 +90,7 @@ const PLAY = () => {
             console.log(data.updatePlay,"before")
             if (data && data.updatePlay.success) {
                 console.log(data.updatePlay,"after")
-                fetchPlay.refetch().then((refetched) => {
-                    const ref = refetched?.data?.play?.tokens || []
-                    const typeGetPlayData = [...ref]
-                    setPlay(() => typeGetPlayData)
-                })
+                fetchedPlayData.refetch()
             }
         },
         onError: error => {
@@ -105,20 +101,13 @@ const PLAY = () => {
     const fetchToken = useCallback(async() => {
 
         try{
-            console.log(fetchedPlay,"fetchedPlay...")
-            if(fetchedPlay){
-                console.log(fetchedPlay,"fetchedPlay...")
+            // console.log(fetchedPlay,"fetchedPlay...")
+            // if(fetchedPlay){
+            //     console.log(fetchedPlay,"fetchedPlay...")
 
-            }else{
+            // }else{
                 const fetchFresh = async() => {
-                    console.log({
-                            name,
-                            imdbId,
-                            year,
-                            season,
-                            episode,
-                            message:"fresh fetch"
-                    })
+
                     const response = await fetch(`${process.env.REACT_APP_stream}`,{
                         method:"POST",
                         headers:{
@@ -134,6 +123,17 @@ const PLAY = () => {
                         })
                     })
                     const {status, error, movies} = await response.json()
+
+                    if(error && error === "No movies found matching the criteria"){
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: error,
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                        return null
+                    }
                     if(status){
                         console.log("fresh play")
                         return movies
@@ -149,69 +149,109 @@ const PLAY = () => {
                     return null
                     
                 }
-                console.log(fetchPlay)
 
-                if (fetchPlay.loading) console.log("fetching token Loading...");
-                if((!fetchPlay) || (fetchPlay && fetchPlay.error) || !fetchPlay.data || (fetchPlay && fetchPlay.hasOwnProperty("data") && fetchPlay.data && (fetchPlay.data.play.error === "no records found" || fetchPlay.data.play.error === "no token found" || !fetchPlay.data.play.tokens))){
-                    const getToken = await fetchFresh()    
-                    console.log("inserting...",getToken)
-                    if(getToken && getToken.length > 0){
-                        mutateUpdatePlay({ variables: {
-                            type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
-                            season:season ? parseInt(season) : -1,
-                            episode:episode ? parseInt(episode) : -1,
-                            id:id?parseInt(id):-1,
-                            tokens:getToken
-                        }})
+                if(!play){
+
+                    // Utility function
+                    function checkTokenDates(tokenExpire) {
+                        if (!tokenExpire) return false
+
+                        const insertedDate = new Date(tokenExpire);
+                        const now = new Date(date);
+                        console.log(now,"now")
+
+                        // Calculate difference in milliseconds
+                        const diffMs = now - insertedDate;
+
+                        // 2 weeks and 4 months in ms
+                        const twoWeeksMs = 14 * 24 * 60 * 60 * 1000;
+                        const fourMonthsMs = 4 * 30 * 24 * 60 * 60 * 1000; // Approximate 4 months as 120 days
+
+                        let response = true
+                        if(diffMs < twoWeeksMs)
+                            response = false
+                        if(diffMs > fourMonthsMs)
+                            response = false
+                        return response
                     }
 
 
-                }else{
-                    //every other user --- most fetch
-                    console.log("ordinarily...")
-                    setPlay(() => ([...fetchPlay.data?.play?.tokens]))
-                    
+                    const fetchPlay = await fetchPlaying({
+                        variables : { 
+                            type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
+                            episode:episode ? parseInt(episode) : -1,
+                            season:season ? parseInt(season) : -1,
+                            id:id?parseInt(id):-1
+                         }})
+
+                         console.log(fetchPlay,"fetchPlay")
+                    if (fetchPlay.loading) console.log("fetching token Loading...");
+                    if((!fetchPlay) || (fetchPlay && fetchPlay.error) || !fetchPlay.data || (fetchPlay && fetchPlay.hasOwnProperty("data") && fetchPlay.data && (fetchPlay.data.play.error === "no records found" || fetchPlay.data.play.error === "no token found" || !fetchPlay.data.play.tokens || checkTokenDates(fetchPlay.data.play.token_expire)))){
+                        const getToken = await fetchFresh()    
+                        console.log("inserting...",getToken)
+                        if(getToken && getToken.length > 0){
+                            setPlay(() => [...getToken])
+                            mutateUpdatePlay({ variables: {
+                                type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
+                                season:season ? parseInt(season) : -1,
+                                episode:episode ? parseInt(episode) : -1,
+                                id:id?parseInt(id):-1,
+                                tokens:getToken,
+                                token_expire: new Date().toISOString()
+                            }})
+                        }
+
+
+                    }else{
+                        //every other user --- most fetch
+                        console.log("ordinarily...")
+                        setPlay(() => ([...fetchPlay.data?.play?.tokens]))
+                        
+                    }
+
                 } 
-            }
+            // }
 
         }catch(err){
             console.log(err)
-            fetch(`${process.env.REACT_APP_stream}`,{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    "Accept":"application/json"
-                },
-                body:JSON.stringify({
-                    name,
-                    imdbId,
-                    year
-                })
-            })
-            .then(data => data.json())
-            .then(data => {
-                const {status, error, movies} = data
-                if(status){
-                    mutateUpdatePlay({ variables: {
-                        type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
-                        season:season ? parseInt(season) : -1,
-                        episode:episode ? parseInt(episode) : -1,
-                        id:id?parseInt(id):-1,
-                        tokens:movies
-                    }})
-                    return null
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: error,
-                    showConfirmButton: false,
-                    timer: 1500
-                })
-            })
+            // if(!play){
+            //     fetch(`${process.env.REACT_APP_stream}`,{
+            //         method:"POST",
+            //         headers:{
+            //             "Content-Type":"application/json",
+            //             "Accept":"application/json"
+            //         },
+            //         body:JSON.stringify({
+            //             name,
+            //             imdbId,
+            //             year
+            //         })
+            //     })
+            //     .then(data => data.json())
+            //     .then(data => {
+            //         const {status, error, movies} = data
+            //         if(status){
+            //             mutateUpdatePlay({ variables: {
+            //                 type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
+            //                 season:season ? parseInt(season) : -1,
+            //                 episode:episode ? parseInt(episode) : -1,
+            //                 id:id?parseInt(id):-1,
+            //                 tokens:movies
+            //             }})
+            //             return null
+            //         }
+            //         Swal.fire({
+            //             icon: 'error',
+            //             title: 'Oops...',
+            //             text: error,
+            //             showConfirmButton: false,
+            //             timer: 1500
+            //         })
+            //     })
+            // }
         }
         
-    },[mutateUpdatePlay,fetchPlay,fetchedPlay,stream,id,season,episode,year,name,imdbId])
+    },[mutateUpdatePlay,fetchPlaying,stream,id,season,episode,year,name,imdbId,play,date])
 
     useEffect(() => {
         //fetch token -- db > token
@@ -220,53 +260,42 @@ const PLAY = () => {
 
     },[fetchToken])
 
-    const runStream = async(e,token) => { 
-        if (token) {
-            setLoading(true)
-            const HTMLMARK = e.target.innerHTML
-            e.target.innerHTML = "loading..."
-            
-            // <>
-            //   <svg class="mr-3 size-5 animate-spin ..." viewBox="0 0 24 24"></svg>
-            // </>
-            
-            const response = await fetch(`${process.env.REACT_APP_play}`,{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    "Accept":"application/json"
-                },
+    useEffect(() => {
+        const destroySession = async() => {
+            console.log("destroying...")
+            const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+                method: "POST",
+                credentials: "include",
                 body:JSON.stringify({
-                    token,
-                    id,
-
-                })
-            })
-            const {status, error, message, url, files} = await response.json()
-            // /series/video/series/${id}/${serie.title || serie.original_title}/${serie.season_number}/${serie.episode_number}/${imdb.imdb_id}/${background}
-            console.log(message)
-            if(status){
-                const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
-                const type = video.name.split(".").pop()
-                
-                setPlay(null)
-                // setPlaying(`${url}/${video.index}`)
-                // router(`/play/${url}/${video.index}/${type}/${background}`)
-                window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
-                setFetchedPlay(() => true)
-                setLoading(false)
-                e.target.innerHTML = HTMLMARK
-            }else{
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Run Stream Oops...',
-                    text: error,
-                    showConfirmButton: false,
-                    timer: 1500
-                })
+                    id
+                }),
+                headers: {
+                    'Content-Type': 'application/json', // Indicates the body is JSON
+                },
+            });
+            const {status, error, message, newToken} = await response.json()
+            console.log(newToken,"newToken")
+            if(error || !status){
+                // Swal.fire({
+                //     icon: 'error',
+                //     title: 'Oops...',
+                //     text: error || message,
+                //     showConfirmButton: false,
+                //     timer: 2500
+                // })
+                return null
             }
+            Swal.fire({
+                icon: 'success',
+                title: 'Session destroyed',
+                text: "success" + message,
+                showConfirmButton: false,
+                timer: 2500
+            })
+            return true
         }
-    }
+        destroySession()
+    },[id])
 
     // useEffect(() => {
     //     if (playing) {
@@ -287,18 +316,13 @@ const PLAY = () => {
             }
             <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                 <h2 style={{fontSize:"180%",textAlign:"center"}}>COLLECTION</h2>
+                <h2>Ensure you have unallocated storage space for smooth streaming</h2>
             {
                 play && play.length > 0 ? 
                     <div className="w-[100%] h-[auto] flex flex-wrap flex-row justify-center items-center">
                         {
                             play.map(({quality,title,token},index) => 
-                                    <button
-                                    disabled={loading}
-                                    onClick={(e) => runStream(e,token)}
-                                    key={index}
-                                    className="bg-[transparent] m-[1%] border-[2px] text-white w-[48%] h-[auto] text-[20px] font-bold"
-                                    >{quality}</button>
-
+                                <COLLECTIONS key={index} token={token} index={index} quality={quality} id={id} background={background}/>
                             )
                         }
                     </div>

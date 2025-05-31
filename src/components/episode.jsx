@@ -434,31 +434,36 @@ const EPISODE = () => {
                 return {...getImageData}
             } 
 
-            
+            if(!images){
+                const fetched = await fetchImage({
+                    variables : {
+                    type:"tv",
+                    episode:episode?parseInt(episode):-1,
+                    season:season?parseInt(season):-1,
+                    id:id?parseInt(id):-1
+                }})
+                // console.log(fetched)
+                if (fetched.data && fetched.data.image.success) {
+                    console.log("image cached data:", fetched.data);
+                    setImages(() => ({...fetched.data.image.data}))
 
-            const fetched = await fetchImage({
-                variables : {
-                type:"tv",
-                episode:episode?parseInt(episode):-1,
-                season:season?parseInt(season):-1,
-                id:id?parseInt(id):-1
-            }})
-            // console.log(fetched)
-            if (fetched.data && fetched.data.image.success) {
-                console.log("image cached data:", fetched.data);
-                setImages(() => ({...fetched.data.image.data}))
-
-            }else {
-                const getImageData = await freshFetch()
-                setImages(() => ({...getImageData}))
+                }else {
+                    const getImageData = await freshFetch()
+                    setImages(() => ({...getImageData}))
+                }
             }
+
+
         }catch(error){
             console.log(error)
-            fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`)
-            .then(data => data.json())
-            .then(data => setImages(() => ({...data})))
+            if(!images){
+                fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`)
+                .then(data => data.json())
+                .then(data => setImages(() => ({...data})))
+            }
+
         }
-    },[id, season, episode, fetchImage, mutateInsertImage])
+    },[id, season, episode, fetchImage, mutateInsertImage, images])
 
     const fetchTV = useCallback(async() => {
 
@@ -479,25 +484,28 @@ const EPISODE = () => {
             return {...data}
         } 
 
-        const fetched = await fetchEpisode({
-            variables : { 
-                id:episodeID
-                // season:season ? parseInt(season):-1,
-                // episode: episode? parseInt(episode):-1
-            }})
-        if (fetched.data && fetched.data.episode.air_date === null) {
-            console.log("first time...")
-            const tv = await freshFetch()
-            setSerie(() => ({...tv}));
-        }else if(fetched.data && fetched.data.episode.success){
-            console.log("Using cached data:", fetched.data)
-            setSerie(() => ({...fetched.data.episode}))
-        }else {
-            const tv = await freshFetch()
-            setSerie(() => ({...tv}))
+        if(!serie){
+            const fetched = await fetchEpisode({
+                variables : { 
+                    id:episodeID
+                    // season:season ? parseInt(season):-1,
+                    // episode: episode? parseInt(episode):-1
+                }})
+            if (fetched.data && fetched.data.episode.air_date === null) {
+                console.log("first time...")
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}));
+            }else if(fetched.data && fetched.data.episode.success){
+                console.log("Using cached data:", fetched.data)
+                setSerie(() => ({...fetched.data.episode}))
+            }else {
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}))
+            }
         }
 
-    },[id, season, episode, episodeID, fetchEpisode, mutateInsertTV])
+
+    },[id, season, episode, episodeID, fetchEpisode, mutateInsertTV, serie])
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
@@ -510,17 +518,20 @@ const EPISODE = () => {
         } 
 
         const current_date = new Date().toISOString().split("T")[0]
-        const fetched = await fetchCreditsData({
-            variables : { id:id?parseInt(id):0, date:current_date }})
-        // console.log(fetched)
-        if(fetched.data && fetched.data.credits.success){
-            console.log("Using cached data:", fetched.data);
-            setCredit(() => ({...fetched.data.credits}));
-        }else {
-            const credits = await freshFetch()
-            setCredit(() => ({...credits}));
+        if(!credits){
+            const fetched = await fetchCreditsData({
+                variables : { id:id?parseInt(id):0, date:current_date }})
+            // console.log(fetched)
+            if(fetched.data && fetched.data.credits.success){
+                console.log("Using cached data:", fetched.data);
+                setCredit(() => ({...fetched.data.credits}));
+            }else {
+                const credits = await freshFetch()
+                setCredit(() => ({...credits}));
+            }
         }
-    },[id, season, episode, fetchCreditsData, mutateInsertCredits])
+
+    },[id, season, episode, fetchCreditsData, mutateInsertCredits, credits])
 
     const fetchID = useCallback(async() => {
 
@@ -534,18 +545,21 @@ const EPISODE = () => {
             return {...imdb_data}
         } 
 
-        const current_date = new Date().toISOString().split("T")[0]
-        const fetched = await fetchIMDBData({
-            variables : { id:id?parseInt(id):0, date:current_date }})
-        console.log(fetched)
-        if(fetched.data && fetched.data.imdb.success){
-            console.log("Using cached data:", fetched.data);
-            setIMDB(() => ({...fetched.data.imdb}));
-        }else {
-            const imdb = await freshFetch()
-            setIMDB(() => ({...imdb}));
+        if(!imdb){
+            const current_date = new Date().toISOString().split("T")[0]
+            const fetched = await fetchIMDBData({
+                variables : { id:id?parseInt(id):0, date:current_date }})
+            console.log(fetched)
+            if(fetched.data && fetched.data.imdb.success){
+                console.log("Using cached data:", fetched.data);
+                setIMDB(() => ({...fetched.data.imdb}));
+            }else {
+                const imdb = await freshFetch()
+                setIMDB(() => ({...imdb}));
+            }
         }
-    },[id, season, episode, fetchIMDBData, mutateUpdateIMDB])
+
+    },[id, season, episode, fetchIMDBData, mutateUpdateIMDB, imdb])
 
     useEffect(() => {
         fetchID()
@@ -618,7 +632,7 @@ const EPISODE = () => {
                                         trailors
                                     </NavLink>
                                     <NavLink
-                                        to={`/video/episode/${serie.id}/${name}/${serie.season_number}/${serie.episode_number}/${imdb.imdb_id}/${background}`}
+                                        to={`/video/episode/${serie.id}/${name}/${serie.season_number}/${serie.episode_number}/${serie.air_date}/${imdb.imdb_id}/${background}`}
                                         className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
                                     >
                                         play <FontAwesomeIcon icon={faPlayCircle} />
@@ -666,7 +680,7 @@ const EPISODE = () => {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className="w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
@@ -690,7 +704,7 @@ const EPISODE = () => {
                                         credits.crew.map(({profile_path,popularity,job,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className="max-w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
@@ -714,7 +728,7 @@ const EPISODE = () => {
                                         credits.guest_stars.map(({profile_path,popularity,character,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className="max-w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>

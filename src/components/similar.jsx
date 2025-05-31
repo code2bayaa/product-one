@@ -110,7 +110,7 @@ const SIMILAR = () => {
         },
     });
 
-    const fetchMain = useCallback(async(page) => {
+    const fetchMain = useCallback(async(page,adjustable = false) => {
         try{
 
             const type = stream === "movies" ? "movie" : "tv"
@@ -129,29 +129,35 @@ const SIMILAR = () => {
                 return {...similar_data}
             } 
     
-            const fetched = await fetchMovie({
-                variables : {
-                    page,
-                    type,
-                    id:id?parseInt(id):-1
-            }})
-            console.log(fetched)
-            if (fetched.data && fetched.data.similarMovies.success) {
-                console.log("movies cached data:", fetched.data);
-                setSimilar(() => ({...fetched.data.similarMovies}))
-    
-            }else {
-                const similar_data = await freshFetch()
-                setSimilar(() => ({...similar_data}))
+            if(!similar || adjustable){
+                const fetched = await fetchMovie({
+                    variables : {
+                        page,
+                        type,
+                        id:id?parseInt(id):-1
+                }})
+                console.log(fetched)
+                if (fetched.data && fetched.data.similarMovies.success) {
+                    console.log("movies cached data:", fetched.data);
+                    setSimilar(() => ({...fetched.data.similarMovies}))
+        
+                }else {
+                    const similar_data = await freshFetch()
+                    setSimilar(() => ({...similar_data}))
+                }
             }
+
         }catch(error){
             console.log(error,"error")
-            const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
-            fetch(`${api}`)
-            .then(data => data.json())
-            .then(data => setSimilar(() => ({...data})))
+            if(!similar){
+                const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
+                fetch(`${api}`)
+                .then(data => data.json())
+                .then(data => setSimilar(() => ({...data})))
+            }
+
         }
-    },[fetchMovie, id, mutateInsertMovie, stream])
+    },[fetchMovie, id, mutateInsertMovie, stream, similar])
 
     useEffect(() => {
         fetchMain(1)
@@ -222,7 +228,7 @@ const SIMILAR = () => {
                                 similar.results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                     <NavLink key={movie_key} to={`/${stream}/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                         <div className="w-[100%] h-[100%]">
-                                            <PICTURE key={id} classes={"object-cover"} picture={poster_path} />
+                                            <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                             <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                 <h2 className="text-[15px] font-bold">{name || original_name || title || original_title}</h2>
                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>

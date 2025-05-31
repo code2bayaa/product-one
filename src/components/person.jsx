@@ -203,29 +203,34 @@ const PERSON = () => {
                 }, data:{...getImageData} } });
                 return {...getImageData}
             } 
+            if(!images){
 
-            const fetched = await fetchImage({
-                variables : {
-                type:"person",
-                episode:-1,
-                season:-1,
-                id:id?parseInt(id):-1
-            }})
-            if (fetched.data && fetched.data.image.success) {
-                // console.log("image cached data:", fetched.data);
-                setImages(() => ({...fetched.data.image.data}))
+                const fetched = await fetchImage({
+                    variables : {
+                    type:"person",
+                    episode:-1,
+                    season:-1,
+                    id:id?parseInt(id):-1
+                }})
+                if (fetched.data && fetched.data.image.success) {
+                    // console.log("image cached data:", fetched.data);
+                    setImages(() => ({...fetched.data.image.data}))
 
-            }else {
-                const getImageData = await freshFetch()
-                setImages(() => ({...getImageData}))
+                }else {
+                    const getImageData = await freshFetch()
+                    setImages(() => ({...getImageData}))
+                }
             }
         }catch(error){
             console.log(error)
-            fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-            .then(data => data.json())
-            .then(data => setImages(() => ({...data})))
+            if(!images){
+                fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
+                .then(data => data.json())
+                .then(data => setImages(() => ({...data})))
+            }
+
         }
-    },[fetchImage, id, mutateInsertImage])
+    },[fetchImage, id, mutateInsertImage, images])
 
     const FETCH_PERSON_QUERY = gql`
         query Person (
@@ -300,22 +305,24 @@ const PERSON = () => {
             return {...data}
         } 
 
-        const fetched = await fetchPersonData({
-            variables : { id }})
-        console.log(fetched)
-        if (fetched.data && fetched.data.person.runtime === null) {
-            console.log("first time...")
-            const movie = await freshFetch()
-            return setPerson(() => ({...movie}));
-        }else if(fetched.data && fetched.data.person.success){
-            console.log("Using cached data:", fetched.data);
-            return setPerson(() => ({...fetched.data.person}));
-        }else {
-            const movie = await freshFetch()
-            return setPerson(() => ({...movie}));
+        if(!person){
+            const fetched = await fetchPersonData({
+                variables : { id }})
+            console.log(fetched)
+            if (fetched.data && fetched.data.person.runtime === null) {
+                console.log("first time...")
+                const movie = await freshFetch()
+                return setPerson(() => ({...movie}));
+            }else if(fetched.data && fetched.data.person.success){
+                console.log("Using cached data:", fetched.data);
+                return setPerson(() => ({...fetched.data.person}));
+            }else {
+                const movie = await freshFetch()
+                return setPerson(() => ({...movie}));
+            }
         }
         
-    },[fetchPersonData, id, mutateInsertPerson])
+    },[fetchPersonData, id, mutateInsertPerson, person])
 
     const FETCH_MOVIE_QUERY = gql`
         query Played(
@@ -427,28 +434,32 @@ const PERSON = () => {
                 return {...movies_data}
             } 
     
-            const fetched = await fetchMovie({
-                variables : {
-                    type:"movie",
-                    id:id?parseInt(id):-1
-            }})
-            console.log(fetched)
-            if (fetched.data && fetched.data.played.success) {
-                console.log("movies cached data:", fetched.data);
-                return setMovies(() => ({...fetched.data.played}))
-    
-            }else {
-                const movies_data = await freshFetch()
-                return setMovies(() => ({...movies_data}))
+            if(!movies){
+                const fetched = await fetchMovie({
+                    variables : {
+                        type:"movie",
+                        id:id?parseInt(id):-1
+                }})
+                console.log(fetched)
+                if (fetched.data && fetched.data.played.success) {
+                    console.log("movies cached data:", fetched.data);
+                    return setMovies(() => ({...fetched.data.played}))
+        
+                }else {
+                    const movies_data = await freshFetch()
+                    return setMovies(() => ({...movies_data}))
+                }
             }
         }catch(error){
             console.log(error,"error")
-            const api = `${process.env.REACT_APP_movie_db}person/${id}/movie_credits?api_key=${process.env.REACT_APP_api_key}`
-            fetch(`${api}`)
-            .then(data => data.json())
-            .then(data => setMovies(() => ({...data})))
+            if(!movies){
+                const api = `${process.env.REACT_APP_movie_db}person/${id}/movie_credits?api_key=${process.env.REACT_APP_api_key}`
+                fetch(`${api}`)
+                .then(data => data.json())
+                .then(data => setMovies(() => ({...data})))
+            }
         }
-    },[mutateInsertMovie, id, fetchMovie])
+    },[mutateInsertMovie, id, fetchMovie, movies])
 
     const fetchTV = useCallback(async() => {
         try{
@@ -465,28 +476,33 @@ const PERSON = () => {
                 return {...movies_data}
             } 
     
-            const fetched = await fetchMovie({
-                variables : {
-                    type:"tv",
-                    id:id?parseInt(id):-1
-            }})
-            console.log(fetched)
-            if (fetched.data && fetched.data.played.success) {
-                console.log("tv cached data:", fetched.data);
-                return setSeries(() => ({...fetched.data.played}))
-    
-            }else {
-                const movies_data = await freshFetch()
-                return setSeries(() => ({...movies_data}))
+            if(!series){
+                const fetched = await fetchMovie({
+                    variables : {
+                        type:"tv",
+                        id:id?parseInt(id):-1
+                }})
+                console.log(fetched)
+                if (fetched.data && fetched.data.played.success) {
+                    console.log("tv cached data:", fetched.data);
+                    return setSeries(() => ({...fetched.data.played}))
+        
+                }else {
+                    const movies_data = await freshFetch()
+                    return setSeries(() => ({...movies_data}))
+                }
             }
         }catch(error){
             console.log(error,"error")
-            const api = `${process.env.REACT_APP_movie_db}person/${id}/tv_credits?api_key=${process.env.REACT_APP_api_key}`
-            fetch(`${api}`)
-            .then(data => data.json())
-            .then(data => setSeries(() => ({...data})))
+            if(!series){
+                const api = `${process.env.REACT_APP_movie_db}person/${id}/tv_credits?api_key=${process.env.REACT_APP_api_key}`
+                fetch(`${api}`)
+                .then(data => data.json())
+                .then(data => setSeries(() => ({...data})))
+            }
+
         }
-    },[mutateInsertMovie, id, fetchMovie])
+    },[mutateInsertMovie, id, fetchMovie, series])
 
     useEffect(() => {
         graphImages()

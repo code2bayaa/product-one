@@ -5,14 +5,15 @@ import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
+// import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
-import Swal from "sweetalert2"
+// import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 
 const PEOPLE = () => {
 
-    const [people, setPeople] = useState([])
+    const [people, setPeople] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
 
     useEffect(() => {
@@ -117,12 +118,21 @@ const PEOPLE = () => {
         genreId = '',
         regionId = '',
         languageId='',
-        yearId=(new Date()).getFullYear()
+        yearId=0
     }) => {
         
         const fetchPersonFromAPI = async (actual_index) => {
 
             const current_date = new Date().toISOString().split("T")[0]
+            const temp_people = [
+                // {"index":"latest","results":[],"api":"movie/latest"},
+                {"index":"discover movie","results":[],"api":"discover/movie","page":1,people_page:1,total_pages:0,total_results:0},
+                {"index":"discover tv","results":[],"api":"discover/tv","page":1,people_page:1,total_pages:0,total_results:0},
+                {"index":"trending","results":[],"api":"trending/person/day",page:1,total_pages:0,total_results:0},
+                {"index":"popular","results":[],"api":"person/popular",page:1,total_pages:0,total_results:0}
+            ]
+            const key = temp_people.findIndex(({ index }) => index === actual_index);
+
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
                 const response = await fetch(
@@ -147,8 +157,16 @@ const PEOPLE = () => {
                         }))
                         peopleArray = peopleArray.flat()
                     }
-                    temp_people[key].results = [...temp_people[key].results, ...peopleArray];
+                    // temp_people[key].results = [...temp_people[key].results, ...peopleArray];
+                    // let peopleArray = [...data.results]
+                    temp_people[key].results = [
+                        ...temp_people[key].results,
+                        ...peopleArray,
+                    ];
+                    temp_people[key].total_pages = data.total_pages;
+                    temp_people[key].total_results = data.total_results;
                     setPeople((prevPeople) => {
+                        prevPeople = prevPeople || [];
                         let updatedPeople = [...prevPeople];
                         const existingIndex = updatedPeople.findIndex(({ index }) => index === actual_index);
                         if (existingIndex > -1) {
@@ -162,110 +180,135 @@ const PEOPLE = () => {
                     });
 
                     console.log(temp_people[key].results.find(({known_for}) => known_for),"known_for")
-                    // Insert the fetched data into MySQL using the mutation
-                    mutateInsertPerson({
-                        variables: {
-                            page:temp_people[key].page,
-                            results:temp_people[key].results,
-                            total_pages:data.total_pages,
-                            total_results:data.total_results,
-                            data :{
-                                genre: genreId,
-                                region: regionId,
-                                language: languageId,
-                                year: yearId,
-                                index:actual_index,
-                                date:current_date,
+                    
+                    function chunkArray(array, size) {
+                        const result = [];
+                        for (let i = 0; i < array.length; i += size) {
+                            result.push(array.slice(i, i + size));
+                        }
+                        return result;
+                    }
+                    let all_results = [...temp_people[key].results]
+                    if(all_results.length > 100){
+                        const chunks = chunkArray(all_results, 100);
+                        for (let i = 0; i < chunks.length; i++) {
+                            await mutateInsertPerson({
+                                variables: {
+                                    page: temp_people[key].page,
+                                    results: chunks[i],
+                                    total_pages: data.total_pages,
+                                    total_results: data.total_results,
+                                    data: {
+                                        genre: genreId,
+                                        region: regionId,
+                                        language: languageId,
+                                        year: yearId,
+                                        index: actual_index,
+                                        date: current_date,
+                                    },
+                                    type: "person",
+                                },
+                            });
+                        }
+                    }else{
+                        // Less than or equal to 100, insert all at once
+                        await mutateInsertPerson({
+                            variables: {
+                                page: temp_people[key].page,
+                                results: all_results,
+                                total_pages: data.total_pages,
+                                total_results: data.total_results,
+                                data: {
+                                    genre: genreId,
+                                    region: regionId,
+                                    language: languageId,
+                                    year: yearId,
+                                    index: actual_index,
+                                    date: current_date,
+                                },
+                                type: "person",
                             },
-                            
-                            type:"person",
-                        },
-                    });
+                        });
+                    }
 
                     return true
                 }
                 return false
             }
 
-            const temp_people = [
-                // {"index":"latest","results":[],"api":"movie/latest"},
-                {"index":"discover movie","results":[],"api":"discover/movie","page":1,people_page:1},
-                {"index":"discover tv","results":[],"api":"discover/tv","page":1,people_page:1},
-                {"index":"trending","results":[],"api":"trending/person/day",page:1},
-                {"index":"popular","results":[],"api":"person/popular",page:1}
-            ]
-            const key = temp_people.findIndex(({ index }) => index === actual_index);
-
             if (page) {
                 temp_people[key].page = page;
             }
 
-            const fetched = await fetchPerson({
-                variables : {
-                page: temp_people[key].page,
-                genre: genreId,
-                region: regionId,
-                language: languageId,
-                year: yearId,
-                index: actual_index,
-                date: current_date,  
-            }})
+            if(!people || jobId !== "Actor" || genreId || regionId || languageId || yearId){
+                const fetched = await fetchPerson({
+                    variables : {
+                    page: temp_people[key].page,
+                    genre: genreId,
+                    region: regionId,
+                    language: languageId,
+                    year: yearId,
+                    index: actual_index,
+                    date: current_date,  
+                }})
 
-            if (fetched.data) {
-                console.log("Using cached data:", fetched.data);
-                if(fetched.data.people.success && fetched.data.people.results &&  fetched.data.people.results.length < 20){
-                    console.log("less items")
+                if (fetched.data) {
+                    console.log("Using cached data:", fetched.data);
+                    if(fetched.data.people.success && fetched.data.people.results &&  fetched.data.people.results.length < 20){
+                        console.log("less items")
+                        return await freshFetch()
+                    }else if(fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
+                        console.log("no records found")
+                        return await freshFetch()
+                    }else{
+                        console.log("finally using cached data")
+                        console.log(fetched.data.people.results.find(({known_for}) => known_for))
+                        setPeople((prevPeople) => {
+                            prevPeople = prevPeople || [];
+                            const updatedPeople = [...prevPeople]
+                            const existingIndex = updatedPeople.findIndex(
+                                (person) => person.index === actual_index
+                            );
+        
+                            if (existingIndex > -1) {
+                                updatedPeople[existingIndex].results = [
+                                    ...fetched.data.people.results,
+                                ];
+                            } else {
+                                updatedPeople.push({
+                                    index: actual_index,
+                                    results: fetched.data.people.results,
+                                    page: fetched.data.people.page,
+                                    total_pages: fetched.data.people.total_pages,
+                                    total_results:fetched.data.people.total_results
+                                });
+                            }
+        
+                            return updatedPeople;
+                        });
+                        return true
+                    }
+
+                } else {
                     return await freshFetch()
-                }else if(fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
-                    console.log("no records found")
-                    return await freshFetch()
-                }else{
-                    console.log("finally using cached data")
-                    console.log(fetched.data.people.results.find(({known_for}) => known_for))
-                    setPeople((prevPeople) => {
-                        const updatedPeople = [...prevPeople]
-                        const existingIndex = updatedPeople.findIndex(
-                            (person) => person.index === actual_index
-                        );
-    
-                        if (existingIndex > -1) {
-                            updatedPeople[existingIndex].results = [
-                                ...fetched.data.people.results,
-                            ];
-                        } else {
-                            updatedPeople.push({
-                                index: actual_index,
-                                results: fetched.data.people.results,
-                                page: fetched.data.people.page,
-                                total_pages: fetched.data.people.total_pages,
-                                total_results:fetched.data.people.total_results
-                            });
-                        }
-    
-                        return updatedPeople;
-                    });
-                    return true
                 }
-
-            } else {
-                return await freshFetch()
             }
         };
         runContent.forEach((index) => {
             fetchPersonFromAPI(index)
             .then(status => {
                 if(!status){
-                    Swal.fire({
-                        title:"internet connection error",
-                        text: "Please try again.",
-                        icon: "error", // Set the icon to "error"
-                        confirmButtonText: "OK",
+                    // Swal.fire({
+                    //     title:"internet connection error",
+                    //     text: "Please try again.",
+                    //     icon: "error", // Set the icon to "error"
+                    //     confirmButtonText: "OK",
                         
-                    })
+                    // })
                 }
             })
         })
-    },[mutateInsertPerson,fetchPerson])
+    },[mutateInsertPerson,fetchPerson, people])
 
     useEffect(() => {
         intitializePeople(
@@ -291,19 +334,20 @@ const PEOPLE = () => {
                 people && people.length > 0 ?
                 <>
                     <div className="w-[100%]">
-                        <CONTROLLERS intitializePeople={intitializePeople} type={"people"}/>
+                        <CONTROLLERS intitializeMovies={intitializePeople} type={"people"}/>
                     </div>
                     {
-                        people.map(({index,results},node) =>
-                            <div className="w-[100%] h-[auto] flex flex-wrap flex-col" key={node}>
-                                <h1 style={{marginLeft:"10%"}} className="my-t-[5%]">{index}</h1>
-                                <div style={{marginLeft:"10%"}} className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
+                        people.map(({index,results,page,total_pages},node) =>
+                            <div className="w-[90%] mx-[5%] h-[auto] flex flex-wrap flex-col" key={node}>
+                                <h1 className="my-t-[5%]">{index}</h1>
+                                <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
+                                {/* <SWEETPAGE intitializeMovies={intitializePeople} page={page} index={index} total_pages={total_pages}/>                                 */}
                                 <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
                                             <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} />
+                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>

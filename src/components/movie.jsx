@@ -392,62 +392,75 @@ const MOVIE = () => {
 
         const graphImages = useCallback(async() => {
             try{
-                
-            //     const fetchFresh = async() => {
-            //         console.log("fetching fresh...")
-            //         const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-            //         const data = await response.json()
-            //         return data
-            //     }
-            //     console.log(fetchImage)
-
-            //     if (fetchImage.loading) console.log("fetching image Loading...");
-            //     if (fetchImage.error){
-            //         // console.log(fetchImage.error.message)
-            //         const getImageData = await fetchFresh()
-            //         setImages(() => ({...getImageData}))
-            //     }else if(fetchImage.hasOwnProperty("data") && fetchImage.data){
-
-            //         if(fetchImage.data.image.error === "no records found"){
-            //             const getImageData = await fetchFresh()    
-            //             console.log(getImageData)
-                        
-            //             mutateInsertImage({ variables: { meta_data : {
-            //                 type:"movie",
-            //                 season:-1,
-            //                 episode:-1,
-            //                 id:id?parseInt(id):-1
-            //             }, data:{...getImageData} } })
-
-            //         }else{
-            //             //every other user --- most fetch
-            //             console.log("ordinarily...")
-            //             setImages(() => ({...fetchImage.data?.image?.data}))
-            //         } 
-            //     }else if(!fetchedImage){
-            //         const getImageData = await fetchFresh()
-            //         setImages(() => ({...getImageData}))
-            //         console.log("first time fetching graph")
-            //     }
-
-            // }catch(err){
-            //     console.log(err)
-            //     fetch(`${process.env.REACT_APP_movie_db}movie/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-            //     .then(data => data.json())
-            //     .then(data => setImages(() => ({...data})))
-            // }
-            // setFetchedImage(true)
 
             async function freshFetch(){
                 const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
                 const getImageData = await response.json();
                 console.log(getImageData)
-                mutateInsertImage({ variables: { meta_data : {
-                    type:"movie",
-                    season:-1,
-                    episode:-1,
-                    id:id?parseInt(id):-1
-                }, data:{...getImageData} } });
+                function chunkArray(array, size) {
+                    const result = [];
+                    for (let i = 0; i < array.length; i += size) {
+                        result.push(array.slice(i, i + size));
+                    }
+                    return result;
+                }
+                let backdrops_all_results = [...getImageData.backdrops]
+                if(backdrops_all_results.length > 100){
+                    const chunks = chunkArray(backdrops_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertImage({ variables: { meta_data : {
+                            type:"movie",
+                            season:-1,
+                            episode:-1,
+                            id:id?parseInt(id):-1
+                        }, data:{id:getImageData.id,backdrops:chunks[i]} } });
+                    }
+                }else{
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"movie",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,backdrops:getImageData.backdrops} } });
+                }
+                let logos_all_results = [...getImageData.logos]
+                if(logos_all_results.length > 100){
+                    const chunks = chunkArray(logos_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertImage({ variables: { meta_data : {
+                            type:"movie",
+                            season:-1,
+                            episode:-1,
+                            id:id?parseInt(id):-1
+                        }, data:{id:getImageData.id,logos:chunks[i]} } });
+                    }
+                }else{
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"movie",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,logos:getImageData.logos} } });
+                }
+                let posters_all_results = [...getImageData.posters]
+                if(posters_all_results.length > 100){
+                    const chunks = chunkArray(posters_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertImage({ variables: { meta_data : {
+                            type:"movie",
+                            season:-1,
+                            episode:-1,
+                            id:id?parseInt(id):-1
+                        }, data:{id:getImageData.id,posters:chunks[i]} } });
+                    }
+                }else{
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"movie",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,posters:getImageData.posters} } });
+                }
                 return {...getImageData}
             } 
     
@@ -481,21 +494,20 @@ const MOVIE = () => {
         }
     },[fetchImage,id,mutateInsertImage,images])
 
-    const fetchMovie = useCallback(async() => {
-
-        async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}?api_key=${process.env.REACT_APP_api_key}`);
-            const data = await response.json();
-            console.log(data)
-            mutateInsertMovie({
-                variables: {...data},
-            });
-            return {...data}
-        } 
-
-    
+    const fetchMovie = useCallback(async() => {    
         
         if(!movie){
+
+            async function freshFetch(){
+                const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}?api_key=${process.env.REACT_APP_api_key}`);
+                const data = await response.json();
+                console.log(data)
+                mutateInsertMovie({
+                    variables: {...data},
+                });
+                return {...data}
+            } 
+
             const fetched = await fetchSingleMovie({
             variables : { id }})
             console.log(fetched)
@@ -523,9 +535,39 @@ const MOVIE = () => {
             const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/credits?api_key=${process.env.REACT_APP_api_key}`);
             const credits_data = await response.json();
             console.log(credits_data)
-            mutateInsertCredits({
-                variables: {...credits_data,id:id?parseInt(id):0},
-            });
+            function chunkArray(array, size) {
+                const result = [];
+                for (let i = 0; i < array.length; i += size) {
+                    result.push(array.slice(i, i + size));
+                }
+                return result;
+            }
+            let cast_all_results = [...credits_data.cast]
+            if(cast_all_results.length > 100){
+                const chunks = chunkArray(cast_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertCredits({
+                        variables: {cast:chunks[i],id:id?parseInt(id):0},
+                    });
+                }
+            }else{
+                mutateInsertCredits({
+                    variables: {cast:cast_all_results,id:id?parseInt(id):0},
+                });
+            }
+            let crew_all_results = [...credits_data.crew]
+            if(crew_all_results.length > 100){
+                const chunks = chunkArray(crew_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertCredits({
+                        variables: {crew:chunks[i],id:id?parseInt(id):0},
+                    });
+                }
+            }else{
+                mutateInsertCredits({
+                    variables: {crew:crew_all_results,id:id?parseInt(id):0},
+                });
+            }
             return {...credits_data}
         } 
 
@@ -566,7 +608,6 @@ const MOVIE = () => {
         let path = ''
         if(backdrops && backdrops.length > 0){
             value = Math.max(...backdrops.map(({height}) => height))
-            // console.log(value,"value")
             let key = backdrops.findIndex(({height}) => height === value)
             if(key > -1){
                 path = backdrops[key].file_path
@@ -591,15 +632,12 @@ const MOVIE = () => {
                 }
             }
         }
-        // console.log(path,path.substring(1),path.substring(1).substring(0,path.substring(1).length - 4))
         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
         return process.env.REACT_APP_img_poster + path
     }
     return (
         <>
-        {
-            credits && movie && images ? 
-                <div className="w-[100%] duration-150 min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
+            <div className="w-[100%] duration-150 min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
                 {
                     windowWidth > 800 ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -608,6 +646,8 @@ const MOVIE = () => {
                     :
                     <MOBILE/>
                 }
+        {
+            credits && movie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
                             <div className={windowWidth > 800 ? "w-[37%] h-[auto]":"w-[100%] h-[300px]"}>
@@ -704,12 +744,12 @@ const MOVIE = () => {
                                 </div>
                             </div>
                         }
-                        <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row h-[200px] flex-wrap">
+                        <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row h-[auto] flex-wrap">
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] min-w-[48%] h-[200px]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-cover"} />
+                                        <div className="m-[0.5%] min-w-[48%] h-[70%]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-cover h-[100%]"} />
                                         </div>
                                     )
                                 )
@@ -717,10 +757,11 @@ const MOVIE = () => {
 
                         </div>
                     </div>
-                </div>
             :
             <LOAD/>
-        }
+            }
+        </div>
+        
         </>
 
     )

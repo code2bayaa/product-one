@@ -3,10 +3,13 @@ import { useEffect, useState } from "react"
 import { COLLECT } from "../midlleware/report";
 import {useNavigate } from "react-router-dom"
 import Swal from "sweetalert2";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCoins } from "@fortawesome/free-solid-svg-icons";
 const NAVBAR = () => {
 
     const [windowWidth, setWindowWidth] = useState(0);
     const [loggedIn, setLoggedIn] = useState(false)
+    const [coins,setCoins] = useState(0.0)
     const router = useNavigate()
     const api_url = process.env.REACT_APP_api_url
     const linkUrl = process.env.REACT_APP_signup
@@ -29,8 +32,43 @@ const NAVBAR = () => {
     },[])
 
     useEffect(() => {
+        async function sumCredits(){
+            if(loggedIn){
+                const res = await fetch(process.env.REACT_APP_check_user_credits,{credentials: "include"})
+                const {sum,message} = await res.json()
+                console.log(message)
+                //affordable for one movie | episode
+                if(sum){
+                    setCoins(sum)
+                }
+            }else{
+                let user = localStorage.getItem("session")
+                const response = await fetch(`${process.env.REACT_APP_check_report_credits}`,{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json",
+                        "Accept":"application/json"
+                    },
+                    body:JSON.stringify({
+                        user
+
+                    })
+                })
+                const {sum,message} = await response.json()
+                console.log(message,sum)
+                //affordable for one movie | episode
+                if(sum){
+                    setCoins(sum)
+                }
+            }
+        }
+        sumCredits()
+
+    },[setCoins,loggedIn])
+
+    useEffect(() => {
       async function authentication(){
-        const res = await fetch(`${api_url}`,{credentials: "include"})
+        const res = await fetch(api_url,{credentials: "include"})
         const {status,message} = await res.json()
         console.log(message)
         if(status){
@@ -47,10 +85,13 @@ const NAVBAR = () => {
     const customSignout = async() => {
         try {
 
-            const response = await fetch(api_url + "/user/signout",{credentials: "include"});
+            const response = await fetch(process.env.REACT_APP_signout,{credentials: "include"});
         
             const {status,message} = await response.json()
+
+            console.log(status,"status")
             if(status){
+                setLoggedIn(false)
                 router("/")
                 return null
             }
@@ -58,7 +99,7 @@ const NAVBAR = () => {
             return null
         
         } catch (error) {
-            console.error("Error during sign-out:", error);
+            console.error("Error during sign-out:", error,error.message);
             Swal.fire("Oops!", error.message, "error");
         }
     }
@@ -67,6 +108,10 @@ const NAVBAR = () => {
         <div className="w-[100%] h-[100%]">
             <img src="/image/logo.png" alt="logo late-developers.com" className="w-[100%] h-[200px]" />
             <div className="w-[100%] h-[auto] text-white">
+                <div className="w-[100%] h-[60px] text-[#ffd800] text-[30px]">
+                    <FontAwesomeIcon icon={faCoins} />{coins} <span className="text-[20px]">credits</span>
+                </div>
+                
                 <NavLink
                     to="/"
                     className={({ isActive, isPending }) =>
@@ -126,6 +171,14 @@ const NAVBAR = () => {
                 >
                     disney
                 </NavLink>
+                <NavLink
+                    to="/credits"
+                    className={({ isActive, isPending }) =>
+                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                    }
+                >
+                    earn credit
+                </NavLink>
                 {/* <NavLink
                     to="/reactions"
                     className={({ isActive, isPending }) =>
@@ -157,6 +210,14 @@ const NAVBAR = () => {
                     :
                     <>
                         <NavLink
+                            to="/subscribe"
+                            className={({ isActive, isPending }) =>
+                                isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            }
+                        >
+                            buy credits
+                        </NavLink>
+                        <NavLink
                             to="/library"
                             className={({ isActive, isPending }) =>
                                 isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
@@ -164,14 +225,14 @@ const NAVBAR = () => {
                         >
                             library
                         </NavLink>
-                        <NavLink
-                            to="/credits"
+                        {/* <NavLink
+                            to="/upload-video"
                             className={({ isActive, isPending }) =>
                                 isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                             }
                         >
-                            get credit
-                        </NavLink>
+                            upload video
+                        </NavLink> */}
                         <button
                             onClick={customSignout}
                             style={{background:"transparent",height:"40px",color:"#fff",textDecoration:"underline"}}

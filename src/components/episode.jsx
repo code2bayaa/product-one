@@ -425,12 +425,71 @@ const EPISODE = () => {
                 const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`);
                 const getImageData = await response.json();
                 console.log(getImageData)
-                mutateInsertImage({ variables: { meta_data : {
-                    type:"tv",
-                    season:season?parseInt(season):-1,
-                    episode:episode?parseInt(episode):-1,
-                    id:id?parseInt(id):-1
-                }, data:{...getImageData} } });
+
+                function chunkArray(array, size) {
+                    const result = [];
+                    for (let i = 0; i < array.length; i += size) {
+                        result.push(array.slice(i, i + size));
+                    }
+                    return result;
+                }
+                let backdrops_all_results = [...getImageData.backdrops]
+                if(backdrops_all_results.length > 100){
+                    const chunks = chunkArray(backdrops_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertImage({ variables: { meta_data : {
+                            type:"tv",
+                            season:season?parseInt(season):-1,
+                            episode:episode?parseInt(episode):-1,
+                            id:id?parseInt(id):-1
+                        }, data:{id:getImageData.id,backdrops:chunks[i]} } });
+                    }
+                }else{
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:season?parseInt(season):-1,
+                        episode:episode?parseInt(episode):-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,backdrops:getImageData.backdrops} } });
+                }
+                let logos_all_results = [...getImageData.logos]
+                if(logos_all_results.length > 100){
+                    const chunks = chunkArray(logos_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertImage({ variables: { meta_data : {
+                            type:"tv",
+                            season:season?parseInt(season):-1,
+                            episode:episode?parseInt(episode):-1,
+                            id:id?parseInt(id):-1
+                        }, data:{id:getImageData.id,logos:chunks[i]} } });
+                    }
+                }else{
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:season?parseInt(season):-1,
+                        episode:episode?parseInt(episode):-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,logos:getImageData.logos} } });
+                }
+                let posters_all_results = [...getImageData.posters]
+                if(posters_all_results.length > 100){
+                    const chunks = chunkArray(posters_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertImage({ variables: { meta_data : {
+                            type:"tv",
+                            season:season?parseInt(season):-1,
+                            episode:episode?parseInt(episode):-1,
+                            id:id?parseInt(id):-1
+                        }, data:{id:getImageData.id,posters:chunks[i]} } });
+                    }
+                }else{
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:season?parseInt(season):-1,
+                        episode:episode?parseInt(episode):-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,posters:getImageData.posters} } });
+                }
                 return {...getImageData}
             } 
 
@@ -511,9 +570,39 @@ const EPISODE = () => {
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/credits?api_key=${process.env.REACT_APP_api_key}`);
             const credits_data = await response.json();
-            mutateInsertCredits({
-                variables: {...credits_data,id:id?parseInt(id):0},
-            })
+            function chunkArray(array, size) {
+                const result = [];
+                for (let i = 0; i < array.length; i += size) {
+                    result.push(array.slice(i, i + size));
+                }
+                return result;
+            }
+            let cast_all_results = [...credits_data.cast]
+            if(cast_all_results.length > 100){
+                const chunks = chunkArray(cast_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertCredits({
+                        variables: {cast:chunks[i],id:id?parseInt(id):0},
+                    });
+                }
+            }else{
+                mutateInsertCredits({
+                    variables: {cast:cast_all_results,id:id?parseInt(id):0},
+                });
+            }
+            let crew_all_results = [...credits_data.crew]
+            if(crew_all_results.length > 100){
+                const chunks = chunkArray(crew_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertCredits({
+                        variables: {crew:chunks[i],id:id?parseInt(id):0},
+                    });
+                }
+            }else{
+                mutateInsertCredits({
+                    variables: {crew:crew_all_results,id:id?parseInt(id):0},
+                });
+            }
             return {...credits_data}
         } 
 
@@ -745,8 +834,8 @@ const EPISODE = () => {
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] min-w-[48%] h-[200px]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-cover"} />
+                                        <div className="m-[0.5%] min-w-[48%] h-[70%]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-cover h-[100%]"} />
                                         </div>
                                     )
                                 )

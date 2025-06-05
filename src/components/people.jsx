@@ -5,7 +5,7 @@ import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
-// import SWEETPAGE from "../midlleware/pages"
+import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 // import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
@@ -114,6 +114,7 @@ const PEOPLE = () => {
     const intitializePeople = useCallback(async ({
         runContent,
         page,
+        adjustable = false,
         jobId='Actor',
         genreId = '',
         regionId = '',
@@ -179,7 +180,7 @@ const PEOPLE = () => {
                         return updatedPeople;
                     });
 
-                    console.log(temp_people[key].results.find(({known_for}) => known_for),"known_for")
+                    // console.log(temp_people[key].results.find(({known_for}) => known_for),"known_for")
                     
                     function chunkArray(array, size) {
                         const result = [];
@@ -240,7 +241,7 @@ const PEOPLE = () => {
                 temp_people[key].page = page;
             }
 
-            if(!people || jobId !== "Actor" || genreId || regionId || languageId || yearId){
+            if(!people || adjustable || jobId !== "Actor" || genreId || regionId || languageId || yearId){
                 const fetched = await fetchPerson({
                     variables : {
                     page: temp_people[key].page,
@@ -341,7 +342,7 @@ const PEOPLE = () => {
                             <div className="w-[90%] mx-[5%] h-[auto] flex flex-wrap flex-col" key={node}>
                                 <h1 className="my-t-[5%]">{index}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
-                                {/* <SWEETPAGE intitializeMovies={intitializePeople} page={page} index={index} total_pages={total_pages}/>                                 */}
+                                <SWEETPAGE intitializeMovies={intitializePeople} page={page} index={index} total_pages={total_pages}/>                                
                                 <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 

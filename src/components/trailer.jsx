@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import Plyr from "plyr-react";
 import { useQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
@@ -9,7 +9,7 @@ import MOBILE from "./mobileBar";
 const TRAILER = () => {
     const { id, stream, season, episode, background } = useParams();
     const [trailor, setTrailor] = useState(null)
-    // const [videos,setTrailor] = useState(null)
+    const [videos,setVideo] = useState(null)
     // const [player,setPlayer] = useState(null)
     // const [backgroundImg,setBackgroundImg] = useState(background)
     // const [fetchedVideoBackgrounds,setFetchedVideoBackgrounds] = useState(null)
@@ -25,6 +25,10 @@ const TRAILER = () => {
         return () => {
             window.removeEventListener("resize", handleResize);
         };
+    },[])
+
+    useLayoutEffect(() => {
+        return () => setVideo(true)
     },[])
     const fetchVideo = useQuery(gql`
         query Video (
@@ -205,7 +209,7 @@ const TRAILER = () => {
                 <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                     <div className="w-[100%] h-[500px]">
                         {
-                            <Plyr
+                            videos && <Plyr
                                 source={{
                                     type:"video",
                                     sources: [

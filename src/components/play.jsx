@@ -316,13 +316,14 @@ const PLAY = () => {
             }
             <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                 <h2 style={{fontSize:"180%",textAlign:"center"}}>COLLECTION</h2>
-                <h2>Ensure you have unallocated storage space for smooth streaming</h2>
+                <h2 style={{fontSize:"130%",textAlign:"center",color:"#ffd800"}}>Play the Best Quality</h2>
+                <h2 style={{fontSize:"130%",textAlign:"center"}}>Ensure you have unallocated storage space for smooth streaming</h2>
             {
                 play && play.length > 0 ? 
                     <div className="w-[100%] h-[auto] flex flex-wrap flex-row justify-center items-center">
                         {
                             play.map(({quality,title,token},index) => 
-                                <COLLECTIONS key={index} token={token} index={index} quality={quality} id={id} background={background}/>
+                                <COLLECTIONS key={index} title={title} token={token} index={index} quality={quality} id={id} background={background}/>
                             )
                         }
                     </div>

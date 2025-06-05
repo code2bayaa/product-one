@@ -14,12 +14,165 @@ const PLAYER = () => {
     const [rating, setRating] = useState(3.2)
     const [stars,setStars] = useState(0)
     const [users, setUsers] = useState(0)
+    const [paid, setPaid] = useState(false)
     // const [mkv, setMKV] = useState(false)
     // const [playID,setPlayID] = useState(null)
     // const api_url = process.env.REACT_APP_api_url
     
+    //pay with credits
     useEffect(() => {
-        if(type === "mkv"){
+        try{
+            async function authentication(){
+                const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+                const {status,message} = await res.json()
+                console.log(message)
+                return status
+            }
+            authentication().then(async isLoggedIn => {
+                //pay with credits from session | user
+                if(isLoggedIn){
+                    
+                    const response = await fetch(`${process.env.REACT_APP_user_paid}`,{
+                        credentials: "include",
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json",
+                            "Accept":"application/json"
+                        },
+                        body:JSON.stringify({
+                            id
+                        })
+                    })
+
+                    const response_data = await response.json()
+                    console.log(response_data.message)
+
+                    if(response_data.status){
+                        const res = await fetch(`${process.env.REACT_APP_update_user_credits}`,{
+                            credentials: "include",
+                            method:"POST",
+                            headers:{
+                                "Content-Type":"application/json",
+                                "Accept":"application/json"
+                            },
+                            body:JSON.stringify({
+                                type,
+                                id
+
+                            })
+                        })
+                        const {success,message} = await res.json()
+                        console.log(message,success)
+                        setPaid(success)
+                    }else{
+                        const res = await fetch(`${process.env.REACT_APP_pay_user_credits}`,{
+                            credentials: "include",
+                            method:"POST",
+                            headers:{
+                                "Content-Type":"application/json",
+                                "Accept":"application/json"
+                            },
+                            body:JSON.stringify({
+                                credit:50.00,
+                                data:{
+                                    "receipt":"player",
+                                    "player-type":[type],
+                                    "title":id
+                                }
+
+                            })
+                        })
+                        const {status,message} = await res.json()
+                        console.log(message)
+                        setPaid(status)
+                        //affordable for one movie | episode
+                        if(status){
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'paid with credits',
+                                text: "success",
+                                showConfirmButton: false,
+                                timer: 2500
+                            })
+                        }
+                    }
+
+                }else{
+                    let user = localStorage.getItem("session")
+                    const res = await fetch(`${process.env.REACT_APP_paid}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json",
+                            "Accept":"application/json"
+                        },
+                        body:JSON.stringify({
+                            user,
+                            id
+                        })
+                    })
+
+                    const res_data = await res.json()
+                    console.log(res_data.message)
+                    if(res_data.status){
+                        const res = await fetch(`${process.env.REACT_APP_update_report_credits}`,{
+                            method:"POST",
+                            headers:{
+                                "Content-Type":"application/json",
+                                "Accept":"application/json"
+                            },
+                            body:JSON.stringify({
+                                user,
+                                type,
+                                id
+
+                            })
+                        })
+                        const {success,message} = await res.json()
+                        console.log(success,message)
+                        setPaid(success)
+                    }else{
+                        const response = await fetch(`${process.env.REACT_APP_pay_report_credits}`,{
+                            method:"POST",
+                            headers:{
+                                "Content-Type":"application/json",
+                                "Accept":"application/json"
+                            },
+                            body:JSON.stringify({
+                                user,
+                                credit:50.00,
+                                data:{
+                                    "receipt":"player",
+                                    "player-type":[type],
+                                    "title":id
+                                }
+
+                            })
+                        })
+                        const {status,message} = await response.json()
+                        console.log(message)
+                        setPaid(status)
+                        //affordable for one movie | episode
+                        if(status){
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'paid with credits',
+                                text: "success",
+                                showConfirmButton: false,
+                                timer: 2500
+                            })
+                        }
+                    }
+
+                }
+            })
+        }catch(error){
+            console.log(error,"error")
+        }
+
+    },[setPaid,type,id])
+
+    useEffect(() => {
+        if(paid && type === "mkv"){
             // setMKV(true)   
             async function runVLC() { 
                 const streamUrl = `${process.env.REACT_APP_player_env}${host}/${index}`
@@ -43,14 +196,14 @@ const PLAYER = () => {
 
                 
         }
-    },[type,host,index,id])
+    },[type,host,index,id,paid])
 
     useEffect(() => {
 
         // return () => {
             // setPlayID(true)
         // }
-        if(host && index){
+        if(paid && host && index){
             // console.log(("playID",`${process.env.REACT_APP_player_env}${host}/${index}`))
             const mkvCheck = document.querySelector("#plyr-video source");
             if(mkvCheck && mkvCheck.src){
@@ -81,7 +234,7 @@ const PLAYER = () => {
             }
             // setPlayID(`${process.env.REACT_APP_player_env}${host}/${index}`)
         }
-    },[host,index])
+    },[host,index,paid])
 
     useEffect(() => {
         const getRate = async() => {
@@ -143,10 +296,14 @@ const PLAYER = () => {
     }
 
     return (
-        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(135deg, hsl(250, 70%, 15%), hsl(220, 70%, 10%)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(45deg, rgba(0,0,0,0.75), hsl(220, 70%, 10%)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
             <div className='w-[100%] text-[#ffd800] h-[60px] flex flex-row flex-wrap'>
                 {
-                    (type === "mkv") ? <h2>Check your VLC</h2> : ""
+                    (type === "mkv") ? 
+                    <div className='w-[100%]'>
+                    <h2>Check your VLC</h2>
+                    <p>If it takes too long, use another collection</p>
+                    </div> : ""
                 }
                 
                 <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">

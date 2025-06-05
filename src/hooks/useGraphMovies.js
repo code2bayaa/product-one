@@ -99,11 +99,11 @@ export const useGraphMovies = () => {
                         let key = search_content.findIndex((cont) => cont.index === index)
                         if(key > -1){
                             setSearchContent(prevSearch => {
-                                prevSearch[key] = {index, page, total_pages:data.total_pages, results: data.results, name: search, api}
+                                prevSearch[key] = {index, page, total_pages:data?.total_pages || 0, results: data?.results, name: search, api}
                                 return [...prevSearch]
                             })        
                         }else
-                            setSearchContent(prevSearch => ([...prevSearch, {index, page, total_pages:data.total_pages, results: data.results, name: search, api}]));
+                            setSearchContent(prevSearch => ([...prevSearch, {index, page, total_pages:data?.total_pages || 0, results: data?.results, name: search, api}]));
                     } else {
                         setSearchContent([{index:"not found", results: [], name: search}]);
                     }
@@ -112,8 +112,8 @@ export const useGraphMovies = () => {
                         variables: {
                             page,
                             results:data.results,
-                            total_pages:data.total_pages,
-                            total_results:data.total_results,
+                            total_pages:data?.total_pages || 0,
+                            total_results:data?.total_results || 0,
                             data :{
                                 index:"search",
                                 search

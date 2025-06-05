@@ -276,6 +276,7 @@ const SERIE = () => {
                 type
                 vote_average
                 vote_count
+                message
             }
         }
     `
@@ -425,13 +426,70 @@ const SERIE = () => {
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
             const getImageData = await response.json();
-            // console.log(getImageData)
-            mutateInsertImage({ variables: { meta_data : {
-                type:"tv",
-                season:-1,
-                episode:-1,
-                id:id?parseInt(id):-1
-            }, data:{...getImageData} } });
+            function chunkArray(array, size) {
+                const result = [];
+                for (let i = 0; i < array.length; i += size) {
+                    result.push(array.slice(i, i + size));
+                }
+                return result;
+            }
+            let backdrops_all_results = [...getImageData.backdrops]
+            if(backdrops_all_results.length > 100){
+                const chunks = chunkArray(backdrops_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,backdrops:chunks[i]} } });
+                }
+            }else{
+                mutateInsertImage({ variables: { meta_data : {
+                    type:"tv",
+                    season:-1,
+                    episode:-1,
+                    id:id?parseInt(id):-1
+                }, data:{id:getImageData.id,backdrops:getImageData.backdrops} } });
+            }
+            let logos_all_results = [...getImageData.logos]
+            if(logos_all_results.length > 100){
+                const chunks = chunkArray(logos_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,logos:chunks[i]} } });
+                }
+            }else{
+                mutateInsertImage({ variables: { meta_data : {
+                    type:"tv",
+                    season:-1,
+                    episode:-1,
+                    id:id?parseInt(id):-1
+                }, data:{id:getImageData.id,logos:getImageData.logos} } });
+            }
+            let posters_all_results = [...getImageData.posters]
+            if(posters_all_results.length > 100){
+                const chunks = chunkArray(posters_all_results, 100);
+                for (let i = 0; i < chunks.length; i++) {
+                    mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,posters:chunks[i]} } });
+                }
+            }else{
+                mutateInsertImage({ variables: { meta_data : {
+                    type:"tv",
+                    season:-1,
+                    episode:-1,
+                    id:id?parseInt(id):-1
+                }, data:{id:getImageData.id,posters:getImageData.posters} } });
+            }
             return {...getImageData}
         } 
 
@@ -467,10 +525,10 @@ const SERIE = () => {
 
     const fetchTV = useCallback(async() => {
 
-        async function freshFetch(){
+        async function freshSingleFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}?api_key=${process.env.REACT_APP_api_key}`);
             const data = await response.json();
-            // console.log(data)
+            console.log(data)
 
             mutateInsertTV({
                 variables: {
@@ -486,13 +544,14 @@ const SERIE = () => {
             console.log(fetched)
             if (fetched.data && fetched.data.singleTV.first_air_date === null) {
                 console.log("first time...")
-                const tv = await freshFetch()
+                const tv = await freshSingleFetch()
+                console.log(tv)
                 setSerie(() => ({...tv}));
             }else if(fetched.data && fetched.data.singleTV.success){
                 console.log("Using cached data:", fetched.data);
                 setSerie(() => ({...fetched.data.singleTV}));
             }else {
-                const tv = await freshFetch()
+                const tv = await freshSingleFetch()
                 setSerie(() => ({...tv}));
             }
         }
@@ -500,29 +559,64 @@ const SERIE = () => {
     },[fetchSingleTV,id,mutateInsertTV,serie])
 
     const fetchCredits = useCallback(async() => {
-        async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
-            const credits_data = await response.json();
-            // console.log(credits_data)
-            mutateInsertCredits({
-                variables: {...credits_data,id:id?parseInt(id):0},
-            });
-            return {...credits_data}
-        } 
+        try{
+            async function freshFetch(){
+                const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
+                const credits_data = await response.json();
+                console.log(credits_data)
+                function chunkArray(array, size) {
+                    const result = [];
+                    for (let i = 0; i < array.length; i += size) {
+                        result.push(array.slice(i, i + size));
+                    }
+                    return result;
+                }
+                let cast_all_results = [...credits_data.cast]
+                if(cast_all_results.length > 100){
+                    const chunks = chunkArray(cast_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertCredits({
+                            variables: {cast:chunks[i],id:id?parseInt(id):0},
+                        });
+                    }
+                }else{
+                    mutateInsertCredits({
+                        variables: {cast:cast_all_results,id:id?parseInt(id):0},
+                    });
+                }
+                let crew_all_results = [...credits_data.crew]
+                if(crew_all_results.length > 100){
+                    const chunks = chunkArray(crew_all_results, 100);
+                    for (let i = 0; i < chunks.length; i++) {
+                        mutateInsertCredits({
+                            variables: {crew:chunks[i],id:id?parseInt(id):0},
+                        });
+                    }
+                }else{
+                    mutateInsertCredits({
+                        variables: {crew:crew_all_results,id:id?parseInt(id):0},
+                    });
+                }
+                return {...credits_data}
+            } 
 
-        if(!credits){
-            const current_date = new Date().toISOString().split("T")[0]
-            const fetched = await fetchCreditsData({
-                variables : { id:id?parseInt(id):0, date:current_date }})
-            console.log(fetched)
-            if(fetched.data && fetched.data.credits.success){
-                console.log("Using cached data:", fetched.data);
-                setCredit(() => ({...fetched.data.credits}));
-            }else {
-                const credits = await freshFetch()
-                setCredit(() => ({...credits}));
+            if(!credits){
+                const current_date = new Date().toISOString().split("T")[0]
+                const fetched = await fetchCreditsData({
+                    variables : { id:id?parseInt(id):0, date:current_date }})
+                console.log(fetched)
+                if(fetched.data && fetched.data.credits.success){
+                    console.log("Using cached data:", fetched.data);
+                    setCredit(() => ({...fetched.data.credits}));
+                }else {
+                    const credits = await freshFetch()
+                    setCredit(() => ({...credits}));
+                }
             }
+        }catch(error){
+            console.log(error,error.message,"error")
         }
+
 
     },[fetchCreditsData,id,mutateInsertCredits,credits])
 
@@ -546,14 +640,14 @@ const SERIE = () => {
         let value = 0
         const {backdrops, posters, logos} = images
         let path = ''
-        if(backdrops.length > 0){
+        if(backdrops && backdrops.length > 0){
             value = Math.max(...backdrops.map(({height}) => height))
             let key = backdrops.findIndex(({height}) => height === value)
             if(key > -1){
                 path = backdrops[key].file_path
             }
         } 
-        if(posters.length > 0){
+        if(posters && posters.length > 0){
             let posters_value = Math.max(...posters.map(({height}) => height))
             if(posters_value > value){
                 let key = posters.findIndex(({height}) => height === posters_value)
@@ -563,7 +657,7 @@ const SERIE = () => {
                 value = posters_value
             }
         }
-        if(logos.length > 0){
+        if(logos && logos.length > 0){
             let logos_value = Math.max(...logos.map(({height}) => height))
             if(logos_value > value){
                 let key = logos.findIndex(({height}) => height === logos_value)
@@ -717,8 +811,8 @@ const SERIE = () => {
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] min-w-[48%] h-[300px]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-cover"} />
+                                        <div className="m-[0.5%] min-w-[48%] h-[70%]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-cover h-[100%]"} />
                                         </div>
                                     )
                                 )

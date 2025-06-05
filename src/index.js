@@ -25,6 +25,8 @@ import PLAYER from './components/player.jsx';
 import SIGNIN from './components/signin.jsx';
 import NETFLIX from './components/netflix.jsx';
 import DISNEY from './components/disney.jsx';
+import CREDITS from './components/credits.jsx';
+import SUBSCRIBE from './components/subscribe.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
 
@@ -147,6 +149,16 @@ const router = createBrowserRouter([
   {
     path:"/signin",
     element:<SIGNIN/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/credits",
+    element:<CREDITS/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/subscribe",
+    element:<SUBSCRIBE/>,
     elementError:<ERROR/>
   }
 ])

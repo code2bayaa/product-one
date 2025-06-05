@@ -9,7 +9,7 @@ const SIGNIN = () => {
     const [form,setForm] = useState({username:"",password:""})
     const router = useNavigate()
     const [windowWidth, setWindowWidth] = useState(0);
-    const api_url = process.env.REACT_APP_api_url
+    const api_url = process.env.REACT_APP_signin
 
     // useEffect(() => {
 
@@ -47,7 +47,7 @@ const SIGNIN = () => {
           setLoading(false)
           return null
         }
-        const response = await fetch(`${api_url}/user/signin`, {
+        const response = await fetch(api_url, {
           method: "POST",
           credentials: "include",
           body:JSON.stringify({
@@ -69,7 +69,7 @@ const SIGNIN = () => {
         console.log(message)
         router("/");
       }catch(error){
-        console.log(error)
+        console.error(error,error.message)
       }
 
     };

@@ -1,15 +1,47 @@
 import NAVBAR from "./nav";
 import MOBILE from "./mobileBar";
 import { useSearchParams, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const CREDITS = () => {
 
     const location = useLocation();
     const [searchParams] = useSearchParams();
+    const [windowWidth,setWindowWidth] = useState(0)
+
     useEffect(() => {
-        const query = searchParams.get("query");
-        const url = `${location.pathname}?${searchParams.toString()}`;
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        window.addEventListener("resize", handleResize);
+        handleResize(); // Call it once to set the initial value
+    },[])
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+
+        // Create the external script
+        const externalScript = document.createElement("script");
+        externalScript.type = "text/javascript";
+        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            document.body.removeChild(externalScript);
+        };
+    }, []);
+
+    useEffect(() => {
+        // const query = searchParams.get("query");
+        // const url = `${location.pathname}?${searchParams.toString()}`;
 
         const scriptElement = document.querySelector('script[src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"]');
         // if (query) {

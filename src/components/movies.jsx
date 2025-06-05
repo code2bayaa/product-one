@@ -324,7 +324,7 @@ const MOVIES = () => {
             // })
             // console.log(fetchedMoviesData)
 
-            if(!movies || adjustable || genreId || regionId || languageId || yearId){
+            
                 console.log(genreId,"genreId")
                 const fetched = await fetchMovies({
                     variables : {
@@ -377,24 +377,26 @@ const MOVIES = () => {
                 } else {
                     return await freshFetch()
                 }
-            }
+            // }
 
         };
-        runContent.forEach((index) => {
-            fetchMoviesFromAPI(index)
-            .then(status => {
-                // if(!status){
-                //     Swal.fire({
-                //         title:"internet connection error",
-                //         text: "Please try again.",
-                //         icon: "error", // Set the icon to "error"
-                //         confirmButtonText: "OK",
-                        
-                //     })
-                // }
+        if(!movies || adjustable || genreId || regionId || languageId || yearId){
+            runContent.forEach((index) => {
+                fetchMoviesFromAPI(index)
+                .then(status => {
+                    // if(!status){
+                    //     Swal.fire({
+                    //         title:"internet connection error",
+                    //         text: "Please try again.",
+                    //         icon: "error", // Set the icon to "error"
+                    //         confirmButtonText: "OK",
+                            
+                    //     })
+                    // }
+                })
             })
-        })
-    },[fetchMovies,mutateInsertMovies,movies]);
+        }
+    },[fetchMovies,mutateInsertMovies,movies,setMovies]);
 
     useEffect(() => {
         intitializeMovies(

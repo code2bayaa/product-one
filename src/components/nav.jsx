@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { COLLECT } from "../midlleware/report";
-import {useNavigate } from "react-router-dom"
+import {useNavigate} from "react-router-dom"
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins } from "@fortawesome/free-solid-svg-icons";
@@ -9,6 +9,7 @@ const NAVBAR = () => {
 
     const [windowWidth, setWindowWidth] = useState(0);
     const [loggedIn, setLoggedIn] = useState(false)
+    // const [count,setCount] = useState(0)
     const [coins,setCoins] = useState(0.0)
     const router = useNavigate()
     const api_url = process.env.REACT_APP_api_url
@@ -26,10 +27,13 @@ const NAVBAR = () => {
             window.removeEventListener("resize", handleResize);
         };
     },[])
-
+    let count = 0
     useEffect(() => {
-        COLLECT()
-    },[])
+        console.log("count",count)
+        !count && COLLECT()
+        count++
+        
+    },[count])
 
     useEffect(() => {
         async function sumCredits(){

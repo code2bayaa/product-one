@@ -1,8 +1,8 @@
 import NAVBAR from "./nav";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, useEffect } from "react";
-import { useGraphMovies } from "../hooks/useGraphMovies";
-import { useGraphPerson } from "../hooks/useGraphPerson";
+import { useSearchMovies } from "../hooks/useSearchMovies";
+import { useSearchPerson } from "../hooks/useSearchPerson";
 import PICTURE from "../midlleware/picture";
 import { faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
 // import Swal from "sweetalert2";
@@ -16,8 +16,8 @@ const SEARCH = () => {
 
     const [search_content, setSearchContent] = useState([]);
     const [search, setSearch] = useState()
-    const {fetchMovies, mutateInsertMovies, intitializeMovies } = useGraphMovies();
-    const {fetchPerson, mutateInsertPerson } = useGraphPerson();
+    const {fetchMovies, mutateInsertMovies, intitializeMovies } = useSearchMovies();
+    const {fetchPerson, mutateInsertPerson } = useSearchPerson();
     const [windowWidth, setWindowWidth] = useState(0);
 
     // useEffect(() => {

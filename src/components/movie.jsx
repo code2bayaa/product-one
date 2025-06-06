@@ -496,7 +496,7 @@ const MOVIE = () => {
 
     const fetchMovie = useCallback(async() => {    
         
-        if(!movie){
+        // if(!movie){
 
             async function freshFetch(){
                 const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}?api_key=${process.env.REACT_APP_api_key}`);
@@ -522,9 +522,9 @@ const MOVIE = () => {
                 const movie = await freshFetch()
                 setMovie(() => ({...movie}));
             }
-        }
+        // }
         
-    },[fetchSingleMovie,id,mutateInsertMovie,movie])
+    },[fetchSingleMovie,id,mutateInsertMovie])
 
     const fetchCredits = useCallback(async() => {
         // const credits_response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/credits?api_key=${process.env.REACT_APP_api_key}`);
@@ -597,6 +597,31 @@ const MOVIE = () => {
     useEffect(() => {
         fetchCredits();
     }, [fetchCredits]);
+
+    useEffect(() => {
+        async function addRecommendations(){
+            const user = localStorage.getItem("session")
+            const response = await fetch(`${process.env.REACT_APP_add_recommendations}`, {
+                method: "POST",
+                credentials: "include",
+                body:JSON.stringify({
+                    title:movie.original_title || movie.title,
+                    overview:movie.overview,
+                    type:"movie",
+                    user
+                }),
+                headers: {
+                    'Content-Type': 'application/json', // Indicates the body is JSON
+                },
+            });
+
+            const {status,message} = await response.json()
+
+            console.log(status,message)
+        }
+        if(movie)
+            addRecommendations()
+    },[movie])
 
     const getBackground = () => {
         if(fetchedImageBackgrounds)

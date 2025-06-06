@@ -7,6 +7,8 @@ import CONTROLLERS from "../midlleware/controllers"
 import { NavLink } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
+import CryptoJS from "crypto-js";
+
 // import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
@@ -14,6 +16,7 @@ import MOBILE from "./mobileBar";
 const MOVIES = () => {
 
     const [movies, setMovies] = useState(null)
+    // const [recommend,setRecommend] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     // const [variables,setVariables] = useState({})
     // const client = useApolloClient(); // Apollo Client instance for accessing the cache
@@ -32,21 +35,13 @@ const MOVIES = () => {
     const FETCH_MOVIES_QUERY = gql`
         query Movie (
             $page: Int!,
-            $genre : String!,
-            $year : Int!,
-            $region : String!,
-            $language : String!,
-            $index : String!,
-            $date:String!,
+            $data:TRACK_DATA_OUTPUT,
+            $hashedKey:String!
         ){
             movie(
                 page:$page,
-                genre:$genre,
-                year:$year,
-                region:$region,
-                language:$language,
-                index:$index,
-                date:$date,
+                data :$data,
+                hashedKey:$hashedKey
             ) {
                 results {
                     adult
@@ -87,7 +82,7 @@ const MOVIES = () => {
             $total_pages:Int!,
             $total_results:Int!,
             $data :TRACK_DATA_INPUT,
-            $type:String!,
+            $hashedKey:String!
         ) {
             addMovies(
                 page:$page,
@@ -95,7 +90,7 @@ const MOVIES = () => {
                 total_pages:$total_pages,
                 total_results:$total_results,
                 data:$data,
-                type:$type,
+                hashedKey:$hashedKey
             ) {
                 success
                 message
@@ -158,7 +153,7 @@ const MOVIES = () => {
     //         });
     //     }
     // }, [fetchMovies.data, variables, client]);
-
+    
     const intitializeMovies = useCallback(async({
         runContent,
         page,
@@ -172,6 +167,22 @@ const MOVIES = () => {
         const fetchMoviesFromAPI = async (actual_index) => {
 
             const current_date = new Date().toISOString().split("T")[0]
+            const temp_movies = [
+                { index: "discover", results: [], api: "discover/movie", page: 1, total_pages: 0 },
+                { index: "popular", results: [], api: "movie/popular", page: 1, total_pages: 0 },
+                { index: "trending", results: [], api: "trending/movie/day", page: 1, total_pages: 0 },
+                { index: "top_rated", results: [], api: "movie/top_rated", page: 1, total_pages: 0 },
+                { index: "upcoming", results: [], api: "movie/upcoming", page: 1, total_pages: 0 },
+                { index: "now_playing", results: [], api: "movie/now_playing", page: 1, total_pages: 0 },
+            ];
+            const key = temp_movies.findIndex(({ index }) => index === actual_index);
+
+            if (page) {
+                temp_movies[key].page = page;
+            }
+            const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "movie"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
+
             // console.log(current_date,"date")
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
@@ -180,7 +191,7 @@ const MOVIES = () => {
                 );
                 const data = await response.json();
 
-                // console.log(data)
+                console.log(data)
                 if (data.results.length > 0) {
                     temp_movies[key].results = [
                         ...temp_movies[key].results,
@@ -265,6 +276,7 @@ const MOVIES = () => {
                             results:data.results,
                             total_pages:data.total_pages,
                             total_results:data.total_results,
+                            hashedKey,
                             data :{
                                 genre: genreId,
                                 region: regionId,
@@ -272,29 +284,15 @@ const MOVIES = () => {
                                 year: yearId,
                                 index:actual_index,
                                 date:current_date,
+                                type:"movie",
                             },
-                            
-                            type:"movie",
+                                                   
                         },
                     });
 
                     return true
                 }
                 return false
-            }
-
-            const temp_movies = [
-                { index: "discover", results: [], api: "discover/movie", page: 1, total_pages: 0 },
-                { index: "popular", results: [], api: "movie/popular", page: 1, total_pages: 0 },
-                { index: "trending", results: [], api: "trending/movie/day", page: 1, total_pages: 0 },
-                { index: "top_rated", results: [], api: "movie/top_rated", page: 1, total_pages: 0 },
-                { index: "upcoming", results: [], api: "movie/upcoming", page: 1, total_pages: 0 },
-                { index: "now_playing", results: [], api: "movie/now_playing", page: 1, total_pages: 0 },
-            ];
-            const key = temp_movies.findIndex(({ index }) => index === actual_index);
-
-            if (page) {
-                temp_movies[key].page = page;
             }
 
             // Check if data exists in the cache
@@ -329,22 +327,30 @@ const MOVIES = () => {
                 const fetched = await fetchMovies({
                     variables : {
                     page: temp_movies[key].page,
-                    genre: genreId,
-                    region: regionId,
-                    language: languageId,
-                    year: yearId,
-                    index: actual_index,
-                    date: current_date,  
+                    data : {
+                        genre: genreId,
+                        year: yearId,
+                        region: regionId,
+                        language: languageId,  
+                        index: actual_index,
+                        date: current_date,
+                        type:"movie"
+                    },
+                    hashedKey
                 }})
                 console.log(fetched)
                 if (fetched.data) {
                     // console.log("Using cached data:", fetched.data);
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
                         // console.log("less items")
-                        return await freshFetch()
+                        // if(!movies)
+                            return await freshFetch()
+                        // return true
                     }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
                         // console.log("no records found")
-                        return await freshFetch()
+                        // if(!movies)
+                            return await freshFetch()
+                        // return true
                     }else{
                         // console.log("finally using cached data")
                         setMovies((prevMovies) => {
@@ -380,7 +386,7 @@ const MOVIES = () => {
             // }
 
         };
-        if(!movies || adjustable || genreId || regionId || languageId || yearId){
+        if(adjustable || genreId || regionId || languageId || yearId){
             runContent.forEach((index) => {
                 fetchMoviesFromAPI(index)
                 .then(status => {
@@ -396,17 +402,58 @@ const MOVIES = () => {
                 })
             })
         }
-    },[fetchMovies,mutateInsertMovies,movies,setMovies]);
+    },[fetchMovies,mutateInsertMovies]);
 
     useEffect(() => {
         intitializeMovies(
             {runContent:[
             // "latest",
-            "discover","popular","trending","top_rated","upcoming","now_playing"]
+            "discover","popular","trending","top_rated","upcoming","now_playing"],
+            adjustable:true
         })
 
     },[intitializeMovies])
 
+    // useEffect(() => {
+    //     //recommendations based on sessions
+    //     async function getRecommendation(){
+    //         const user = localStorage.getItem("session")
+    //         const response = await fetch(`${process.env.REACT_APP_get_recommendations}`, {
+    //             method: "POST",
+    //             credentials: "include",
+    //             body:JSON.stringify({
+    //                 user
+    //             }),
+    //             headers: {
+    //                 'Content-Type': 'application/json', // Indicates the body is JSON
+    //             },
+    //         });   
+            
+    //         const {data, status, message} = await response.json()
+    //         console.log(message,"get recommendations",status,"status")
+
+    //         if(status){
+    //             const response = await fetch(`${process.env.REACT_APP_fetch_recommendations}`, {
+    //                 method: "POST",
+    //                 credentials: "include",
+    //                 body:JSON.stringify({
+    //                     data
+    //                 }),
+    //                 headers: {
+    //                     'Content-Type': 'application/json', // Indicates the body is JSON
+    //                 },
+    //             }); 
+                
+    //             const {results, status, message} = await response.json()
+    //             console.log(results,message)
+
+    //             if(status){
+    //                 setRecommend(results)
+    //             }
+    //         }
+    //     }
+    //     getRecommendation()
+    // },[])
 
     return (
         <div className="w-[100%] duration-250 h-[auto] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -418,6 +465,9 @@ const MOVIES = () => {
                 :
                 <MOBILE/>
             }
+            {/* <div className="w-[100%]">
+                {console.log(recommend)}
+            </div> */}
             <div className={windowWidth > 800 ? "w-[80%] h-[auto] ml-[20%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>

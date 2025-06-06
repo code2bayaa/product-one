@@ -48,7 +48,7 @@ const EMPIRE = () => {
                 user_location = JSON.parse(user_location);
             }
             // return user_location;
-            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa"){
+            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa" && user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Australia"){
                 setLayouts(true)
             }  
             console.log(user_location,"user location")

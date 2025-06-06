@@ -1,17 +1,19 @@
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 
-export const useGraphPerson = () => {
+export const useSearchPerson = () => {
 
     const FETCH_PERSON_QUERY = gql`
         query FetchPerson (
             $page: Int!,
             $index : String!,
             $search:String!,
+            $hashedKey:String!
         ){
             fetchPerson(
                 page:$page,
                 search:$search,
                 index:$index,
+                hashedKey:$hashedKey
             ) {
                 results {
                     adult
@@ -45,6 +47,7 @@ export const useGraphPerson = () => {
             $total_results:Int!,
             $data :SEARCH_PERSON_DATA_INPUT,
             $type:String!,
+            $hashedKey:String!
         ) {
             searchPerson(
                 page:$page,
@@ -53,6 +56,7 @@ export const useGraphPerson = () => {
                 total_results:$total_results,
                 data:$data,
                 type:$type,
+                hashedKey:$hashedKey
             ) {
                 success
                 message

@@ -9,6 +9,7 @@ import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
+import CryptoJS from "crypto-js";
 
 const DISNEY = () => {
 
@@ -30,21 +31,13 @@ const DISNEY = () => {
     const FETCH_MOVIES_QUERY = gql`
         query Movie (
             $page: Int!,
-            $genre : String!,
-            $year : Int!,
-            $region : String!,
-            $language : String!,
-            $index : String!,
-            $date:String!,
+            $data:TRACK_DATA_OUTPUT,
+            $hashedKey:String!
         ){
             movie(
                 page:$page,
-                genre:$genre,
-                year:$year,
-                region:$region,
-                language:$language,
-                index:$index,
-                date:$date,
+                data:$data,
+                hashedKey:$hashedKey
             ) {
                 results {
                     adult
@@ -88,7 +81,7 @@ const DISNEY = () => {
             $total_pages:Int!,
             $total_results:Int!,
             $data :TRACK_DATA_INPUT,
-            $type:String!,
+            $hashedKey:String!,
         ) {
             addMovies(
                 page:$page,
@@ -96,7 +89,7 @@ const DISNEY = () => {
                 total_pages:$total_pages,
                 total_results:$total_results,
                 data:$data,
-                type:$type,
+                hashedKey:$hashedKey,
             ) {
                 success
                 message
@@ -140,6 +133,12 @@ const DISNEY = () => {
                 // { index: "discover disney person", results: [], api: "discover/person", page: 1, total_pages: 0 },
             ];
             const key = temp_movies.findIndex(({ index }) => index === actual_index);
+            if (page) {
+                temp_movies[key].page = page;
+            }
+
+            const hashed = temp_movies[key].page + actual_index
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
             // console.log(current_date,"date")
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
@@ -192,9 +191,9 @@ const DISNEY = () => {
                                 year: yearId,
                                 index:actual_index,
                                 date:current_date,
+                                type:temp_movies[key].type,
                             },
-                            
-                            type:temp_movies[key].type,
+                            hashedKey 
                         },
                     });
 
@@ -203,20 +202,22 @@ const DISNEY = () => {
                 return false
             }
 
-            if (page) {
-                temp_movies[key].page = page;
-            }
 
-            if(!movies || adjustable){
+
+            if(adjustable){
                 const fetched = await fetchMovies({
                     variables : {
                     page: temp_movies[key].page,
-                    genre: genreId,
-                    region: regionId,
-                    language: languageId,
-                    year: yearId,
-                    index: actual_index,
-                    date: current_date,  
+                    data : {
+                        genre: genreId,
+                        year: yearId,
+                        region: regionId,
+                        language: languageId,  
+                        index: actual_index,
+                        date: current_date,
+                        type:temp_movies[key].type
+                    }, 
+                    hashedKey 
                 }})
                 console.log(fetched)
                 if (fetched.data) {
@@ -268,13 +269,14 @@ const DISNEY = () => {
 
             })
         })
-    },[fetchMovies,mutateInsertMovies,movies]);
+    },[fetchMovies,mutateInsertMovies]);
 
     useEffect(() => {
         intitializeMovies(
             {runContent:[
             "discover disney movie",
-            "discover disney tv"]
+            "discover disney tv"],
+            adjustable:true
         })
 
     },[intitializeMovies])

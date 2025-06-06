@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
 
 const COLLECTIONS = ({index,token,quality,id,background,title}) => {
@@ -7,6 +7,45 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
     const [open,setOpen] = useState(false);
     const [URLS,setURLS] = useState(null);
     // const containerRef = useRef(null);
+
+    useEffect(() => {
+        const destroySession = async() => {
+            console.log("destroying...")
+            const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+                method: "POST",
+                credentials: "include",
+                body:JSON.stringify({
+                    id,
+                    index
+                }),
+                headers: {
+                    'Content-Type': 'application/json', // Indicates the body is JSON
+                },
+            });
+            const {status, error, message, newToken} = await response.json()
+            console.log(newToken,"newToken")
+            console.log(error,message)
+            if(error || !status){
+                // Swal.fire({
+                //     icon: 'error',
+                //     title: 'Could not destroy session ' + error + message,
+                //     text: error || message,
+                //     showConfirmButton: false,
+                //     timer: 2500
+                // })
+                return null
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Session destroyed',
+                text: "success" + message,
+                showConfirmButton: false,
+                timer: 2500
+            })
+            return true
+        }
+        destroySession()
+    },[id,index])
 
     const runStream = async(e,token) => { 
         //check for credits
@@ -64,6 +103,21 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
             console.log(res_data.message)
             if(res_data.status){
                 hasPaid = true
+                Swal.fire({
+                    icon: 'success',
+                    title: 'rent paid',
+                    text: res_data.message,
+                    showConfirmButton: false,
+                    timer: 2500
+                })
+            }else{
+                Swal.fire({
+                    icon: 'error',
+                    title: 'rent elapsed',
+                    text: res_data.message,
+                    showConfirmButton: false,
+                    timer: 1500
+                })
             }
 
             const response = await fetch(`${process.env.REACT_APP_check_report_credits}`,{
@@ -110,7 +164,7 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
                 body:JSON.stringify({
                     token,
                     id,
-
+                    index
                 })
             })
             const {status, error, message, url, files} = await response.json()

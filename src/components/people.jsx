@@ -10,6 +10,7 @@ import { gql, useMutation, useLazyQuery } from '@apollo/client';
 // import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
+import CryptoJS from "crypto-js";
 
 const PEOPLE = () => {
 
@@ -36,6 +37,7 @@ const PEOPLE = () => {
             $language : String!,
             $index : String!,
             $date:String!,
+            $hashedKey:String!
         ){
             people(
                 page:$page,
@@ -45,6 +47,7 @@ const PEOPLE = () => {
                 language:$language,
                 index:$index,
                 date:$date,
+                hashedKey:$hashedKey
             ) {
                 results {
                     adult
@@ -78,6 +81,7 @@ const PEOPLE = () => {
             $total_results:Int!,
             $data :TRACK_PERSON_DATA_INPUT,
             $type:String!,
+            $hashedKey:String!
         ) {
             addPerson(
                 page:$page,
@@ -86,6 +90,7 @@ const PEOPLE = () => {
                 total_results:$total_results,
                 data:$data,
                 type:$type,
+                hashedKey:$hashedKey
             ) {
                 success
                 message
@@ -133,7 +138,11 @@ const PEOPLE = () => {
                 {"index":"popular","results":[],"api":"person/popular",page:1,total_pages:0,total_results:0}
             ]
             const key = temp_people.findIndex(({ index }) => index === actual_index);
-
+            if (page) {
+                temp_people[key].page = page;
+            }
+            const hashed = temp_people[key].page + genreId + regionId + languageId + yearId + actual_index + "person"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
                 const response = await fetch(
@@ -208,6 +217,7 @@ const PEOPLE = () => {
                                         date: current_date,
                                     },
                                     type: "person",
+                                    hashedKey
                                 },
                             });
                         }
@@ -228,6 +238,7 @@ const PEOPLE = () => {
                                     date: current_date,
                                 },
                                 type: "person",
+                                hashedKey
                             },
                         });
                     }
@@ -237,11 +248,7 @@ const PEOPLE = () => {
                 return false
             }
 
-            if (page) {
-                temp_people[key].page = page;
-            }
-
-            if(!people || adjustable || jobId !== "Actor" || genreId || regionId || languageId || yearId){
+            if(adjustable || jobId !== "Actor" || genreId || regionId || languageId || yearId){
                 const fetched = await fetchPerson({
                     variables : {
                     page: temp_people[key].page,
@@ -250,7 +257,8 @@ const PEOPLE = () => {
                     language: languageId,
                     year: yearId,
                     index: actual_index,
-                    date: current_date,  
+                    date: current_date, 
+                    hashedKey 
                 }})
 
                 if (fetched.data) {
@@ -309,13 +317,14 @@ const PEOPLE = () => {
                 }
             })
         })
-    },[mutateInsertPerson,fetchPerson, people])
+    },[mutateInsertPerson,fetchPerson])
 
     useEffect(() => {
         intitializePeople(
             {runContent:[
             // "latest",
-            "discover movie","discover tv","trending","popular"]
+            "discover movie","discover tv","trending","popular"],
+            adjustable:true
         })
 
     },[intitializePeople])

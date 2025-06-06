@@ -260,43 +260,6 @@ const PLAY = () => {
 
     },[fetchToken])
 
-    useEffect(() => {
-        const destroySession = async() => {
-            console.log("destroying...")
-            const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
-                method: "POST",
-                credentials: "include",
-                body:JSON.stringify({
-                    id
-                }),
-                headers: {
-                    'Content-Type': 'application/json', // Indicates the body is JSON
-                },
-            });
-            const {status, error, message, newToken} = await response.json()
-            console.log(newToken,"newToken")
-            if(error || !status){
-                // Swal.fire({
-                //     icon: 'error',
-                //     title: 'Oops...',
-                //     text: error || message,
-                //     showConfirmButton: false,
-                //     timer: 2500
-                // })
-                return null
-            }
-            Swal.fire({
-                icon: 'success',
-                title: 'Session destroyed',
-                text: "success" + message,
-                showConfirmButton: false,
-                timer: 2500
-            })
-            return true
-        }
-        destroySession()
-    },[id])
-
     // useEffect(() => {
     //     if (playing) {
     //         new Plyr('#plyr-video');

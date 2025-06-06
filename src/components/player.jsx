@@ -19,6 +19,7 @@ const PLAYER = () => {
     // const [playID,setPlayID] = useState(null)
     // const api_url = process.env.REACT_APP_api_url
     
+
     //pay with credits
     useEffect(() => {
         try{
@@ -185,8 +186,8 @@ const PLAYER = () => {
                     },
                     body:JSON.stringify({
                         url:streamUrl,
-                        id
-
+                        id,
+                        index
                     })
                 })
                 const {status, error, message, url} = await response.json()

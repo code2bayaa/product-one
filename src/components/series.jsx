@@ -9,6 +9,7 @@ import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
+import CryptoJS from "crypto-js";
 
 const SERIES = () => {
 
@@ -34,6 +35,7 @@ const SERIES = () => {
             $language : String!,
             $index : String!,
             $date:String!,
+            $hashedKey:String!
         ){
             tv(
                 page:$page,
@@ -43,6 +45,7 @@ const SERIES = () => {
                 language:$language,
                 index:$index,
                 date:$date,
+                hashedKey:$hashedKey
             ) {
                 results {
                     adult
@@ -84,6 +87,7 @@ const SERIES = () => {
             $total_results:Int!,
             $data :TRACK_TV_DATA_INPUT,
             $type:String!,
+            $hashedKey:String!
         ) {
             addTVS(
                 page:$page,
@@ -92,6 +96,7 @@ const SERIES = () => {
                 total_results:$total_results,
                 data:$data,
                 type:$type,
+                hashedKey:$hashedKey
             ) {
                 success
                 message
@@ -128,6 +133,23 @@ const SERIES = () => {
         const fetchMoviesFromAPI = async (actual_index) => {
 
             const current_date = new Date().toISOString().split("T")[0]
+            const temp_movies = [
+                {"index":"discover","results":[],"api":"discover/tv",page:1,total_pages:0},
+                {"index":"airing","results":[],"api":"tv/airing_today",page:1,total_pages:0},
+                {"index":"trending","results":[],"api":"trending/tv/day",page:1,total_pages:0},
+                {"index":"popular","results":[],"api":"tv/popular",page:1,total_pages:0},
+                {"index":"top rated","results":[],"api":"tv/top_rated",page:1,total_pages:0},                
+                {"index":"on air","results":[],"api":"tv/on_the_air",page:1,total_pages:0}
+            ];
+            const key = temp_movies.findIndex(({ index }) => index === actual_index);
+
+            if (page) {
+                temp_movies[key].page = page;
+            }
+
+            const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "tv"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
+
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
                 const response = await fetch(
@@ -180,7 +202,7 @@ const SERIES = () => {
                                 index:actual_index,
                                 date:current_date,
                             },
-                            
+                            hashedKey,
                             type:"tv",
                         },
                     });
@@ -190,21 +212,7 @@ const SERIES = () => {
                 return false
             }
 
-            const temp_movies = [
-                {"index":"discover","results":[],"api":"discover/tv",page:1,total_pages:0},
-                {"index":"airing","results":[],"api":"tv/airing_today",page:1,total_pages:0},
-                {"index":"trending","results":[],"api":"trending/tv/day",page:1,total_pages:0},
-                {"index":"popular","results":[],"api":"tv/popular",page:1,total_pages:0},
-                {"index":"top rated","results":[],"api":"tv/top_rated",page:1,total_pages:0},                
-                {"index":"on air","results":[],"api":"tv/on_the_air",page:1,total_pages:0}
-            ];
-            const key = temp_movies.findIndex(({ index }) => index === actual_index);
-
-            if (page) {
-                temp_movies[key].page = page;
-            }
-
-            if(!movies || adjustable || genreId || regionId || languageId || yearId){
+            if(adjustable || genreId || regionId || languageId || yearId){
                 const fetched = await fetchMovies({
                     variables : {
                     page: temp_movies[key].page,
@@ -213,7 +221,8 @@ const SERIES = () => {
                     language: languageId,
                     year: yearId,
                     index: actual_index,
-                    date: current_date,  
+                    date: current_date,
+                    hashedKey  
                 }})
                 console.log(fetched)
 
@@ -268,14 +277,15 @@ const SERIES = () => {
                 }
             })
         })
-    },[fetchMovies,mutateInsertMovies,movies])
+    },[fetchMovies,mutateInsertMovies])
 
     useEffect(() => {
         intitializeMovies(
             {runContent:[
             // "latest",
                 "airing","trending","popular","top rated","discover","on air"
-            ]
+            ],
+            adjustable:true
         })
 
     },[intitializeMovies])

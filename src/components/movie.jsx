@@ -511,11 +511,7 @@ const MOVIE = () => {
             const fetched = await fetchSingleMovie({
             variables : { id }})
             console.log(fetched)
-            if (fetched.data && fetched.data.single.runtime === null) {
-                console.log("first time...")
-                const movie = await freshFetch()
-                setMovie(() => ({...movie}));
-            }else if(fetched.data && fetched.data.single.success){
+            if(fetched.data && fetched.data.single.success){
                 console.log("Using cached data:", fetched.data);
                 setMovie(() => ({...fetched.data.single}));
             }else {

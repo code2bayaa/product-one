@@ -106,10 +106,14 @@ const SEASON = () => {
         mutation AddImage(
             $meta_data: META_DATA_INPUT!
             $data: DATA_INPUT!
+            $chunking:Boolean!
+            $chunking_index:Int!            
         ) {
             addImage(
                 meta_data: $meta_data
                 data: $data
+                $chunking:Boolean!
+                $chunking_index:Int!                
             ){
                 data {
                     id
@@ -334,11 +338,15 @@ const SEASON = () => {
             $id:Int!
             $cast:[CAST_INPUT]
             $crew:[CREW_INPUT]
+            $chunking:Boolean!
+            $chunking_index:Int!            
         ) {
             addCredits(
                 id:$id
                 cast:$cast
                 crew:$crew
+                chunking:$chunking
+                chunking_index:$chunking_index                
             ) {
                 success
                 message
@@ -394,7 +402,10 @@ const SEASON = () => {
                         season:season?parseInt(season):-1,
                         episode:-1,
                         id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,backdrops:chunks[i]} } });
+                    }, data:{id:getImageData.id,backdrops:chunks[i]},
+                        chunking:true,
+                        chunking_index:i
+                    } });
                 }
             }else{
                 mutateInsertImage({ variables: { meta_data : {
@@ -402,7 +413,9 @@ const SEASON = () => {
                     season:season?parseInt(season):-1,
                     episode:-1,
                     id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,backdrops:getImageData.backdrops} } });
+                }, data:{id:getImageData.id,backdrops:getImageData.backdrops},
+                                chunking:false,
+                    chunking_index:0 } });
             }
             let logos_all_results = [...getImageData.logos]
             if(logos_all_results.length > 100){
@@ -413,7 +426,10 @@ const SEASON = () => {
                         season:season?parseInt(season):-1,
                         episode:-1,
                         id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,logos:chunks[i]} } });
+                    }, data:{id:getImageData.id,logos:chunks[i]},
+                    chunking:true,
+                    chunking_index:i                    
+                } });
                 }
             }else{
                 mutateInsertImage({ variables: { meta_data : {
@@ -421,7 +437,9 @@ const SEASON = () => {
                     season:season?parseInt(season):-1,
                     episode:-1,
                     id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,logos:getImageData.logos} } });
+                }, data:{id:getImageData.id,logos:getImageData.logos},
+                                chunking:false,
+                    chunking_index:0  } });
             }
             let posters_all_results = [...getImageData.posters]
             if(posters_all_results.length > 100){
@@ -432,7 +450,10 @@ const SEASON = () => {
                         season:season?parseInt(season):-1,
                         episode:-1,
                         id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,posters:chunks[i]} } });
+                    }, data:{id:getImageData.id,posters:chunks[i]},
+                        chunking:true,
+                        chunking_index:i                    
+                } });
                 }
             }else{
                 mutateInsertImage({ variables: { meta_data : {
@@ -440,12 +461,13 @@ const SEASON = () => {
                     season:season?parseInt(season):-1,
                     episode:-1,
                     id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,posters:getImageData.posters} } });
+                }, data:{id:getImageData.id,posters:getImageData.posters},
+                        chunking:false,
+                        chunking_index:0  } });
             }
             return {...getImageData}
         } 
 
-        if(!images){
             const fetched = await fetchImage({
                 variables : {
                 type:"tv",
@@ -462,18 +484,17 @@ const SEASON = () => {
                 const getImageData = await freshFetch()
                 setImages(() => ({...getImageData}))
             }
-        }
+        
 
     }catch(error){
-        console.log(error)
-        if(!images){
+        // console.log(error)
             fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/images?api_key=${process.env.REACT_APP_api_key}`)
             .then(data => data.json())
             .then(data => setImages(() => ({...data})))
-        }
+        
 
     }
-    },[fetchImage, id, season, mutateInsertImage, images]);
+    },[fetchImage, id, season, mutateInsertImage]);
 
     const fetchTV = useCallback(async() => {
 
@@ -527,12 +548,22 @@ const SEASON = () => {
                 const chunks = chunkArray(cast_all_results, 100);
                 for (let i = 0; i < chunks.length; i++) {
                     mutateInsertCredits({
-                        variables: {cast:chunks[i],id:id?parseInt(id):0},
+                        variables: {
+                            cast:chunks[i],
+                            id:id?parseInt(id):0,
+                            chunking:true,
+                            chunking_index:i
+                        },
                     });
                 }
             }else{
                 mutateInsertCredits({
-                    variables: {cast:cast_all_results,id:id?parseInt(id):0},
+                    variables: {
+                        cast:cast_all_results,
+                        id:id?parseInt(id):0,
+                        chunking:false,
+                        chunking_index:0
+                    },
                 });
             }
             let crew_all_results = [...credits_data.crew]
@@ -540,18 +571,27 @@ const SEASON = () => {
                 const chunks = chunkArray(crew_all_results, 100);
                 for (let i = 0; i < chunks.length; i++) {
                     mutateInsertCredits({
-                        variables: {crew:chunks[i],id:id?parseInt(id):0},
+                        variables: {
+                            crew:chunks[i],
+                            id:id?parseInt(id):0,
+                            chunking:true,
+                            chunking_index:i                        
+                        },
                     });
                 }
             }else{
                 mutateInsertCredits({
-                    variables: {crew:crew_all_results,id:id?parseInt(id):0},
+                    variables: {
+                        crew:crew_all_results,
+                        id:id?parseInt(id):0,
+                        chunking:false,
+                        chunking_index:0                    
+                    },
                 });
             }
             return {...credits_data}
         } 
 
-        if(!credits){
             const current_date = new Date().toISOString().split("T")[0]
             const fetched = await fetchCreditsData({
                 variables : { id:id?parseInt(id):0, date:current_date }})
@@ -563,9 +603,9 @@ const SEASON = () => {
                 const credits = await freshFetch()
                 setCredit(() => ({...credits}));
             }
-        }
+        
 
-    },[fetchCreditsData, id, season, mutateInsertCredits, credits]);
+    },[fetchCreditsData, id, season, mutateInsertCredits]);
 
     useEffect(() => {
         graphImages()

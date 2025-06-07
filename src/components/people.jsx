@@ -80,6 +80,8 @@ const PEOPLE = () => {
             $total_pages:Int!,
             $total_results:Int!,
             $data :TRACK_PERSON_DATA_INPUT,
+            $chunking:Boolean!
+            $chunking_index:Int!
             $type:String!,
             $hashedKey:String!
         ) {
@@ -89,6 +91,8 @@ const PEOPLE = () => {
                 total_pages:$total_pages,
                 total_results:$total_results,
                 data:$data,
+                chunking:$chunking
+                chunking_index:$chunking_index
                 type:$type,
                 hashedKey:$hashedKey
             ) {
@@ -106,7 +110,7 @@ const PEOPLE = () => {
                     console.log("person inserting already started...")
                 // console.log("Movies successfully inserted into MySQL:", data.addPerson.message);
                 fetchedPersonData.refetch()
-                .then(status => console.log(status,"status"))
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addPerson.message, data.addPerson.error);
             }
@@ -149,6 +153,7 @@ const PEOPLE = () => {
                     `${process.env.REACT_APP_movie_db}${temp_people[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_people[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
                 );
                 const data = await response.json();
+                console.log(data)
 
                 if (data.results.length > 0) {
                     let peopleArray = [...data.results]
@@ -199,8 +204,14 @@ const PEOPLE = () => {
                         return result;
                     }
                     let all_results = [...temp_people[key].results]
-                    if(all_results.length > 100){
+
+                    // Remove duplicates by id (optional, if your data can have duplicates)
+                    const uniqueResults = Array.from(
+                        new Map(all_results.map(item => [item.id, item])).values()
+                    );
+                    if(uniqueResults.length > 100){
                         const chunks = chunkArray(all_results, 100);
+                        console.log("chunking...")
                         for (let i = 0; i < chunks.length; i++) {
                             await mutateInsertPerson({
                                 variables: {
@@ -208,6 +219,8 @@ const PEOPLE = () => {
                                     results: chunks[i],
                                     total_pages: data.total_pages,
                                     total_results: data.total_results,
+                                    chunking:true,
+                                    chunking_index:i,
                                     data: {
                                         genre: genreId,
                                         region: regionId,
@@ -229,6 +242,8 @@ const PEOPLE = () => {
                                 results: all_results,
                                 total_pages: data.total_pages,
                                 total_results: data.total_results,
+                                chunking:false,
+                                chunking_index:0,
                                 data: {
                                     genre: genreId,
                                     region: regionId,
@@ -261,9 +276,10 @@ const PEOPLE = () => {
                     hashedKey 
                 }})
 
+                console.log(fetched.data)
                 if (fetched.data) {
                     console.log("Using cached data:", fetched.data);
-                    if(fetched.data.people.success && fetched.data.people.results &&  fetched.data.people.results.length < 20){
+                    if(fetched.data.people.success && fetched.data.people.results &&  fetched.data.people.results.length < 15){
                         console.log("less items")
                         return await freshFetch()
                     }else if(fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
@@ -299,6 +315,7 @@ const PEOPLE = () => {
                     }
 
                 } else {
+                    console.log("nothing")
                     return await freshFetch()
                 }
             }

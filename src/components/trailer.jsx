@@ -28,7 +28,10 @@ const TRAILER = () => {
     },[])
 
     useLayoutEffect(() => {
-        return () => setVideo(true)
+        setVideo(true)
+        return () => {
+            setVideo(false)
+        }
     },[])
     const fetchVideo = useQuery(gql`
         query Video (

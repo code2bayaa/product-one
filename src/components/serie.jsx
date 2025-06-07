@@ -277,6 +277,7 @@ const SERIE = () => {
                 vote_average
                 vote_count
                 message
+                success
             }
         }
     `
@@ -542,12 +543,7 @@ const SERIE = () => {
             const fetched = await fetchSingleTV({
                 variables : { id }})
             console.log(fetched)
-            if (fetched.data && fetched.data.singleTV.first_air_date === null) {
-                console.log("first time...")
-                const tv = await freshSingleFetch()
-                console.log(tv)
-                setSerie(() => ({...tv}));
-            }else if(fetched.data && fetched.data.singleTV.success){
+            if(fetched.data && fetched.data.singleTV.success){
                 console.log("Using cached data:", fetched.data);
                 setSerie(() => ({...fetched.data.singleTV}));
             }else {
@@ -699,11 +695,11 @@ const SERIE = () => {
                                 }
                                 <h3 style={{color:"#ffd800"}}>{serie.in_production ? "airing" : "ended"}</h3>
                                 <h3 style={{color:"#ffd800"}}>latest episode</h3>
-                                <span>{serie.last_episode_to_air.name} || {serie.last_episode_to_air.air_date} || {serie.last_episode_to_air.season_number} || {serie.last_episode_to_air.episode_number}</span>
+                                <span>{serie.last_episode_to_air?.name} || {serie.last_episode_to_air?.air_date} || {serie.last_episode_to_air?.season_number} || {serie.last_episode_to_air?.episode_number}</span>
                                 <h3>seasons || {serie.number_of_seasons}</h3>
                                 <h3>episodes || {serie.number_of_episodes}</h3>
                                 <h3 style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {serie.vote_average && (parseFloat(serie.vote_average)).toFixed(1)}</h3>
-                                { serie.episode_run_time.length > 0 && <h4>{ (serie.episode_run_time[0] > 60) ? (Math.floor(serie.episode_run_time[0] / 60)) + "h " + (serie.episode_run_time[0] % 60) + "min" : serie.episode_run_time[0] + "min" }</h4>}
+                                { serie.episode_run_time && serie.episode_run_time.length > 0 && <h4>{ (serie.episode_run_time[0] > 60) ? (Math.floor(serie.episode_run_time[0] / 60)) + "h " + (serie.episode_run_time[0] % 60) + "min" : serie.episode_run_time[0] + "min" }</h4>}
                                 <article>
                                     {serie.overview}
                                 </article>

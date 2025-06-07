@@ -253,6 +253,9 @@ const PERSON = () => {
                 place_of_birth
                 popularity 
                 profile_path 
+                success
+                message
+                error
             }
         }
     `
@@ -309,11 +312,7 @@ const PERSON = () => {
             const fetched = await fetchPersonData({
                 variables : { id }})
             console.log(fetched)
-            if (fetched.data && fetched.data.person.runtime === null) {
-                console.log("first time...")
-                const movie = await freshFetch()
-                return setPerson(() => ({...movie}));
-            }else if(fetched.data && fetched.data.person.success){
+            if(fetched.data && fetched.data.person.success){
                 console.log("Using cached data:", fetched.data);
                 return setPerson(() => ({...fetched.data.person}));
             }else {

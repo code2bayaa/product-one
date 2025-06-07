@@ -13,7 +13,6 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
             console.log("destroying...")
             const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
                 method: "POST",
-                credentials: "include",
                 body:JSON.stringify({
                     id,
                     index
@@ -254,7 +253,6 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
         setOpen(false)
         const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
             method: "POST",
-            credentials: "include",
             body:JSON.stringify({
                 id
             }),

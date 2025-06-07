@@ -661,7 +661,7 @@ const MOVIE = () => {
             <div className="w-[100%] duration-150 min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
                 {
                     windowWidth > 800 ? 
-                    <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                    <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                         <NAVBAR/>
                     </div>
                     :
@@ -671,8 +671,8 @@ const MOVIE = () => {
             credits && movie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[auto]":"w-[100%] h-[300px]"}>
-                                <PICTURE picture={movie.poster_path} classes={"shadow-lg shadow-blue-500/50"} />
+                            <div className={windowWidth > 800 ? "w-[37%] h-[auto]":"w-[100%] h-[auto]"}>
+                                <PICTURE picture={movie.poster_path} classes={"shadow-lg h-[70%] shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
                                 <h1 className="text-[30px]">{movie.original_title || movie.title}</h1>

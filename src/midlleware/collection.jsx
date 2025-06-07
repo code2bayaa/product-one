@@ -109,7 +109,7 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
                     showConfirmButton: false,
                     timer: 2500
                 })
-            }else{
+            }else if(res_data.message === "day for movie credits ended"){
                 Swal.fire({
                     icon: 'error',
                     title: 'rent elapsed',

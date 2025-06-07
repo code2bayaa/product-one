@@ -1,12 +1,12 @@
 import NAVBAR from "./nav";
 import MOBILE from "./mobileBar";
-import { useSearchParams, useLocation } from "react-router-dom";
+// import { useSearchParams, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const CREDITS = () => {
 
-    const location = useLocation();
-    const [searchParams] = useSearchParams();
+    // const location = useLocation();
+    // const [searchParams] = useSearchParams();
     const [windowWidth,setWindowWidth] = useState(0)
 
     useEffect(() => {
@@ -40,36 +40,60 @@ const CREDITS = () => {
     }, []);
 
     useEffect(() => {
-        // const query = searchParams.get("query");
-        // const url = `${location.pathname}?${searchParams.toString()}`;
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.crossorigin = "anonymous";
+        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+        inlineScript.async = true
+        // Create the external script
+        // const externalScript = document.createElement("script");
+        // externalScript.type = "text/javascript";
+        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
 
-        const scriptElement = document.querySelector('script[src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"]');
-        // if (query) {
-        //     document.title = `Empire | ${query}`;
-        // } else {
-        //     document.title = "Empire";
-        // }
-        function handleScriptLoad() {
-            try{
-                if(window.adsbygoogle){
-                    console.log("pushing ads")
-                    window.adsbygoogle.push({});
-                }else{
-                    scriptElement.addEventListener("load",handleScriptLoad)
-                    console.log("adsbygoogle not defined, waiting for script to load");
-                }
-            }catch(error){
-                console.error("Error loading script:", error);
-            }
-        }
-        handleScriptLoad()
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        // document.body.appendChild(externalScript);
 
+        // Cleanup on unmount
         return () => {
-            if(scriptElement){
-                scriptElement.removeEventListener("load", handleScriptLoad);
-            }
-        }
-    }, [searchParams,location]);
+            document.body.removeChild(inlineScript);
+            // document.body.removeChild(externalScript);
+        };
+    }, []);
+
+//     useEffect(() => {
+//         // const query = searchParams.get("query");
+//         // const url = `${location.pathname}?${searchParams.toString()}`;
+// {/* <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+//      crossorigin="anonymous"></script> */}
+//         const scriptElement = document.querySelector('script[src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"]');
+//         // if (query) {
+//         //     document.title = `Empire | ${query}`;
+//         // } else {
+//         //     document.title = "Empire";
+//         // }
+//         function handleScriptLoad() {
+//             try{
+//                 if(window.adsbygoogle){
+//                     console.log("pushing ads")
+//                     window.adsbygoogle.push({});
+//                 }else{
+//                     scriptElement.addEventListener("load",handleScriptLoad)
+//                     console.log("adsbygoogle not defined, waiting for script to load");
+//                 }
+//             }catch(error){
+//                 console.error("Error loading script:", error);
+//             }
+//         }
+//         handleScriptLoad()
+
+//         return () => {
+//             if(scriptElement){
+//                 scriptElement.removeEventListener("load", handleScriptLoad);
+//             }
+//         }
+//     }, [searchParams,location]);
     return (
         <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {

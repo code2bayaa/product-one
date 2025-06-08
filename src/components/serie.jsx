@@ -567,7 +567,6 @@ const SERIE = () => {
             return {...data}
         } 
 
-        if(!serie){
             const fetched = await fetchSingleTV({
                 variables : { id }})
             console.log(fetched)
@@ -578,9 +577,9 @@ const SERIE = () => {
                 const tv = await freshSingleFetch()
                 setSerie(() => ({...tv}));
             }
-        }
+        
 
-    },[fetchSingleTV,id,mutateInsertTV,serie])
+    },[fetchSingleTV,id,mutateInsertTV])
 
     const fetchCredits = useCallback(async() => {
         try{
@@ -779,7 +778,7 @@ const SERIE = () => {
                                                 className={windowWidth > 800 ? "min-w-[24%] h-[100%] border-[2px] m-[0.5%] hover:contrast-150":"min-w-[98%] border-[2px] h-[100%] m-[0.5%] hover:contrast-150"}
                                             >
                                                 <p>{name}</p>
-                                                <p>{season_number} || episodes ({episode_count})</p>
+                                                <p>season {season_number} || episode(s) ({episode_count})</p>
                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {(parseFloat(vote_average)).toFixed(1)}</p>
                                             </NavLink>
                                         )

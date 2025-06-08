@@ -104,8 +104,8 @@ const EPISODE = () => {
             addImage(
                 meta_data: $meta_data
                 data: $data
-                $chunking:Boolean!
-                $chunking_index:Int!                
+                chunking:$chunking
+                chunking_index:$chunking_index                
             ){
                 data {
                     id

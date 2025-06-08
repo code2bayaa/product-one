@@ -164,6 +164,8 @@ const MOVIES = () => {
         yearId=0
     }) => {
         
+        const downloaded = []
+
         const fetchMoviesFromAPI = async (actual_index) => {
 
             const current_date = new Date().toISOString().split("T")[0]
@@ -192,6 +194,7 @@ const MOVIES = () => {
                 const data = await response.json();
 
                 console.log(data)
+                
                 if (data.results.length > 0) {
                     temp_movies[key].results = [
                         ...temp_movies[key].results,
@@ -339,6 +342,9 @@ const MOVIES = () => {
                     hashedKey
                 }})
                 console.log(fetched)
+                if(downloaded.includes(actual_index))
+                    return true
+                downloaded.push(actual_index)
                 if (fetched.data) {
                     // console.log("Using cached data:", fetched.data);
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
@@ -383,6 +389,7 @@ const MOVIES = () => {
                 } else {
                     return await freshFetch()
                 }
+                
             // }
 
         };

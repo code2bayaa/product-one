@@ -130,7 +130,8 @@ const PEOPLE = () => {
         languageId='',
         yearId=0
     }) => {
-        
+        console.log("mutating...")
+        const downloaded = []
         const fetchPersonFromAPI = async (actual_index) => {
 
             const current_date = new Date().toISOString().split("T")[0]
@@ -145,6 +146,7 @@ const PEOPLE = () => {
             if (page) {
                 temp_people[key].page = page;
             }
+            
             const hashed = temp_people[key].page + genreId + regionId + languageId + yearId + actual_index + "person"
             const hashedKey = CryptoJS.SHA256(hashed).toString();
             async function freshFetch(){
@@ -154,6 +156,7 @@ const PEOPLE = () => {
                 );
                 const data = await response.json();
                 console.log(data)
+                
 
                 if (data.results.length > 0) {
                     let peopleArray = [...data.results]
@@ -263,6 +266,9 @@ const PEOPLE = () => {
                 return false
             }
 
+            if(downloaded.includes(actual_index))
+                return true
+            downloaded.push(actual_index)
             if(adjustable || jobId !== "Actor" || genreId || regionId || languageId || yearId){
                 const fetched = await fetchPerson({
                     variables : {
@@ -319,6 +325,7 @@ const PEOPLE = () => {
                     return await freshFetch()
                 }
             }
+            
         };
         runContent.forEach((index) => {
             fetchPersonFromAPI(index)
@@ -350,7 +357,7 @@ const PEOPLE = () => {
         <div className="w-[100%] min-h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
+                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                     <NAVBAR/>
                 </div>
                 :

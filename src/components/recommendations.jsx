@@ -62,7 +62,7 @@ const RECOMMENDATIONS = () => {
             }
         }
     `
-    const [fetchMovie,fetchedMovieData] = useLazyQuery(FETCH_MOVIE_QUERY,{
+    const [fetchMovie] = useLazyQuery(FETCH_MOVIE_QUERY,{
         notifyOnNetworkStatusChange: true,
     });
 
@@ -96,8 +96,8 @@ const RECOMMENDATIONS = () => {
                 if(data.addRecommendedMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movie successfully inserted into MySQL:", data.addRecommendedMovies.message);
-                fetchedMovieData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMovieData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addRecommendedMovies.message, data.addRecommendedMovies.error);
             }

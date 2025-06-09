@@ -183,6 +183,14 @@ const NAVBAR = () => {
                 >
                     earn credit
                 </NavLink>
+                <NavLink
+                    to="/subscribe"
+                    className={({ isActive, isPending }) =>
+                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                    }
+                >
+                    buy credits
+                </NavLink>
                 {/* <NavLink
                     to="/reactions"
                     className={({ isActive, isPending }) =>
@@ -213,14 +221,7 @@ const NAVBAR = () => {
                     </>
                     :
                     <>
-                        <NavLink
-                            to="/subscribe"
-                            className={({ isActive, isPending }) =>
-                                isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
-                            }
-                        >
-                            buy credits
-                        </NavLink>
+
                         <NavLink
                             to="/library"
                             className={({ isActive, isPending }) =>

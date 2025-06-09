@@ -67,7 +67,7 @@ const DISNEY = () => {
             }
         }
     `
-    const [fetchMovies,fetchedMoviesData] = useLazyQuery(FETCH_MOVIES_QUERY,{
+    const [fetchMovies] = useLazyQuery(FETCH_MOVIES_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
         // variables,
@@ -104,7 +104,7 @@ const DISNEY = () => {
                 if(data.addMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movies successfully inserted into MySQL:", data.addMovies.message);
-                fetchedMoviesData.refetch()
+                // fetchedMoviesData.refetch()
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addMovies.message, data.addMovies.error);
             }
@@ -304,7 +304,7 @@ const DISNEY = () => {
                             <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,original_name,name,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

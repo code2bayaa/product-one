@@ -74,6 +74,7 @@ const SUBSCRIBE = () => {
             const {status, data, message} = await res.json()
 
             if(!status || data.ResponseCode !== "0"){
+                setLoading({...loading,mpesa:false})
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',

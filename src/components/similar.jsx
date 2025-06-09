@@ -62,7 +62,7 @@ const SIMILAR = () => {
             }
         }
     `
-    const [fetchMovie,fetchedMovieData] = useLazyQuery(FETCH_MOVIE_QUERY,{
+    const [fetchMovie] = useLazyQuery(FETCH_MOVIE_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
         // variables,
@@ -99,8 +99,8 @@ const SIMILAR = () => {
                 if(data.addSimilarMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movie successfully inserted into MySQL:", data.addSimilarMovies.message);
-                fetchedMovieData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMovieData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addSimilarMovies.message, data.addSimilarMovies.error);
             }

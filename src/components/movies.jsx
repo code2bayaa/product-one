@@ -68,7 +68,7 @@ const MOVIES = () => {
             }
         }
     `
-    const [fetchMovies,fetchedMoviesData] = useLazyQuery(FETCH_MOVIES_QUERY,{
+    const [fetchMovies] = useLazyQuery(FETCH_MOVIES_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
         // variables,
@@ -105,8 +105,8 @@ const MOVIES = () => {
                 if(data.addMovies.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movies successfully inserted into MySQL:", data.addMovies.message);
-                fetchedMoviesData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMoviesData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addMovies.message, data.addMovies.error);
             }
@@ -164,7 +164,7 @@ const MOVIES = () => {
         yearId=0
     }) => {
         
-        const downloaded = []
+        // const downloaded = []
 
         const fetchMoviesFromAPI = async (actual_index) => {
 
@@ -272,6 +272,7 @@ const MOVIES = () => {
 
                     // console.log(writtenData,"written")
 
+                    console.log(actual_index,"actual_index")
                     // Insert the fetched data into MySQL using the mutation
                     mutateInsertMovies({
                         variables: {
@@ -326,7 +327,8 @@ const MOVIES = () => {
             // console.log(fetchedMoviesData)
 
             
-                console.log(genreId,"genreId")
+                // console.log(genreId,"genreId")
+            if(adjustable || genreId || regionId || languageId || yearId){
                 const fetched = await fetchMovies({
                     variables : {
                     page: temp_movies[key].page,
@@ -342,18 +344,18 @@ const MOVIES = () => {
                     hashedKey
                 }})
                 console.log(fetched)
-                if(downloaded.includes(actual_index))
-                    return true
-                downloaded.push(actual_index)
+                // if(downloaded.includes(actual_index))
+                //     return true
+                
                 if (fetched.data) {
                     // console.log("Using cached data:", fetched.data);
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
-                        // console.log("less items")
+                        console.log("less items")
                         // if(!movies)
                             return await freshFetch()
                         // return true
                     }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
-                        // console.log("no records found")
+                        console.log("no records found")
                         // if(!movies)
                             return await freshFetch()
                         // return true
@@ -387,17 +389,21 @@ const MOVIES = () => {
                     }
 
                 } else {
+                    console.log("nothing")
                     return await freshFetch()
                 }
                 
-            // }
+            }
 
         };
-        if(adjustable || genreId || regionId || languageId || yearId){
-            runContent.forEach((index) => {
+        // console.log(downloaded)
+        
+
+        
+        runContent.forEach((index) => {
                 fetchMoviesFromAPI(index)
                 .then(status => {
-                    // if(!status){
+                    if(!status){
                     //     Swal.fire({
                     //         title:"internet connection error",
                     //         text: "Please try again.",
@@ -405,10 +411,9 @@ const MOVIES = () => {
                     //         confirmButtonText: "OK",
                             
                     //     })
-                    // }
+                    }
                 })
-            })
-        }
+        })        
     },[fetchMovies,mutateInsertMovies]);
 
     useEffect(() => {
@@ -488,7 +493,7 @@ const MOVIES = () => {
                             <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                        <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

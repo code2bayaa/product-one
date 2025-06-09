@@ -800,14 +800,14 @@ const EPISODE = () => {
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&
-                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
+                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
                                 <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className="w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
+                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":"w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -824,14 +824,14 @@ const EPISODE = () => {
                         }
                         {
                             credits.crew && credits.crew.length > 0 &&
-                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
+                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
                                 <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.crew.map(({profile_path,popularity,job,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className="max-w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
+                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":"w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -848,14 +848,14 @@ const EPISODE = () => {
                         }
                         {
                             credits.guest_stars && credits.guest_stars.length > 0 &&
-                            <div className="w-[80%] h-[420px] mx-[10%] my-[2%]">
+                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>GUEST STARS</h1>
                                 <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.guest_stars.map(({profile_path,popularity,character,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className="max-w-[24%] h-[100%] m-[0.5%] hover:contrast-150">
+                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":"w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

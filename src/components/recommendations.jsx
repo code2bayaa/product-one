@@ -214,7 +214,7 @@ const RECOMMENDATIONS = () => {
                             </NavLink>
                         </div>
                     </div>
-                        <div className="w-[80%] movie-scene min-h-[320px] mx-[10%] my-[2%]">
+                        <div className={windowWidth > 800 ? "w-[90%] movie-scene min-h-[320px] mx-[5%] my-[2%]":"w-[100%] movie-scene min-h-[320px] my-[2%]"}>
 
                             <h1 style={{textAlign:"center",textDecoration:"underline"}}>RECOMMENDED { stream === "movies" ? "MOVIES" : "TV"}</h1>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={recommendations?.page} index={"recommendation"} total_pages={recommendations?.total_pages}/>
@@ -223,7 +223,7 @@ const RECOMMENDATIONS = () => {
                                 
                                 {
                                     recommendations.results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={`/${stream}/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                        <NavLink key={movie_key} to={`/${stream}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

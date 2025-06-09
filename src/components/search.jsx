@@ -93,14 +93,14 @@ const SEARCH = () => {
                 <div className="w-[100%] h-[auto] flex flex-col-reverse items-center justify-center">
                     {
                         search_content ? search_content.map(({index,results,page,total_pages,api},node) =>
-                            <div className="w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" key={node}>
+                            <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                                 <h1 className="my-t-[5%]">{index}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                 <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages || 0}/>
                                 <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
-                                            <NavLink key={search_key} to={`/${index}/${id}`} className="w-[24%] h-[100%] m-[0.5%] hover:skew-4 hover:contrast-150">
+                                            <NavLink key={search_key} to={`/${index}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150": "w-[50%] h-[100%] hover:skew-4 hover:contrast-150"}>
 
                                                 <div key={search_key} className="w-[100%] h-[100%]">
                                                     <PICTURE picture={poster_path || backdrop_path || profile_path} />

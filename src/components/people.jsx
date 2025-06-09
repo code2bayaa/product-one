@@ -66,6 +66,8 @@ const PEOPLE = () => {
                 success
                 error
                 message
+                people_page
+                people_next
             }
         }
     `

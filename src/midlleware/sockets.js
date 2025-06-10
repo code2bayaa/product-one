@@ -1,6 +1,13 @@
 import { io } from "socket.io-client"
 
-
+console.log(
+        process.env.REACT_APP_environment === "development"
+    ? process.env.REACT_APP_socket_api_dev :
+        process.env.REACT_APP_sandbox === "development"
+        ? process.env.REACT_APP_socket_api_sandbox
+        :
+        process.env.REACT_APP_socket_api_live
+)
 const SOCKETS = new (function(){
     this.socketModule = null
     this.connect = async() => {

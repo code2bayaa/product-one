@@ -109,8 +109,10 @@ const SUBSCRIBE = () => {
                         })
                         setLoading({...loading,mpesa:false})
                         modalRef.current?.close()
+                        socket.emit("destroy", data.MerchantRequestID);
                         return null
                     }
+                    socket.emit("destroy", data.MerchantRequestID);
                     //include app pay
                     runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
                     

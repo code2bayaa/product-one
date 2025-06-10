@@ -27,6 +27,7 @@ import NETFLIX from './components/netflix.jsx';
 import DISNEY from './components/disney.jsx';
 import CREDITS from './components/credits.jsx';
 import SUBSCRIBE from './components/subscribe.jsx';
+import TESTSOCKETS from './components/test.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
 
@@ -159,6 +160,11 @@ const router = createBrowserRouter([
   {
     path:"/subscribe",
     element:<SUBSCRIBE/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/test",
+    element:<TESTSOCKETS/>,
     elementError:<ERROR/>
   }
 ])

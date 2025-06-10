@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import SOCKETS from "../midlleware/sockets";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import Swal from "sweetalert2";
+import {useNavigate} from "react-router-dom"
 
 const SUBSCRIBE = () => {
 
@@ -13,6 +14,7 @@ const SUBSCRIBE = () => {
     const [credits, setCredits] = useState(1500);
     const modalRef = useRef(null);
     const [usd, setUsd] = useState(1);
+    const router = useNavigate()
    const initialOptions = {
 
         "client-id":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_paypal_sandbox_client: process.env.REACT_APP_paypal_live_client,
@@ -64,7 +66,8 @@ const SUBSCRIBE = () => {
                 credentials: "include",
                 method:"POST",
                 body : JSON.stringify({
-                    total:Math.ceil(usd * 100)
+                    // total:Math.ceil(usd * 100)
+                    total:1.00 //testing
                 }),
                 headers: {
                     'Content-Type': 'application/json', // Indicates the body is JSON
@@ -93,27 +96,27 @@ const SUBSCRIBE = () => {
 
             SOCKETS.connect().then(socket => {
                 socket.emit("user", data.MerchantRequestID)
+                socket.on("callback", async data => {
+                    //check if payment was cancelled
+                    console.log(data)
+                    if(data.ResultCode !== 0){
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        })
+                        setLoading({...loading,mpesa:false})
+                        modalRef.current?.close()
+                        return null
+                    }
+                    //include app pay
+                    runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
+                    
+                })
             })
 
-            SOCKETS.on("callback", async data => {
-                //check if payment was cancelled
-                console.log(data)
-                if(data.ResultCode !== 0){
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: message,
-                        showConfirmButton: false,
-                        timer: 2500
-                    })
-                    setLoading({...loading,mpesa:false})
-                    modalRef.current?.close()
-                    return null
-                }
-                //include app pay
-                runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
-                
-            })
         }catch(error){
             console.log(error,error.message,"error")
             setLoading({...loading,mpesa:false})
@@ -122,6 +125,7 @@ const SUBSCRIBE = () => {
     }
 
     const runPurchase = async({data,payment}) => {
+        console.log("running purchase...")
         //insert payment
         const res = await fetch(process.env.REACT_APP_payment,{
             credentials: "include",
@@ -136,7 +140,7 @@ const SUBSCRIBE = () => {
         });
 
         const {status,message} = await res.json()
-        console.log(status,"status")
+        console.log(status,"status",message,"message")
         if(!status){
             Swal.fire({
                 icon: 'error',
@@ -147,6 +151,7 @@ const SUBSCRIBE = () => {
             })
         }
 
+        console.log("include credits")
         //include credits
         const response = await fetch(process.env.REACT_APP_add_user_credits,{
             credentials: "include",
@@ -172,9 +177,9 @@ const SUBSCRIBE = () => {
             })
         }
 
-        setLoading({...loading,mpesa:false})
-        setLoading({...loading,paypal:false})
+        setLoading({...loading,mpesa:false,paypal:false})
         modalRef.current?.close()
+        router("/")
     }
     const payWithPayPal = async() => {
         setLoading({...loading,paypal:true})
@@ -358,6 +363,7 @@ const SUBSCRIBE = () => {
                                 }} 
                                 onApprove={async (data, actions) => {
                                     try {
+                                        // console.log(data,"approve data")
                                         const response = await fetch(process.env.REACT_APP_init_paypal_capture,
                                             {
                                                 method: "POST",
@@ -365,12 +371,13 @@ const SUBSCRIBE = () => {
                                                     "Content-Type": "application/json",
                                                 },
                                                 body : JSON.stringify({
-                                                    id:data.orderID
+                                                    orderID:data.orderID
                                                 })
 
                                             });
                                             
                                         const orderData = await response.json();
+                                        // console.log(orderData,"approve order data")
 
                                         const errorDetail = orderData?.details?.[0];
                                         if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
@@ -381,7 +388,7 @@ const SUBSCRIBE = () => {
                                             );
 
                                         } else {
-                                            const transaction = orderData.purchase_units[0].payments.captures[0];
+                                            const transaction = orderData.jsonResponse.purchase_units[0].payments.captures[0];
                                                     
                                             runPurchase({success:`Transaction ${transaction.status}: ${transaction.id}`,payment:"paypal", data:{...orderData,app:"uko"}})
 

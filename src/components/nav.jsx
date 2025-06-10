@@ -36,11 +36,24 @@ const NAVBAR = () => {
     },[count])
 
     useEffect(() => {
+      async function authentication(){
+        const res = await fetch(api_url,{credentials: "include"})
+        const {status,message} = await res.json()
+        console.log(message)
+        if(status){
+            // router('/admin/reports')
+            setLoggedIn(true)
+        }
+      }
+      authentication()
+    },[api_url,setLoggedIn])
+
+    useEffect(() => {
         async function sumCredits(){
             if(loggedIn){
                 const res = await fetch(process.env.REACT_APP_check_user_credits,{credentials: "include"})
                 const {sum,message} = await res.json()
-                console.log(message)
+                console.log(message,sum)
                 //affordable for one movie | episode
                 if(sum){
                     setCoins(sum)
@@ -70,22 +83,6 @@ const NAVBAR = () => {
 
     },[setCoins,loggedIn])
 
-    useEffect(() => {
-      async function authentication(){
-        const res = await fetch(api_url,{credentials: "include"})
-        const {status,message} = await res.json()
-        console.log(message)
-        if(status){
-            // router('/admin/reports')
-            setLoggedIn(true)
-        }
-      }
-      authentication()
-    },[api_url,setLoggedIn])
-
-    // const signup = () => {
-    //     window.location.href = process.env.REACT_signup
-    // }
     const customSignout = async() => {
         try {
 

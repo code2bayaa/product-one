@@ -1,16 +1,66 @@
 import NAVBAR from "./nav";
-import {useEffect,useState} from "react"
+import {useEffect,useState,useCallback} from "react"
 import { useNavigate  } from "react-router-dom"
 import Swal from "sweetalert2";
 import MOBILE from "./mobileBar";
+import {jwtDecode} from 'jwt-decode';
 const SIGNIN = () => {
 
     const [loading, setLoading] = useState(false)
     const [form,setForm] = useState({username:"",password:""})
+    const [remember, setRemember] = useState(false);
+
     const router = useNavigate()
     const [windowWidth, setWindowWidth] = useState(0);
-    const api_url = process.env.REACT_APP_signin
 
+    const handleCredentialResponse = useCallback(async(response) => {
+      const {email,family_name,given_name,name,picture} = jwtDecode(response.credential);
+      localStorage.setItem("google",JSON.stringify({
+        email,
+        family_name,
+        given_name,
+        name,
+        picture
+      }))
+      // You can now send token or userObject to your backend for further processing
+      const res = await fetch(process.env.REACT_APP_google_signin, {
+          method: "POST",
+          credentials: "include",
+          body:JSON.stringify({
+            email,
+            remember
+          }),
+          headers: {
+            'Content-Type': 'application/json', // Indicates the body is JSON
+          },
+        });
+    
+        const {status, message} = await res.json()
+        if(!status){
+          Swal.fire("oops!",message,"error");
+          setLoading(false)
+          return null
+        }
+
+        console.log(message)
+        router("/");
+    },[router,remember])
+
+    useEffect(() => {
+      /* global google */
+      window.onload = () => {
+        google.accounts.id.initialize({
+          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+          auto_select: true, // Enables auto-signin
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("google-signin-btn"), // The container ID
+          { theme: "outline", size: "large" } // customization
+        );
+        google.accounts.id.prompt(); // Shows popup or auto signs in if remembered
+      };
+    }, [handleCredentialResponse]);
     // useEffect(() => {
 
     //   async function authentication(){
@@ -47,12 +97,13 @@ const SIGNIN = () => {
           setLoading(false)
           return null
         }
-        const response = await fetch(api_url, {
+        const response = await fetch(process.env.REACT_APP_signin, {
           method: "POST",
           credentials: "include",
           body:JSON.stringify({
             username:form.username,
-            password:form.password
+            password:form.password,
+            remember
           }),
           headers: {
             'Content-Type': 'application/json', // Indicates the body is JSON
@@ -84,45 +135,71 @@ const SIGNIN = () => {
                 :
                 <MOBILE/>
             }
-            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[auto]" }`}>
-                <img src="/image/footer3.png"  alt="https://late-developers.com" 
-                className={`w-[60%] mx-[20%]`}/>
-                <div style={{width:"100%",textAlign:"center",color:"#000",display:"grid",justifyItems:"center"}}>
-                    <div style={{width:"45%"}}>
-                        <form 
-                            onSubmit={(e) => handleSubmit(e)} style={{width:"100%"}}
-                        >
-                        <fieldset>
-                            <input
-                              type="email"
-                              placeholder="username"
-                              value={form.username}
-                              style={{width:"100%",height:"60px",borderBottom:"1px solid #ccc"}}
-                              name="username"
-                              onChange={(e) => setForm(() => ({...form, [e.target.name] : e.target.value}))}
-                            />
-                        </fieldset>
-                        <fieldset>
-                            <input
-                            type="password"
-                            placeholder="Password"
-                            value={form.password}
-                            style={{width:"100%",height:"60px",borderBottom:"1px solid #ccc"}}
-                            name="password"
-                            onChange={(e) => setForm(() => ({...form, [e.target.name]:e.target.value}))}
-                            />
-                        </fieldset>
-
-                        <button 
-                            type="submit"
-                            disabled={loading}
-                            style={{width:"50%",margin:"0.5%",height:"60px",background:"#000",color:"#fff"}}
+            <div className="flex flex-1 items-center w-[80%] ml-[20%] justify-center min-h-screen">
+                <div className="bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 flex flex-col items-center  w-[60%]">
+                    <img src="/image/footer3.png" alt="late developers https://late-developers.com" className="w-1/2 mx-auto mb-6" />
+                    <h2 className="text-2xl font-bold text-center text-[#18181c] mb-6">Sign in to your account</h2>
+                    <div className="w-full flex flex-col gap-4">
+                        {/* Google Sign-In */}
+                        <div className="flex flex-col items-center w-full mb-2">
+                            <div id="google-signin-btn" style={{ width: "100%", display: "flex", justifyContent: "center" }}></div>
+                            <div className="my-4 text-gray-400 text-sm">or</div>
+                        </div>
+                        {/* Email/Password Sign-In */}
+                        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+                            <div className="flex flex-row gap-2 w-full">
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={form.username}
+                                    name="username"
+                                    onChange={e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))}
+                                    className="flex-1 p-3 rounded border border-gray-300 focus:outline-none focus:border-[#ffd800] text-black"
+                                    autoComplete="username"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={form.password}
+                                    name="password"
+                                    onChange={e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))}
+                                    className="flex-1 p-3 rounded border border-gray-300 focus:outline-none focus:border-[#ffd800] text-black"
+                                    autoComplete="current-password"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between w-full mt-2">
+                                <label className="flex items-center gap-2 text-gray-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={remember}
+                                        onChange={() => setRemember(r => !r)}
+                                        className="accent-[#ffd800]"
+                                    />
+                                    Remember me
+                                </label>
+                                <a
+                                    type="button"
+                                    className="text-[#ffd800] hover:underline text-sm"
+                                    href = "https://app.late-developers.com/users/forgot"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    without
+                                    noreferrer
+                                >
+                                    Forgot password?
+                                </a>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full mt-4 py-3 rounded bg-[#18181c] text-white font-bold hover:bg-[#ffd800] hover:text-black transition"
                             >
-                            {loading ? "signing in...":"Login"}
-                        </button>
+                                {loading ? "Signing in..." : "Sign In"}
+                            </button>
                         </form>
                     </div>
                 </div>
+     
             </div>
         </div>
     )

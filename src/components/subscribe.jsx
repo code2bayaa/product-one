@@ -96,7 +96,7 @@ const SUBSCRIBE = () => {
 
             SOCKETS.connect().then(socket => {
                 socket.emit("user", data.MerchantRequestID)
-                socket.on("callback", async data => {
+                socket.on("callback", async({data}) => {
                     //check if payment was cancelled
                     console.log(data)
                     if(data.ResultCode !== 0){
@@ -112,6 +112,13 @@ const SUBSCRIBE = () => {
                         socket.emit("destroy", data.MerchantRequestID);
                         return null
                     }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'confirmed',
+                        text: "success",
+                        showConfirmButton: false,
+                        timer: 2500
+                    })
                     socket.emit("destroy", data.MerchantRequestID);
                     //include app pay
                     runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})

@@ -199,14 +199,13 @@ const NAVBAR = () => {
                 {
                     !loggedIn ? 
                     <>
-                        <NavLink
-                            to="/signin"                    
-                            className={({ isActive, isPending }) =>
-                                isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
-                            }
+                        <a
+                            href="/signin"                    
+                            className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            
                         >
                             sign in
-                        </NavLink>
+                        </a>
                         <a
                             href={`${linkUrl}`}
                             target="_blank"

@@ -714,7 +714,7 @@ const MOVIE = () => {
             credits && movie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[auto]":"w-[100%] h-[auto]"}>
+                            <div className={windowWidth > 800 ? "w-[37%] min-h-[70%]":"w-[100%] min-h-[70%]"}>
                                 <PICTURE picture={movie.poster_path} classes={"shadow-lg h-[70%] shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>

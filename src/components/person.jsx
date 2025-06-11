@@ -548,7 +548,7 @@ const PERSON = () => {
                     <div className="w-[100%]">
                         <div className="w-[90%] ml-[5%] h-[60%] text-justify justify-center items-center">
                             <div className="w-[40%] min-h-[300px] float-left">
-                                <PICTURE picture={person.profile_path} classes={"object-contain shadow-lg shadow-blue-500/50"} />
+                                <PICTURE picture={person.profile_path} classes={"object-contain h-[100%] shadow-lg shadow-blue-500/50"} />
                             </div>
 
                             <h1 className="text-[30px]">{person.name}</h1>

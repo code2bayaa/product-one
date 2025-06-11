@@ -797,8 +797,8 @@ const SERIE = () => {
                                     {
                                         credits.cast.map(({profile_path,roles,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:skew-4 hover:contrast-150"}>
-                                                <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
+                                                <div className="w-[100%] min-h-[100%]">
+                                                    <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover min-h-[70%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>

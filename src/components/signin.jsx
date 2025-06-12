@@ -183,8 +183,6 @@ const SIGNIN = () => {
                                     href = "https://app.late-developers.com/users/forgot"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    without
-                                    noreferrer
                                 >
                                     Forgot password?
                                 </a>

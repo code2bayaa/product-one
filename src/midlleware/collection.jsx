@@ -1,12 +1,21 @@
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
 
-const COLLECTIONS = ({index,token,quality,id,background,title}) => {
+const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) => {
 
     const [loading, setLoading] = useState(false);
     const [open,setOpen] = useState(false);
     const [URLS,setURLS] = useState(null);
+    const [rate,setRate] = useState(0);
     // const containerRef = useRef(null);
+
+    useEffect(() => {
+        // Check if the rate is a number and set it
+            const index = (Number(seeders)/Number(maxRate)) * 10
+            setRate(index);
+    }, [maxRate,seeders]);
 
     useEffect(() => {
         const destroySession = async() => {
@@ -214,6 +223,7 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
                     },
                     body:JSON.stringify({
                         id,
+                        index
                     })
                 })
                 const { error, message, newToken} = await response.json()
@@ -254,7 +264,8 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
         const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
             method: "POST",
             body:JSON.stringify({
-                id
+                id,
+                index
             }),
             headers: {
                 'Content-Type': 'application/json', // Indicates the body is JSON
@@ -285,6 +296,15 @@ const COLLECTIONS = ({index,token,quality,id,background,title}) => {
                 className="bg-[transparent] m-[1%] border-[2px] text-white w-[48%] h-[auto] text-[20px] font-bold"
             >
                 {quality}
+                {rate > 0 && (
+                    <span className="text-[#ffd800] ml-2">
+                        <FontAwesomeIcon icon={faStar}/> {rate.toFixed(1)}
+                    </span>
+                )}
+                <span className="text-[italic] ml-2">
+                    {`${size.replace("i","").toLowerCase()}`}
+                </span>
+                
             </button>
          {open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">

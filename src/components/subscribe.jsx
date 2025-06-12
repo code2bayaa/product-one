@@ -66,8 +66,8 @@ const SUBSCRIBE = () => {
                 credentials: "include",
                 method:"POST",
                 body : JSON.stringify({
-                    // total:Math.ceil(usd * 100)
-                    total:1.00 //testing
+                    total:Math.ceil(usd * 100)
+                    // total:1.00 //testing
                 }),
                 headers: {
                     'Content-Type': 'application/json', // Indicates the body is JSON

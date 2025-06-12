@@ -85,9 +85,10 @@ const PLAYER = () => {
                         })
                         const {status,message} = await res.json()
                         console.log(message)
-                        setPaid(status)
+                        
                         //affordable for one movie | episode
                         if(status){
+                            setPaid(status)
                             Swal.fire({
                                 icon: 'success',
                                 title: 'paid with credits',
@@ -151,9 +152,10 @@ const PLAYER = () => {
                         })
                         const {status,message} = await response.json()
                         console.log(message)
-                        setPaid(status)
+                        
                         //affordable for one movie | episode
                         if(status){
+                            setPaid(status)
                             Swal.fire({
                                 icon: 'success',
                                 title: 'paid with credits',
@@ -173,6 +175,8 @@ const PLAYER = () => {
     },[setPaid,type,id])
 
     useEffect(() => {
+        console.log("paid",paid)
+        console.log("type",type)
         if(paid && type === "mkv"){
             // setMKV(true)   
             async function runVLC() { 

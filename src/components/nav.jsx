@@ -202,7 +202,7 @@ const NAVBAR = () => {
                         <a
                             href="/signin"                    
                             className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
-                            
+                            rel="noreferrer"
                         >
                             sign in
                         </a>

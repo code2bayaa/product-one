@@ -71,7 +71,7 @@ const EMPIRE = () => {
                         scrollTrigger: {
                             trigger: divRef,
                             scroller:".home",
-                            start: "top 30%",
+                            start: windowWidth > 800 ? "top 30%" : "5% 50%",
                             toggleActions: "play none none none",
                             markers:false
                         },
@@ -98,7 +98,7 @@ const EMPIRE = () => {
                             scrollTrigger: {
                                 trigger: divRef,
                                 scroller:".home",
-                                start: "top 35%",
+                                start: windowWidth > 800 ? "top 35%" : "5% 55%",
                                 toggleActions: "play none none none",
                                 markers:false
                             },
@@ -107,7 +107,7 @@ const EMPIRE = () => {
                 })
             });
         })
-    },[])
+    },[windowWidth])
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);

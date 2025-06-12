@@ -13,6 +13,7 @@ const PLAY = () => {
     const [play, setPlay] = useState(null)
     // const [fetchedPlay, setFetchedPlay] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0)
+    const [maxRate, setMaxRate] = useState(0)
     // const [loading,setLoading] = useState(false)
 
     useEffect(() => {
@@ -97,6 +98,16 @@ const PLAY = () => {
             console.error("insert video Error:", error);
         },
     });
+
+    const cleanTokens = (tokens) => {
+        if(!tokens || tokens.length === 0) return []
+        return tokens.sort((a,b) => {
+            if(b.seeders > a.seeders){
+                setMaxRate(b.seeders)
+            }
+            return b.seeders - a.seeders    
+        },[])
+    }
 
     const fetchToken = useCallback(async() => {
 
@@ -190,7 +201,9 @@ const PLAY = () => {
                         const getToken = await fetchFresh()    
                         console.log("inserting...",getToken)
                         if(getToken && getToken.length > 0){
-                            setPlay(() => [...getToken])
+                            const cleanedTokens = cleanTokens(getToken)
+                            console.log("cleaned tokens",cleanedTokens)
+                            setPlay(() => [...cleanedTokens])
                             mutateUpdatePlay({ variables: {
                                 type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
                                 season:season ? parseInt(season) : -1,
@@ -205,7 +218,8 @@ const PLAY = () => {
                     }else{
                         //every other user --- most fetch
                         console.log("ordinarily...")
-                        setPlay(() => ([...fetchPlay.data?.play?.tokens]))
+                        const cleanedTokens = cleanTokens(fetchPlay.data?.play?.tokens)
+                        setPlay(() => ([...cleanedTokens]))
                         
                     }
 
@@ -268,7 +282,7 @@ const PLAY = () => {
 
     return (
         
-        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+        <div className={windowWidth > 800 ? "w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" : "w-[100%] h-[auto]  bg-cover bg-no-repeat bg-center text-white"} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
                     <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
@@ -277,16 +291,15 @@ const PLAY = () => {
                 :
                     <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] h-[auto] flex flex-col"}>
                 <h2 style={{fontSize:"180%",textAlign:"center"}}>COLLECTION</h2>
                 <h2 style={{fontSize:"130%",textAlign:"center",color:"#ffd800"}}>Play the Best Quality</h2>
-                <h2 style={{fontSize:"130%",textAlign:"center"}}>Ensure you have unallocated storage space for smooth streaming</h2>
             {
                 play && play.length > 0 ? 
                     <div className="w-[100%] h-[auto] flex flex-wrap flex-row justify-center items-center">
                         {
-                            play.map(({quality,title,token},index) => 
-                                <COLLECTIONS key={index} title={title} token={token} index={index} quality={quality} id={id} background={background}/>
+                            play.map(({quality,title,token,seeders,size},index) => 
+                                <COLLECTIONS key={index} size={size} seeders={seeders} maxRate={maxRate} title={title} token={token} index={index} quality={quality} id={id} background={background}/>
                             )
                         }
                     </div>

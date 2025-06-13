@@ -416,26 +416,33 @@ const MOVIE = () => {
                 if(backdrops_all_results.length > 100){
                     const chunks = chunkArray(backdrops_all_results, 100);
                     for (let i = 0; i < chunks.length; i++) {
-                        mutateInsertImage({ variables: { meta_data : {
-                            type:"movie",
-                            season:-1,
-                            episode:-1,
-                            id:id?parseInt(id):-1
-                        }, data:{id:getImageData.id,backdrops:chunks[i]},
-                            chunking:true,
-                            chunking_index:i
-                        } });
+                        mutateInsertImage({
+                            variables: {
+                                meta_data : {
+                                    type:"movie",
+                                    season:-1,
+                                    episode:-1,
+                                    id:id?parseInt(id):-1
+                                },
+                                data:{id:getImageData.id,backdrops:chunks[i]},
+                                chunking:true,
+                                chunking_index:i
+                            } 
+                        });
                     }
                 }else{
-                    mutateInsertImage({ variables: { meta_data : {
-                        type:"movie",
-                        season:-1,
-                        episode:-1,
-                        id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,backdrops:getImageData.backdrops,
-                        chunking:false,
-                        chunking_index:0
-                    } } });
+                    mutateInsertImage({ 
+                        variables: { 
+                            meta_data : {
+                                type:"movie",
+                                season:-1,
+                                episode:-1,
+                                id:id?parseInt(id):-1
+                            },
+                            data:{id:getImageData.id,backdrops:getImageData.backdrops},
+                            chunking:false,
+                            chunking_index:0
+                        } });
                 }
                 let logos_all_results = [...getImageData.logos]
                 if(logos_all_results.length > 100){
@@ -452,15 +459,18 @@ const MOVIE = () => {
                     } });
                     }
                 }else{
-                    mutateInsertImage({ variables: { meta_data : {
-                        type:"movie",
-                        season:-1,
-                        episode:-1,
-                        id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,logos:getImageData.logos,
+                    mutateInsertImage({ 
+                        variables: { 
+                            meta_data : {
+                                type:"movie",
+                                season:-1,
+                                episode:-1,
+                                id:id?parseInt(id):-1
+                            },
+                            data:{id:getImageData.id,logos:getImageData.logos},
                             chunking:false,
-                            chunking_index:0                       
-                    } } });
+                            chunking_index:0
+                        } });
                 }
                 let posters_all_results = [...getImageData.posters]
                 if(posters_all_results.length > 100){
@@ -477,15 +487,18 @@ const MOVIE = () => {
                     } });
                     }
                 }else{
-                    mutateInsertImage({ variables: { meta_data : {
-                        type:"movie",
-                        season:-1,
-                        episode:-1,
-                        id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,posters:getImageData.posters,
+                    mutateInsertImage({ 
+                        variables: { 
+                            meta_data : {
+                                type:"movie",
+                                season:-1,
+                                episode:-1,
+                                id:id?parseInt(id):-1
+                            },
+                            data:{id:getImageData.id,posters:getImageData.posters},
                             chunking:false,
-                            chunking_index:0                        
-                    } } });
+                            chunking_index:0
+                        } });
                 }
                 return {...getImageData}
             } 

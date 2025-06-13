@@ -101,12 +101,12 @@ const PLAY = () => {
 
     const cleanTokens = (tokens) => {
         if(!tokens || tokens.length === 0) return []
-        return tokens.sort((a,b) => {
-            if(b.seeders > a.seeders){
-                setMaxRate(b.seeders)
-            }
-            return b.seeders - a.seeders    
-        },[])
+        // Sort tokens by seeders descending, but do NOT try to set state inside sort!
+        const sorted = [...tokens].sort((a, b) => b.seeders - a.seeders);
+        if (sorted.length > 0) {
+            setMaxRate(sorted[0].seeders);
+        }
+        return sorted;
     }
 
     const fetchToken = useCallback(async() => {

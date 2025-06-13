@@ -29,10 +29,7 @@ const TRAILER = () => {
 
     useLayoutEffect(() => {
         setVideo(true)
-        return () => {
-            setVideo(false)
-        }
-    },[])
+    },[videos])
     const fetchVideo = useQuery(gql`
         query Video (
             $type: String!
@@ -243,7 +240,7 @@ const TRAILER = () => {
                                         {/* {console.log(key,"key")} */}
                                         {
                                             
-                                            <Plyr
+                                            videos && <Plyr
                                                 source={{
                                                     type:"video",
                                                     sources: [

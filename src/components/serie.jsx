@@ -748,7 +748,7 @@ const SERIE = () => {
 
         //authentication
         const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
-        const {status,message, user} = await res.json()
+        const {status, user} = await res.json()
         if(status){
             console.log(`${process.env.REACT_APP_playlist}`)
             fetch(`${process.env.REACT_APP_playlist}`,{

@@ -3,7 +3,7 @@ import { NavLink, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAdd, faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar } from "@fortawesome/free-solid-svg-icons";
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
@@ -287,7 +287,7 @@ const SERIE = () => {
             }
         }
     `
-    const [fetchSingleTV,fetchedMovieData] = useLazyQuery(FETCH_MOVIE_QUERY,{
+    const [fetchSingleTV] = useLazyQuery(FETCH_MOVIE_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
         // variables,
@@ -574,7 +574,7 @@ const SERIE = () => {
             //authentication
             fetch(process.env.REACT_APP_api_url,{credentials: "include"})
             .then(async res => {
-                const {status,message, user} = await res.json()
+                const {status, user} = await res.json()
                 if(status){
                     console.log(`${process.env.REACT_APP_playlist_select}`)
                     fetch(`${process.env.REACT_APP_playlist_select}`,{

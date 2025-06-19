@@ -53,7 +53,7 @@ const SEARCH = () => {
     }
 
     const editMachine = (e) => {
-        const searchValue = e.target.value
+        const searchValue = e.target.value.toLowerCase().trim();
         setSearch(() => searchValue);
         intitializeMovies({runContent:[
             {setSearchContent,search_content,"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
@@ -103,7 +103,7 @@ const SEARCH = () => {
                                             <NavLink key={search_key} to={`/${index}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150": "w-[50%] h-[100%] hover:skew-4 hover:contrast-150"}>
 
                                                 <div key={search_key} className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={poster_path || backdrop_path || profile_path} />
+                                                    <PICTURE picture={poster_path || backdrop_path || profile_path} classes={`object-cover h-[100%]`} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{name || original_name || title || original_title}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { 

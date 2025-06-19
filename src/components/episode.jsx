@@ -3,10 +3,12 @@ import { NavLink, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlayCircle, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faPlayCircle, faStar, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
+import Swal from "sweetalert2";
+
 const EPISODE = () => {
     const { id, season, episodeID, episode, name, background } = useParams();
     // console.log({
@@ -18,6 +20,7 @@ const EPISODE = () => {
     const [credits,setCredit] = useState(null)
     const [imdb,setIMDB] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const [playlist,setPlaylist] = useState(null)
 
     const FETCH_IMAGE_QUERY = gql`
         query Image (
@@ -441,7 +444,7 @@ const EPISODE = () => {
                     }
                     return result;
                 }
-                let backdrops_all_results = [...getImageData.backdrops]
+                let backdrops_all_results = getImageData.backdrops ? [...getImageData?.backdrops] : []
                 if(backdrops_all_results.length > 100){
                     const chunks = chunkArray(backdrops_all_results, 100);
                     for (let i = 0; i < chunks.length; i++) {
@@ -465,7 +468,7 @@ const EPISODE = () => {
                                         chunking:false,
                         chunking_index:0 } });
                 }
-                let logos_all_results = [...getImageData.logos]
+                let logos_all_results = [...getImageData?.logos]
                 if(logos_all_results.length > 100){
                     const chunks = chunkArray(logos_all_results, 100);
                     for (let i = 0; i < chunks.length; i++) {
@@ -489,7 +492,7 @@ const EPISODE = () => {
                                         chunking:false,
                         chunking_index:0 } });
                 }
-                let posters_all_results = [...getImageData.posters]
+                let posters_all_results = [...getImageData?.posters]
                 if(posters_all_results.length > 100){
                     const chunks = chunkArray(posters_all_results, 100);
                     for (let i = 0; i < chunks.length; i++) {
@@ -509,7 +512,7 @@ const EPISODE = () => {
                         season:season?parseInt(season):-1,
                         episode:episode?parseInt(episode):-1,
                         id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,posters:getImageData.posters},
+                    }, data:{id:getImageData.id,posters:getImageData?.posters},
                                             chunking:false,
                             chunking_index:0  } });
                 }
@@ -564,33 +567,59 @@ const EPISODE = () => {
             return {...data}
         } 
 
-        if(!serie){
-            const fetched = await fetchEpisode({
-                variables : { 
-                    id:episodeID
-                    // season:season ? parseInt(season):-1,
-                    // episode: episode? parseInt(episode):-1
-                }})
-            if (fetched.data && fetched.data.episode.air_date === null) {
-                console.log("first time...")
-                const tv = await freshFetch()
-                setSerie(() => ({...tv}));
-            }else if(fetched.data && fetched.data.episode.success){
-                console.log("Using cached data:", fetched.data)
-                setSerie(() => ({...fetched.data.episode}))
-            }else {
-                const tv = await freshFetch()
-                setSerie(() => ({...tv}))
-            }
+        const checkFeedback = (id) => {
+            console.log(id,"id")
+            //authentication
+            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            .then(async res => {
+                const {status, user} = await res.json()
+                if(status){
+                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({id, episodeID, user, season, episode, type:"episode"})
+                    })
+                    .then(res => res.json())
+                    .then(({status}) => {
+                        if(status){
+                            setPlaylist(() => true)
+                        }
+                    })
+                }
+            })
         }
+        const fetched = await fetchEpisode({
+            variables : { 
+                id:episodeID
+                // season:season ? parseInt(season):-1,
+                // episode: episode? parseInt(episode):-1
+            }})
+        if (fetched.data && fetched.data.episode.air_date === null) {
+            console.log("first time...")
+            const tv = await freshFetch()
+            setSerie(() => ({...tv}));
+            checkFeedback(tv.id)
+        }else if(fetched.data && fetched.data.episode.success){
+            console.log("Using cached data:", fetched.data)
+            setSerie(() => ({...fetched.data.episode}))
+            checkFeedback(fetched.data.episode.id)
+        }else {
+            const tv = await freshFetch()
+            setSerie(() => ({...tv}))
+            checkFeedback(tv.id)
+        }
+        
 
 
-    },[id, season, episode, episodeID, fetchEpisode, mutateInsertTV, serie])
+    },[id, season, episode, episodeID, fetchEpisode, mutateInsertTV, ])
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/credits?api_key=${process.env.REACT_APP_api_key}`);
             const credits_data = await response.json();
+            console.log(credits_data)
             function chunkArray(array, size) {
                 const result = [];
                 for (let i = 0; i < array.length; i += size) {
@@ -714,6 +743,54 @@ const EPISODE = () => {
         handleResize(); // Call it once to set the initial value
     },[])
 
+    const addToPlayList = async() => {
+
+        //authentication
+        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const {status, user} = await res.json()
+        if(status){
+            fetch(`${process.env.REACT_APP_playlist}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({id, episodeID, season:parseInt(season), episode:parseInt(episode), user, type:"episode"})
+            })
+            .then(res => res.json())
+            .then(({status, message}) => {
+                if(status){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Added to playlist',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+
+                    setPlaylist(() => true)
+                }else if(message === "Playlist already exists for this user"){
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: "Already in playlist",
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    setPlaylist(() => true)
+                }
+                
+            })
+        }else{
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "Sign in to add to playlist",
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+
+    }
+
     return (
 
         <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
@@ -795,7 +872,26 @@ const EPISODE = () => {
                                         )
                                     }
                                 </div> */}
-
+                                <div className="w-[100%]">
+                                    <button
+                                        type="button"
+                                        className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                        onClick={() => addToPlayList()}
+                                    >
+                                        {
+                                            playlist ? 
+                                                <>
+                                                    <FontAwesomeIcon icon={faBasketShopping} /> <span>Added to Playlist</span>
+                                                </>
+                                            :
+                                                <>
+                                                    <FontAwesomeIcon icon={faCirclePlus} /> Add to Playlist
+                                                </>
+                                                
+                                        }
+                                        
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         {
@@ -806,14 +902,14 @@ const EPISODE = () => {
                                 <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
-                                        credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
+                                        credits.cast.map(({roles,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":"w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
-                                                        <h3 style={{fontStyle:"italic"}}>{character}</h3>
+                                                        <h3 style={{fontStyle:"italic"}}>{roles && roles.length > 0 && roles[0].character}</h3>
                                                     </div>
                                                 </div>
                                             </NavLink>
@@ -830,14 +926,14 @@ const EPISODE = () => {
                                 <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
-                                        credits.crew.map(({profile_path,popularity,job,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
+                                        credits.crew.map(({profile_path,popularity,jobs,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":"w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
-                                                        <h3>{job}</h3>
+                                                        <h3>{jobs && jobs.length > 0 && jobs[0].job}</h3>
                                                     </div>
                                                 </div>
                                             </NavLink>

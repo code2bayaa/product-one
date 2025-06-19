@@ -71,7 +71,7 @@ const EMPIRE = () => {
                         scrollTrigger: {
                             trigger: divRef,
                             scroller:".home",
-                            start: windowWidth > 800 ? "top 30%" : "5% 50%",
+                            start: windowWidth > 800 ? "top 30%" : "5% 80%",
                             toggleActions: "play none none none",
                             markers:false
                         },
@@ -98,7 +98,7 @@ const EMPIRE = () => {
                             scrollTrigger: {
                                 trigger: divRef,
                                 scroller:".home",
-                                start: windowWidth > 800 ? "top 35%" : "5% 55%",
+                                start: windowWidth > 800 ? "top 35%" : "5% 85%",
                                 toggleActions: "play none none none",
                                 markers:false
                             },

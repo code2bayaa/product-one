@@ -9,6 +9,7 @@ export const useSearchMovies = () => {
             $index : String!,
             $type:String!,
             $hashedKey:String!
+            $date:Int!
         ){
             fetchMovie(
                 search:$search,
@@ -16,6 +17,7 @@ export const useSearchMovies = () => {
                 index:$index,
                 type:$type,
                 hashedKey:$hashedKey
+                date:$date
             ) {
                 results {
                     adult
@@ -56,6 +58,7 @@ export const useSearchMovies = () => {
             $data :SEARCH_DATA_INPUT,
             $type:String!,
             $hashedKey:String!
+            $date:Int!
         ) {
             searchMovies(
                 page:$page,
@@ -65,6 +68,7 @@ export const useSearchMovies = () => {
                 data:$data,
                 type:$type,
                 hashedKey:$hashedKey
+                date:$date
             ) {
                 success
                 message
@@ -92,6 +96,16 @@ export const useSearchMovies = () => {
 
     const intitializeMovies = ({runContent,search}) => {
         if(search){
+            function getCurrentWeek() {
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const pastDaysOfYear = (now - startOfYear) / 86400000;
+                return Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+            }
+
+            // Usage:
+            const currentWeek = getCurrentWeek();
+            console.log(currentWeek,typeof currentWeek);
             console.log("searching for...",search)
             runContent.forEach(async({index, api, setSearchContent, search_content, page, select, insert, type, object}) => {
                 const hashed = page + search + type
@@ -122,7 +136,8 @@ export const useSearchMovies = () => {
                             data :{
                                 index:"search",
                                 search
-                            },                            
+                            },   
+                            date:currentWeek,                         
                             type,
                             hashedKey
                         },
@@ -135,6 +150,7 @@ export const useSearchMovies = () => {
                         search,
                         index: "search",
                         type,
+                        date:currentWeek,
                         hashedKey
                 }})
                 // console.log(fetched)

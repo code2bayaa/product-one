@@ -3,10 +3,11 @@ import { NavLink, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlayCircle, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faPlayCircle, faStar, faBasketShopping, faCirclePlus, } from "@fortawesome/free-solid-svg-icons";
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
+import Swal from "sweetalert2";
 
 const MOVIE = () => {
     const { id } = useParams();
@@ -14,6 +15,7 @@ const MOVIE = () => {
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const [playlist,setPlaylist] = useState(null)
     // const [fetchedImage, setFetchedImage] = useState(null)
     useEffect(() => {
         const handleResize = () => {
@@ -533,28 +535,52 @@ const MOVIE = () => {
 
     const fetchMovie = useCallback(async() => {    
         
-        // if(!movie){
+        async function freshFetch(){
+            const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}?api_key=${process.env.REACT_APP_api_key}`);
+            const data = await response.json();
+            console.log(data)
+            mutateInsertMovie({
+                variables: {...data},
+            });
+            return {...data}
+        } 
+        const checkFeedback = (id) => {
+            console.log(id,"id")
+            //authentication
+            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            .then(async res => {
+                const {status,message, user} = await res.json()
+                if(status){
+                    console.log(`${process.env.REACT_APP_playlist_select}`)
+                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({id, user, type:"movie"})
+                    })
+                    .then(res => res.json())
+                    .then(({status}) => {
+                        if(status){
+                            setPlaylist(() => true)
+                        }
+                    })
+                }
+            })
+        }            
 
-            async function freshFetch(){
-                const response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}?api_key=${process.env.REACT_APP_api_key}`);
-                const data = await response.json();
-                console.log(data)
-                mutateInsertMovie({
-                    variables: {...data},
-                });
-                return {...data}
-            } 
-
-            const fetched = await fetchSingleMovie({
-            variables : { id }})
-            console.log(fetched)
-            if(fetched.data && fetched.data.single.success){
-                console.log("Using cached data:", fetched.data);
-                setMovie(() => ({...fetched.data.single}));
-            }else {
-                const movie = await freshFetch()
-                setMovie(() => ({...movie}));
-            }
+        const fetched = await fetchSingleMovie({
+        variables : { id }})
+        console.log(fetched)
+        if(fetched.data && fetched.data.single.success){
+            console.log("Using cached data:", fetched.data);
+            setMovie(() => ({...fetched.data.single}));
+            checkFeedback(fetched.data.single.id)
+        }else {
+            const movie = await freshFetch()
+            setMovie(() => ({...movie}));
+            checkFeedback(movie.id)
+        }
         // }
         
     },[fetchSingleMovie,id,mutateInsertMovie])
@@ -712,6 +738,55 @@ const MOVIE = () => {
         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
         return process.env.REACT_APP_img_poster + path
     }
+
+    const addToPlayList = async() => {
+
+        //authentication
+        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const {status,message, user} = await res.json()
+        if(status){
+            console.log(`${process.env.REACT_APP_playlist}`)
+            fetch(`${process.env.REACT_APP_playlist}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({id:movie.id, user, type:"movie"})
+            })
+            .then(res => res.json())
+            .then(({status}) => {
+                if(status){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Added to playlist',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+
+                    
+                }else{
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: "Already in playlist",
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }
+                setPlaylist(() => true)
+            })
+        }else{
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "Sign in to add to playlist",
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+
+    }
+
     return (
         <>
             <div className="w-[100%] duration-150 min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
@@ -727,8 +802,8 @@ const MOVIE = () => {
             credits && movie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] min-h-[70%]":"w-[100%] min-h-[70%]"}>
-                                <PICTURE picture={movie.poster_path} classes={"shadow-lg h-[70%] shadow-blue-500/50"} />
+                            <div className={windowWidth > 800 ? "w-[37%] min-h-[100%]":"w-[100%] min-h-[70%]"}>
+                                <PICTURE picture={movie.poster_path} classes={"shadow-lg h-[100%] shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
                                 <h1 className="text-[30px]">{movie.original_title || movie.title}</h1>
@@ -766,9 +841,29 @@ const MOVIE = () => {
                                     >
                                         recommended movies
                                     </NavLink>
+                                    <div className="w-[100%]">
+                                        <button
+                                            type="button"
+                                            className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                            onClick={() => addToPlayList()}
+                                        >
+                                            {
+                                                playlist ? 
+                                                    <>
+                                                        <FontAwesomeIcon icon={faBasketShopping} /> <span>Added to Playlist</span>
+                                                    </>
+                                                :
+                                                    <>
+                                                        <FontAwesomeIcon icon={faCirclePlus} /> Add to Playlist
+                                                    </>
+                                                    
+                                            }
+                                            
+                                        </button>
+                                    </div>
                                 </div>
 
-                            </div>
+                            </div>                          
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&

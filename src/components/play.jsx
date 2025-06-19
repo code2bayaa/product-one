@@ -9,12 +9,9 @@ import COLLECTIONS from "../midlleware/collection";
 
 const PLAY = () => {
     const { id, stream,  name, year,  date, imdbId, season, episode, background } = useParams();
-    // console.log("play",id,stream,name,year,imdbId,season,episode)
     const [play, setPlay] = useState(null)
-    // const [fetchedPlay, setFetchedPlay] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0)
     const [maxRate, setMaxRate] = useState(0)
-    // const [loading,setLoading] = useState(false)
 
     useEffect(() => {
         const handleResize = () => {
@@ -112,11 +109,6 @@ const PLAY = () => {
     const fetchToken = useCallback(async() => {
 
         try{
-            // console.log(fetchedPlay,"fetchedPlay...")
-            // if(fetchedPlay){
-            //     console.log(fetchedPlay,"fetchedPlay...")
-
-            // }else{
                 const fetchFresh = async() => {
 
                     const response = await fetch(`${process.env.REACT_APP_stream}`,{

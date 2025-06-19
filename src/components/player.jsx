@@ -1,6 +1,7 @@
 // import Plyr from "plyr-react";
 import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
+// import Hls from 'hls.js'
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 // import ReactStars from 'react-rating-stars-component';
@@ -8,6 +9,8 @@ import { Rating } from 'react-simple-star-rating'
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faUserCheck } from '@fortawesome/free-solid-svg-icons';
+// import * as dashjs from 'dashjs';
+// import '../node_modules/dashjs/dist/modern/esm/dash.mss.min.js';
 
 const PLAYER = () => {
     const { host, index, id, type, background } = useParams();
@@ -15,6 +18,7 @@ const PLAYER = () => {
     const [stars,setStars] = useState(0)
     const [users, setUsers] = useState(0)
     const [paid, setPaid] = useState(false)
+    // const videoRef = useRef(null)
     // const [mkv, setMKV] = useState(false)
     // const [playID,setPlayID] = useState(null)
     // const api_url = process.env.REACT_APP_api_url
@@ -177,41 +181,51 @@ const PLAYER = () => {
     useEffect(() => {
         console.log("paid",paid)
         console.log("type",type)
-        if(paid && type === "mkv"){
-            // setMKV(true)   
-            async function runVLC() { 
-                const streamUrl = `${process.env.REACT_APP_player_env}${host}/${index}`
+        // if(paid && type === "mkv"){
+        if(paid && type !== "mkv"){
+            // let url = "https://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720.ism/Manifest";
+            // let player = dashjs.MediaPlayer().create();
+            // player.initialize(document.querySelector('#plyr-video'), url, true);
+        //     // setMKV(true)   
+        //     // async function runVLC() { 
+        //     //     const streamUrl = `${process.env.REACT_APP_player_env}${host}/${index}`
 
-                const response = await fetch(`${process.env.REACT_APP_playing}`,{
-                    method:"POST",
-                    headers:{
-                        "Content-Type":"application/json",
-                        "Accept":"application/json"
-                    },
-                    body:JSON.stringify({
-                        url:streamUrl,
-                        id,
-                        index
-                    })
-                })
-                const {status, error, message, url} = await response.json()
-                console.log(status,message,url,error)
-            }
-            runVLC()
+        //     //     const response = await fetch(`${process.env.REACT_APP_playing}`,{
+        //     //         method:"POST",
+        //     //         headers:{
+        //     //             "Content-Type":"application/json",
+        //     //             "Accept":"application/json"
+        //     //         },
+        //     //         body:JSON.stringify({
+        //     //             url:streamUrl,
+        //     //             id,
+        //     //             index
+        //     //         })
+        //     //     })
+        //     //     const {status, error, message, url} = await response.json()
+        //     //     console.log(status,message,url,error)
+        //     // }
+        //     // runVLC()
+        //     console.log("paid and type is mkv",`${process.env.REACT_APP_player_env}${host}/${index}`)
+        //     // window.location.href = `${process.env.REACT_APP_player_env}${host}/${index}`;
+        //     // Send a message from your page to the content script
 
-                
-        }
-    },[type,host,index,id,paid])
+            // const video = videoRef.current
 
-    useEffect(() => {
+            // if (Hls.isSupported()) {
+            //     console.log("HLS supported")
+            //     const hls = new Hls()
+            //     hls.loadSource(`${process.env.REACT_APP_player_env}${host}/${index}`)
+            //     hls.attachMedia(video)
+            // } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            //     console.log("not HLS supported")
+            //     video.src = `${process.env.REACT_APP_player_env}${host}/${index}`
+            // }
 
-        // return () => {
-            // setPlayID(true)
-        // }
-        if(paid && host && index){
-            // console.log(("playID",`${process.env.REACT_APP_player_env}${host}/${index}`))
+            // const player = new Plyr("#plyr-video")
             const mkvCheck = document.querySelector("#plyr-video source");
             if(mkvCheck && mkvCheck.src){
+                console.log("playing plyr")
                 new Plyr('#plyr-video', {
                     autoplay: false,
                     muted: false,
@@ -236,10 +250,27 @@ const PLAYER = () => {
                     //     ],
                     // },
                 });
-            }
-            // setPlayID(`${process.env.REACT_APP_player_env}${host}/${index}`)
+            }                
         }
-    },[host,index,paid])
+
+    },[type,host,index,id,paid])
+
+    // useEffect(() => {
+
+    //     // return () => {
+    //         // setPlayID(true)
+    //     // }
+    //     if(paid && host && index){
+
+    //         if(type === "mkv"){
+    //             window.location.href = `/vlc/${process.env.REACT_APP_player_env}${host}/${index}`;
+    //             return
+    //         }
+    //         // console.log(("playID",`${process.env.REACT_APP_player_env}${host}/${index}`))
+
+    //         // setPlayID(`${process.env.REACT_APP_player_env}${host}/${index}`)
+    //     }
+    // },[host,index,paid])
 
     useEffect(() => {
         const getRate = async() => {
@@ -264,7 +295,6 @@ const PLAYER = () => {
     },[id])
 
     const ratingChanged = async(rating) => {
-        // console.log(rating,"rating")
         const response = await fetch(`${process.env.REACT_APP_rate_add}`, {
           method: "POST",
           credentials: "include",
@@ -305,17 +335,30 @@ const PLAYER = () => {
             <div className='w-[100%] text-[#ffd800] h-[60px] flex flex-row flex-wrap'>
                 {
                     (type === "mkv") ? 
-                    <div className='w-[100%]'>
-                    <h2>Check your VLC</h2>
-                    <p>If it takes too long, use another collection</p>
-                    </div> : ""
+                        <div className='w-[100%]'>
+                            <h1 className='text-[30px] font-bold'>mkv Player</h1>
+                            <p className='text-[20px]'>This is a mkv player, you can use Chrome browser to play this file.</p>
+                        </div> 
+                    :
+                        ""
                 }
-                
-                <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">
-                    <source src={`${process.env.REACT_APP_player_env}${host}/${index}`} type="video/mp4" />
-                    Your browser does not support the video tag.
-                    
-                </video>
+                {
+                    type === "mkv" ?
+                    (
+                        <video controls className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_player_env}${host}/${index}`} />
+
+                    )
+                    :
+                    (
+                        <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">
+                            <source src={`${process.env.REACT_APP_player_env}${host}/${index}`} type="video/mp4" />
+                            Your browser does not support the video tag.
+                            
+                        </video>
+                    )
+
+                }
+
                 <Rating
                     onClick={ratingChanged}
                     initialValue={rating}

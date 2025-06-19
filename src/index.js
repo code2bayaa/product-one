@@ -28,6 +28,8 @@ import DISNEY from './components/disney.jsx';
 import CREDITS from './components/credits.jsx';
 import SUBSCRIBE from './components/subscribe.jsx';
 import TESTSOCKETS from './components/test.jsx';
+import PLAYLIST from './components/playlist.jsx';
+import FOLLOW from './components/follow.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
 
@@ -148,6 +150,11 @@ const router = createBrowserRouter([
     elementError:<ERROR/>
   },
   {
+    path:"/play",
+    element:<PLAYER/>,
+    elementError:<ERROR/>
+  },
+  {
     path:"/signin",
     element:<SIGNIN/>,
     elementError:<ERROR/>
@@ -160,6 +167,16 @@ const router = createBrowserRouter([
   {
     path:"/subscribe",
     element:<SUBSCRIBE/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/playlist",
+    element:<PLAYLIST/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/follow",
+    element:<FOLLOW/>,
     elementError:<ERROR/>
   },
   {

@@ -44,23 +44,24 @@ const NAVBAR = () => {
             // router('/admin/reports')
             setLoggedIn(true)
         }
+        return status
       }
       authentication()
-    },[api_url,setLoggedIn])
+      .then(status => {
+            if(status){
+                fetch(process.env.REACT_APP_check_user_credits,{credentials: "include"})
+                .then(res => res.json())
+                .then(({sum,message}) => {
+                    console.log(message,sum)
+                    //affordable for one movie | episode
+                    if(sum){
+                        setCoins(sum)
+                    }
+                })
 
-    useEffect(() => {
-        async function sumCredits(){
-            if(loggedIn){
-                const res = await fetch(process.env.REACT_APP_check_user_credits,{credentials: "include"})
-                const {sum,message} = await res.json()
-                console.log(message,sum)
-                //affordable for one movie | episode
-                if(sum){
-                    setCoins(sum)
-                }
             }else{
                 let user = localStorage.getItem("session")
-                const response = await fetch(`${process.env.REACT_APP_check_report_credits}`,{
+                fetch(`${process.env.REACT_APP_check_report_credits}`,{
                     method:"POST",
                     headers:{
                         "Content-Type":"application/json",
@@ -71,17 +72,19 @@ const NAVBAR = () => {
 
                     })
                 })
-                const {sum,message} = await response.json()
-                console.log(message,sum)
-                //affordable for one movie | episode
-                if(sum){
-                    setCoins(sum)
-                }
-            }
-        }
-        sumCredits()
+                .then((response) => response.json())
+                .then(({sum,message}) => {
+                    console.log(message,sum)
+                    //affordable for one movie | episode
+                    if(sum){
+                        setCoins(sum)
+                    }
+                })
 
-    },[setCoins,loggedIn])
+            }
+      })
+    },[api_url])
+
 
     const customSignout = async() => {
         try {
@@ -106,7 +109,7 @@ const NAVBAR = () => {
     }
 
     return (
-        <div className="w-[100%] h-[100%]">
+        <div className="w-[100%] movie-scene h-[100%] overflow-auto">
             <img src="/image/logo.png" alt="logo late-developers.com" className="w-[100%] h-[200px]" />
             <div className="w-[100%] h-[auto] text-white">
                 <div className="w-[100%] h-[60px] text-[#ffd800] text-[30px]">
@@ -218,6 +221,23 @@ const NAVBAR = () => {
                     :
                     <>
 
+                        <NavLink
+                            to="/follow"
+                            className={({ isActive, isPending }) =>
+                                isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            }
+                        >
+                            following
+                        </NavLink>     
+
+                        <NavLink
+                            to="/playlist"
+                            className={({ isActive, isPending }) =>
+                                isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            }
+                        >
+                            playlist
+                        </NavLink>
                         <NavLink
                             to="/library"
                             className={({ isActive, isPending }) =>

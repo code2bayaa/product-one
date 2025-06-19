@@ -3,16 +3,18 @@ import { NavLink, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDoubleRight, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faAdd, faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar } from "@fortawesome/free-solid-svg-icons";
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
+import Swal from "sweetalert2";
 
 const SERIE = () => {
     const { id } = useParams();
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
+    const [playlist,setPlaylist] = useState(null)
     // const [fetchedImage, setFetchedImage] = useState(null)
     const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
@@ -311,8 +313,8 @@ const SERIE = () => {
                 if(data.addTV.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movie successfully inserted into MySQL:", data.addTV.message);
-                fetchedMovieData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMovieData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addTV.message, data.addTV.error);
             }
@@ -567,16 +569,43 @@ const SERIE = () => {
             return {...data}
         } 
 
-            const fetched = await fetchSingleTV({
-                variables : { id }})
-            console.log(fetched)
-            if(fetched.data && fetched.data.singleTV.success){
-                console.log("Using cached data:", fetched.data);
-                setSerie(() => ({...fetched.data.singleTV}));
-            }else {
-                const tv = await freshSingleFetch()
-                setSerie(() => ({...tv}));
-            }
+        const checkFeedback = (id) => {
+            console.log(id,"id")
+            //authentication
+            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            .then(async res => {
+                const {status,message, user} = await res.json()
+                if(status){
+                    console.log(`${process.env.REACT_APP_playlist_select}`)
+                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({id, user, type:"tv"})
+                    })
+                    .then(res => res.json())
+                    .then(({status}) => {
+                        if(status){
+                            setPlaylist(() => true)
+                        }
+                    })
+                }
+            })
+        }
+
+        const fetched = await fetchSingleTV({
+            variables : { id }})
+        console.log(fetched)
+        if(fetched.data && fetched.data.singleTV.success){
+            console.log("Using cached data:", fetched.data);
+            setSerie(() => ({...fetched.data.singleTV}))
+            checkFeedback(fetched.data.singleTV.id)
+        }else {
+            const tv = await freshSingleFetch()
+            setSerie(() => ({...tv}));
+            checkFeedback(tv.id)
+        }
         
 
     },[fetchSingleTV,id,mutateInsertTV])
@@ -667,12 +696,15 @@ const SERIE = () => {
     },[graphImages])
 
     useEffect(() => {
-        fetchTV();
+        fetchTV()
+
+
     }, [fetchTV]);
 
     useEffect(() => {
         fetchCredits();
     }, [fetchCredits]);
+
 
     const getBackground = () => {
         if(fetchedImageBackgrounds)
@@ -711,6 +743,56 @@ const SERIE = () => {
         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
         return process.env.REACT_APP_img_poster + path
     }
+
+    const addToPlayList = async() => {
+
+        //authentication
+        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const {status,message, user} = await res.json()
+        if(status){
+            console.log(`${process.env.REACT_APP_playlist}`)
+            fetch(`${process.env.REACT_APP_playlist}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({id:serie.id, user, type:"tv"})
+            })
+            .then(res => res.json())
+            .then(({status, message}) => {
+                if(status){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Added to playlist',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+
+                    setPlaylist(() => true)
+                }else if(message === "Playlist already exists for this user"){
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: "Already in playlist",
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    setPlaylist(() => true)
+                }
+                
+            })
+        }else{
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "Sign in to add to playlist",
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+
+    }
+
     return (
         
 
@@ -784,6 +866,26 @@ const SERIE = () => {
                                         )
                                     }
                                 </div>
+                                <div className="w-[100%]">
+                                    <button
+                                        type="button"
+                                        className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                        onClick={() => addToPlayList()}
+                                    >
+                                        {
+                                            playlist ? 
+                                                <>
+                                                    <FontAwesomeIcon icon={faBasketShopping} /> <span>Added to Playlist</span>
+                                                </>
+                                            :
+                                                <>
+                                                    <FontAwesomeIcon icon={faCirclePlus} /> Add to Playlist
+                                                </>
+                                                
+                                        }
+                                        
+                                    </button>
+                                </div>
 
                             </div>
                         </div>
@@ -797,9 +899,9 @@ const SERIE = () => {
                                     {
                                         credits.cast.map(({profile_path,roles,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:skew-4 hover:contrast-150"}>
-                                                <div className="w-[100%] min-h-[100%]">
-                                                    <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover min-h-[70%]"} picture={profile_path} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                <div className="w-[100%] h-[100%]">
+                                                    <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[70%]"} picture={profile_path} />
+                                                    <div className="w-[100%] relative min-h-[60px] top-[-30%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         {

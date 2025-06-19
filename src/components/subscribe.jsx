@@ -46,16 +46,16 @@ const SUBSCRIBE = () => {
     const handleCreditsChange = (e) => {
         let val = parseInt(e.target.value) || 0;
         // Ensure minimum credits is 1500
-        if (val < 1500) val = 1500;
+        if (val < 1000) val = 1000;
         setCredits(val);
-        setUsd((val / 1500).toFixed(2));
+        setUsd((val / 1000).toFixed(2));
     };
     const handleUsdChange = (e) => {
         let val = parseFloat(e.target.value) || 0;
         // Ensure minimum USD is 1
         if (val < 1) val = 1;
         setUsd(val);
-        setCredits(Math.round(val * 1500));
+        setCredits(Math.round(val * 1000));
     };
 
     const payWithMPESA = async() => {

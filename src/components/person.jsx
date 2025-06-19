@@ -3,11 +3,12 @@ import { NavLink, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faAngleDoubleRight } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faAngleDoubleRight, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
-
+import Swal from "sweetalert2";
+import CryptoJS from "crypto-js";
 const PERSON = () => {
 
     const { id } = useParams();
@@ -16,6 +17,7 @@ const PERSON = () => {
     const [series, setSeries] = useState(null)
     const [images, setImages] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const [following,setFollowing] = useState(null)
 
     useEffect(() => {
         const handleResize = () => {
@@ -296,6 +298,28 @@ const PERSON = () => {
 
     const fetchPerson = useCallback(async() => {
 
+        const checkFeedback = (id) => {
+            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            .then(async res => {
+                const {status, user} = await res.json()
+                if(status){
+                    fetch(`${process.env.REACT_APP_followers_select}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({id, user})
+                    })
+                    .then(res => res.json())
+                    .then(({status}) => {
+                        if(status){
+                            setFollowing(() => true)
+                        }
+                    })
+                }
+            })
+        } 
+
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}?api_key=${process.env.REACT_APP_api_key}`);
             const data = await response.json();
@@ -313,10 +337,12 @@ const PERSON = () => {
         console.log(fetched)
         if(fetched.data && fetched.data.person.success){
             console.log("Using cached data:", fetched.data);
+            checkFeedback(fetched.data.person.id)
             return setPerson(() => ({...fetched.data.person}));
         }else {
-            const movie = await freshFetch()
-            return setPerson(() => ({...movie}));
+            const personData = await freshFetch()
+            checkFeedback(personData.id)
+            return setPerson(() => ({...personData}));
         }
     
         
@@ -385,13 +411,13 @@ const PERSON = () => {
             $id:ID!
             $cast:[ADD_CAST_PLAYED_RESULTS_INPUT]
             $crew:[ADD_CREW_PLAYED_RESULTS_INPUT]
-            $type:String!
+            $hashedKey:String!
         ){
             addPlayed(
                 id:$id
                 cast:$cast
                 crew:$crew
-                type:$type
+                hashedKey:$hashedKey
             ){
                 success
                 message
@@ -417,9 +443,49 @@ const PERSON = () => {
         },
     });
 
+    
+    const INSERT_TV_MUTATION = gql`
+        mutation AddPlayedTV(
+            $id:ID!
+            $cast:[ADD_CAST_PLAYED_TV_RESULTS_INPUT]
+            $crew:[ADD_CREW_PLAYED_TV_RESULTS_INPUT]
+            $hashedKey:String!
+        ){
+            addPlayedTV(
+                id:$id
+                cast:$cast
+                crew:$crew
+                hashedKey:$hashedKey
+            ){
+                success
+                message
+                error
+            }
+        }
+    `;
+
+    const [mutateInsertTV] = useMutation(INSERT_TV_MUTATION, {
+        onCompleted: (data) => {
+            if (data.addPlayedTV.success) {
+                if(data.addPlayedTV.message === "already inserted")
+                    console.log("movie inserting already started...")
+                console.log("Movie successfully inserted into MySQL:", data.addPlayedTV.message);
+                fetchedMovieData.refetch()
+                .then(status => console.log(status,"status"))
+            } else {
+                console.error("Failed to insert movies into MySQL:", data.addPlayedTV.message, data.addPlayedTV.error);
+            }
+        },
+        onError: (error) => {
+            console.error("Error inserting movies into MySQL:", error.message);
+        },
+    });
+
     const fetchMovies = useCallback(async() => {
         try{
             
+            const hashed = id + "movie"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
             const api = `${process.env.REACT_APP_movie_db}person/${id}/movie_credits?api_key=${process.env.REACT_APP_api_key}`
             async function freshFetch(){
                 const response = await fetch(`${api}`);
@@ -428,7 +494,7 @@ const PERSON = () => {
                 setMovies(() => ({...movies_data})); 
                 mutateInsertMovie({ variables: {
                     ...movies_data,
-                    type:"movie",
+                    hashedKey
                 }} );
                 return {...movies_data}
             } 
@@ -436,7 +502,8 @@ const PERSON = () => {
             const fetched = await fetchMovie({
                 variables : {
                     type:"movie",
-                    id:id?parseInt(id):-1
+                    id:id?parseInt(id):-1,
+                    hashedKey
             }})
             console.log(fetched)
             if (fetched.data && fetched.data.played.success) {
@@ -461,15 +528,18 @@ const PERSON = () => {
     const fetchTV = useCallback(async() => {
         try{
 
+            const hashed = id + "tv"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
+
             const api = `${process.env.REACT_APP_movie_db}person/${id}/tv_credits?api_key=${process.env.REACT_APP_api_key}`
             async function freshFetch(){
                 const response = await fetch(`${api}`);
                 const movies_data = await response.json();
                 console.log(movies_data)
                 setSeries(() => ({...movies_data})); 
-                mutateInsertMovie({ variables: {
+                mutateInsertTV({ variables: {
                     ...movies_data,
-                    type:"tv",
+                    hashedKey
                 }} );
                 return {...movies_data}
             } 
@@ -477,7 +547,8 @@ const PERSON = () => {
             const fetched = await fetchMovie({
                 variables : {
                     type:"tv",
-                    id:id?parseInt(id):-1
+                    id:id?parseInt(id):-1,
+                    hashedKey
             }})
             console.log(fetched)
             if (fetched.data && fetched.data.played.success) {
@@ -498,7 +569,7 @@ const PERSON = () => {
             
 
         }
-    },[mutateInsertMovie, id, fetchMovie])
+    },[mutateInsertTV, id, fetchMovie])
 
     useEffect(() => {
         graphImages()
@@ -530,6 +601,52 @@ const PERSON = () => {
         return process.env.REACT_APP_img_poster + path
     }
 
+    const addToFollowers = async() => {
+
+        //authentication
+        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const {status, user} = await res.json()
+        if(status){
+            fetch(`${process.env.REACT_APP_followers}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({id:person.id, user})
+            })
+            .then(res => res.json())
+            .then(({status}) => {
+                if(status){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Added to following',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+
+                    
+                }else{
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: "Already following",
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }
+                setFollowing(() => true)
+            })
+        }else{
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "Sign in to follow " + person.name,
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+
+    }
     return (
 
         <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
@@ -547,7 +664,7 @@ const PERSON = () => {
                 <>
                     <div className="w-[100%]">
                         <div className="w-[90%] ml-[5%] h-[60%] text-justify justify-center items-center">
-                            <div className="w-[40%] min-h-[300px] float-left">
+                            <div className="w-[40%] min-h-[300px] m-[1%] float-left">
                                 <PICTURE picture={person.profile_path} classes={"object-contain h-[100%] shadow-lg shadow-blue-500/50"} />
                             </div>
 
@@ -561,6 +678,26 @@ const PERSON = () => {
                             <article>
                                 {person.biography}
                             </article>
+                            <div className={windowWidth > 800 ? "w-[56%] float-right":"w-[100%]"}>
+                                <button
+                                    type="button"
+                                    className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                    onClick={() => addToFollowers()}
+                                >
+                                    {
+                                        following ? 
+                                            <>
+                                                <FontAwesomeIcon icon={faBasketShopping} /> <span>following</span>
+                                            </>
+                                        :
+                                            <>
+                                                <FontAwesomeIcon icon={faCirclePlus} /> follow
+                                            </>
+                                            
+                                    }
+                                    
+                                </button>
+                            </div>                            
                         </div>
                                 <div className={windowWidth > 800 ? "w-[90%] min-h-[100%] ml-[5%] flex flex-col":"w-[100%] min-h-[100%] flex flex-col"}>
                                     {

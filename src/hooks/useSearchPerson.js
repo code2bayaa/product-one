@@ -8,12 +8,14 @@ export const useSearchPerson = () => {
             $index : String!,
             $search:String!,
             $hashedKey:String!
+            $date:Int!
         ){
             fetchPerson(
                 page:$page,
                 search:$search,
                 index:$index,
                 hashedKey:$hashedKey
+                date:$date
             ) {
                 results {
                     adult
@@ -48,6 +50,7 @@ export const useSearchPerson = () => {
             $data :SEARCH_PERSON_DATA_INPUT,
             $type:String!,
             $hashedKey:String!
+            $date:Int!
         ) {
             searchPerson(
                 page:$page,
@@ -57,6 +60,7 @@ export const useSearchPerson = () => {
                 data:$data,
                 type:$type,
                 hashedKey:$hashedKey
+                date:$date
             ) {
                 success
                 message

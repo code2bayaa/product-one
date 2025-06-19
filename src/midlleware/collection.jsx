@@ -6,8 +6,8 @@ import Swal from 'sweetalert2'
 const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) => {
 
     const [loading, setLoading] = useState(false);
-    const [open,setOpen] = useState(false);
-    const [URLS,setURLS] = useState(null);
+    // const [open,setOpen] = useState(false);
+    // const [URLS,setURLS] = useState(null);
     const [rate,setRate] = useState(0);
     // const containerRef = useRef(null);
 
@@ -20,37 +20,70 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
     useEffect(() => {
         const destroySession = async() => {
             console.log("destroying...")
-            const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
-                method: "POST",
-                body:JSON.stringify({
-                    id,
-                    index
-                }),
-                headers: {
-                    'Content-Type': 'application/json', // Indicates the body is JSON
-                },
-            });
-            const {status, error, message, newToken} = await response.json()
-            console.log(newToken,"newToken")
-            console.log(error,message)
-            if(error || !status){
-                // Swal.fire({
-                //     icon: 'error',
-                //     title: 'Could not destroy session ' + error + message,
-                //     text: error || message,
-                //     showConfirmButton: false,
-                //     timer: 2500
-                // })
-                return null
+
+            const sessionDestroy = ({status, error, message, newToken}) => {
+                
+                console.log(newToken,"newToken")
+                console.log(error,message)
+                if(error || !status){
+                    // Swal.fire({
+                    //     icon: 'error',
+                    //     title: 'Could not destroy session ' + error + message,
+                    //     text: error || message,
+                    //     showConfirmButton: false,
+                    //     timer: 2500
+                    // })
+                    return null
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Session destroyed',
+                    text: "success" + message,
+                    showConfirmButton: false,
+                    timer: 2500
+                })
+                return true                
             }
-            Swal.fire({
-                icon: 'success',
-                title: 'Session destroyed',
-                text: "success" + message,
-                showConfirmButton: false,
-                timer: 2500
-            })
-            return true
+
+            async function authentication(){
+                const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+                const {status,message,user} = await res.json()
+                console.log(message)
+                return ({status,user})
+            }
+            const isLoggedIn = await authentication()
+
+            if(isLoggedIn.status){
+                const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+                    method: "POST",
+                    body:JSON.stringify({
+                        id,
+                        index,
+                        user:isLoggedIn.user
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json', // Indicates the body is JSON
+                    },
+                });
+                const {status, error, message, newToken} = await response.json()
+                return sessionDestroy({status, error, message, newToken})
+            }else{
+                let user = localStorage.getItem("session")
+                const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+                    method: "POST",
+                    body:JSON.stringify({
+                        id,
+                        index,
+                        user
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json', // Indicates the body is JSON
+                    },
+                });
+                const {status, error, message, newToken} = await response.json()
+                return sessionDestroy({status, error, message, newToken})
+            }
+
         }
         destroySession()
     },[id,index])
@@ -59,14 +92,17 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
         //check for credits
         async function authentication(){
             const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
-            const {status,message} = await res.json()
+            const {status,message,user} = await res.json()
             console.log(message)
-            return status
+            return ({status,user})
         }
         const isLoggedIn = await authentication()
         let hasCredits = false
         let hasPaid = false
-        if(isLoggedIn){
+        let user;
+        if(isLoggedIn.status){
+            user = isLoggedIn.user
+
             const response = await fetch(`${process.env.REACT_APP_user_paid}`,{
                 credentials: "include",
                 method:"POST",
@@ -94,7 +130,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                 hasCredits = true
             }
         }else{
-            let user = localStorage.getItem("session")
+            user = localStorage.getItem("session")
             const res = await fetch(`${process.env.REACT_APP_paid}`,{
                 method:"POST",
                 headers:{
@@ -163,6 +199,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
             e.target.innerHTML = "loading..."
             
             console.log("clicked play...")
+            //
             const response = await fetch(`${process.env.REACT_APP_play}`,{
                 method:"POST",
                 headers:{
@@ -172,11 +209,11 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                 body:JSON.stringify({
                     token,
                     id,
-                    index
+                    index,
+                    user
                 })
             })
             const {status, error, message, url, files} = await response.json()
-            // /series/video/series/${id}/${serie.title || serie.original_title}/${serie.season_number}/${serie.episode_number}/${imdb.imdb_id}/${background}
             console.log(message || error)
             if(status){
                 const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
@@ -194,41 +231,26 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                         
                         return null
                     }else{
-                        setURLS(`/play/${id}/${url}/${video.index}/${type}/${background}`)
-                        //for mkv files open disclaimer
-                        if(open){
-                            // $(containerRef.current).slideUp(500)
-                            // $(containerRef.current).addClass("hidden")
-                            setOpen(false)
+                        //unless VLC situation changes, we will not use this
+                        // setURLS(`/play/${id}/${url}/${video.index}/${type}/${background}`)
+                        // //for mkv files open disclaimer
+                        // if(open){
+                        //     // $(containerRef.current).slideUp(500)
+                        //     // $(containerRef.current).addClass("hidden")
+                        //     setOpen(false)
                             
-                        }else{
-                            // $(containerRef.current).removeClass("hidden")
-                            // $(containerRef.current).slideDown(500)
-                            setOpen(true)
-                        }
+                        // }else{
+                        //     // $(containerRef.current).removeClass("hidden")
+                        //     // $(containerRef.current).slideDown(500)
+                        //     setOpen(true)
+                        // }
+
+                        window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
 
                         return null
                         
                     }
                 }
-                //in case no video file found -- destroy token
-                // setPlay(null)
-                setLoading(false)
-                e.target.innerHTML = HTMLMARK
-                const response = await fetch(`${process.env.REACT_APP_destroy_token}`,{
-                    method:"POST",
-                    headers:{
-                        "Content-Type":"application/json",
-                        "Accept":"application/json"
-                    },
-                    body:JSON.stringify({
-                        id,
-                        index
-                    })
-                })
-                const { error, message, newToken} = await response.json()
-                console.log(message,"destruction")
-                console.log(newToken,"new token")
 
                 Swal.fire({
                     icon: 'error',
@@ -255,36 +277,54 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                     timer: 1500
                 })
             }
+                        //in case no video file found -- destroy token
+            // setPlay(null)
+            setLoading(false)
+            e.target.innerHTML = HTMLMARK
+            const responseDestroy = await fetch(`${process.env.REACT_APP_destroy_token}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                    "Accept":"application/json"
+                },
+                body:JSON.stringify({
+                    id,
+                    index
+                })
+            })
+            const responseDestroyData = await responseDestroy.json()
+            console.log(responseDestroyData.message,"destruction")
+            console.log(responseDestroyData.newToken,"new token")
         }
     }
 
-    const destroySession = async() => {
-        console.log("destroying...")
-        setOpen(false)
-        const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
-            method: "POST",
-            body:JSON.stringify({
-                id,
-                index
-            }),
-            headers: {
-                'Content-Type': 'application/json', // Indicates the body is JSON
-            },
-        });
-        const {status, error, message, newToken} = await response.json()
-        console.log(newToken,"newToken")
-        if(error || !status){
-            return null
-        }
-        Swal.fire({
-            icon: 'success',
-            title: 'Session destroyed',
-            text: "success" + message,
-            showConfirmButton: false,
-            timer: 2500
-        })
-        return true
-    }
+    // const destroySession = async() => {
+    //     console.log("destroying...")
+    //     // setOpen(false)
+    //     const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+    //         method: "POST",
+    //         body:JSON.stringify({
+    //             id,
+    //             index
+    //         }),
+    //         headers: {
+    //             'Content-Type': 'application/json', // Indicates the body is JSON
+    //         },
+    //     });
+    //     const {status, error, message, newToken} = await response.json()
+    //     console.log(newToken,"newToken")
+    //     if(error || !status){
+    //         return null
+    //     }
+    //     Swal.fire({
+    //         icon: 'success',
+    //         title: 'Session destroyed',
+    //         text: "success" + message,
+    //         showConfirmButton: false,
+    //         timer: 2500
+    //     })
+    //     return true
+    // }
 
     return (
         <>
@@ -306,7 +346,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                 </span>
                 
             </button>
-         {open && (
+         {/* {open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
                     <div className="bg-[#18181c] p-6 rounded-lg shadow-lg w-full max-w-lg relative">
                         <button
@@ -348,7 +388,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
         </>
     )
 }

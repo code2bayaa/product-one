@@ -3,16 +3,19 @@ import { NavLink, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
+import Swal from "sweetalert2";
+
 const SEASON = () => {
     const { seasonID, id, season, name, background } = useParams();
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const [playlist,setPlaylist] = useState(null)
 
     const serie_name = name
 
@@ -512,25 +515,49 @@ const SEASON = () => {
             });
             return {...data}
         } 
+        const checkFeedback = (id) => {
+            console.log(id,"id")
+            //authentication
+            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            .then(async res => {
+                const {status, user} = await res.json()
+                if(status){
+                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({id, user, seasonID, season, type:"season"})
+                    })
+                    .then(res => res.json())
+                    .then(({status}) => {
+                        if(status){
+                            setPlaylist(() => true)
+                        }
+                    })
+                }
+            })
+        }
 
-        if(!serie){
-            const fetched = await fetchSeason({
-                variables : { id:seasonID }})
-            if (fetched.data && fetched.data.season.air_date === null) {
-                console.log("first time...")
-                const tv = await freshFetch()
-                setSerie(() => ({...tv}));
-            }else if(fetched.data && fetched.data.season.success){
-                console.log("Using cached data:", fetched.data);
-                setSerie(() => ({...fetched.data.season}));
-            }else {
-                const tv = await freshFetch()
-                setSerie(() => ({...tv}));
-            }
+        const fetched = await fetchSeason({
+            variables : { id:seasonID }})
+        if (fetched.data && fetched.data.season.air_date === null) {
+            console.log("first time...")
+            const tv = await freshFetch()
+            setSerie(() => ({...tv}));
+            checkFeedback(tv.id)
+        }else if(fetched.data && fetched.data.season.success){
+            console.log("Using cached data:", fetched.data);
+            setSerie(() => ({...fetched.data.season}));
+            checkFeedback(fetched.data.season.id)
+        }else {
+            const tv = await freshFetch()
+            setSerie(() => ({...tv}));
+            checkFeedback(tv.id)
         }
 
 
-    },[fetchSeason, id, season, seasonID, mutateInsertTV, serie]);
+    },[fetchSeason, mutateInsertTV, id, season, seasonID]);
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
@@ -618,6 +645,52 @@ const SEASON = () => {
     useEffect(() => {
         fetchCredits();
     }, [fetchCredits]);
+    const addToPlayList = async() => {
+
+        //authentication
+        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const {status, user} = await res.json()
+        if(status){
+            fetch(`${process.env.REACT_APP_playlist}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({id, user, seasonID, season:parseInt(season), type:"season"})
+            })
+            .then(res => res.json())
+            .then(({status}) => {
+                if(status){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Added to playlist',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+
+                    
+                }else{
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: "Already in playlist",
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }
+                setPlaylist(() => true)
+            })
+        }else{
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "Sign in to add to playlist",
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+
+    }
 
     return (
         
@@ -687,7 +760,26 @@ const SEASON = () => {
                                         )
                                     }
                                 </div>
-
+                                <div className="w-[100%]">
+                                    <button
+                                        type="button"
+                                        className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                        onClick={() => addToPlayList()}
+                                    >
+                                        {
+                                            playlist ? 
+                                                <>
+                                                    <FontAwesomeIcon icon={faBasketShopping} /> <span>Added to Playlist</span>
+                                                </>
+                                            :
+                                                <>
+                                                    <FontAwesomeIcon icon={faCirclePlus} /> Add to Playlist
+                                                </>
+                                                
+                                        }
+                                        
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         {

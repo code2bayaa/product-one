@@ -71,7 +71,7 @@ const PEOPLE = () => {
             }
         }
     `
-    const [fetchPerson] = useLazyQuery(FETCH_PERSON_QUERY,{
+    const [fetchPerson,fetchedPersonData] = useLazyQuery(FETCH_PERSON_QUERY,{
         notifyOnNetworkStatusChange: true,
     });
 
@@ -114,8 +114,8 @@ const PEOPLE = () => {
                 if(data.addPerson.message === "already inserted")
                     console.log("person inserting already started...")
                 // console.log("Movies successfully inserted into MySQL:", data.addPerson.message);
-                // fetchedPersonData.refetch()
-                // .then(status => console.log(status,"status"))
+                fetchedPersonData.refetch()
+                .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addPerson.message, data.addPerson.error);
             }
@@ -333,10 +333,11 @@ const PEOPLE = () => {
                 console.log(fetched.data)
                 if (fetched.data) {
                     console.log("Using cached data:", fetched.data);
-                    if(fetched.data.people.success && fetched.data.people.results &&  fetched.data.people.results.length < 15){
-                        console.log("less items")
-                        return await freshFetch()
-                    }else if(fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
+                    // if(fetched.data.people.success && fetched.data.people.results &&  fetched.data.people.results.length < 15){
+                    //     console.log("less items")
+                    //     return await freshFetch()
+                    // }else 
+                    if(fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
                         console.log("no records found")
                         return await freshFetch()
                     }else{

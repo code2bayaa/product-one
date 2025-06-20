@@ -213,23 +213,43 @@ const TRAILER = () => {
                 <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
                     <div className="w-[100%] h-[500px]">
                         {
-                            videos && <Plyr
-                                source={{
-                                    type:"video",
-                                    sources: [
-                                    {
-                                        src: trailor.hasOwnProperty("results") && trailor.results && trailor.results.length > 0 && trailor.results[0].key, // YouTube video ID
-                                        provider: "youtube",
-                                    },
-                                    ],
+                            process.env.REACT_APP_environment === "development" ?
+                                videos && <Plyr
+                                    source={{
+                                        type:"video",
+                                        sources: [
+                                            {
+                                                src: trailor.hasOwnProperty("results") && trailor.results && trailor.results.length > 0 && trailor.results[0].key, // YouTube video ID
+                                                provider: "youtube",
+                                            },
+                                        ],
 
-                                }}
-                                options= {{
-                                    autoplay: true,
-                                    muted: false,
-                                    controls: ["play", "volume", "fullscreen"],
-                                }}
-                            />
+                                    }}
+                                    options= {{
+                                        autoplay: false,
+                                        muted: true,
+                                        controls: ["play", "volume", "fullscreen"],
+                                    }}
+                                />
+                                :
+                                    <Plyr
+                                        source={{
+                                            type:"video",
+                                            sources: [
+                                                {
+                                                    src: trailor.hasOwnProperty("results") && trailor.results && trailor.results.length > 0 && trailor.results[0].key, // YouTube video ID
+                                                    provider: "youtube",
+                                                },
+                                            ],
+
+                                        }}
+                                        options= {{
+                                            autoplay: false,
+                                            muted: true,
+                                            controls: ["play", "volume", "fullscreen"],
+                                        }}
+                                    />  
+                            
                         }     
                     </div>
                     <div className="w-[90%] min-h-[320px] mx-[5%] my-[2%]">
@@ -241,26 +261,44 @@ const TRAILER = () => {
                             {
                                 trailor.results.length > 0 && trailor.results.map(({iso_639_1,iso_3166_1,name,key,site,size,integer,type,officialpublished_at,id},movie_key) => 
                                     <div className={windowWidth > 800 ? "w-[23%] h-[100%] m-[0.5%]":"w-[49%] h-[100%] m-[0.5%]"} key={movie_key}>
-                                        {/* {console.log(key,"key")} */}
                                         {
                                             
-                                            videos && <Plyr
-                                                source={{
-                                                    type:"video",
-                                                    sources: [
-                                                    {
-                                                        src: key, // YouTube video ID
-                                                        provider: "youtube",
-                                                    },
-                                                    ],
+                                            process.env.REACT_APP_environment === "development" ?
+                                                videos && <Plyr
+                                                    source={{
+                                                        type:"video",
+                                                        sources: [
+                                                        {
+                                                            src:key, // YouTube video ID
+                                                            provider: "youtube",
+                                                        },
+                                                        ],
 
-                                                }}
-                                                options= {{
-                                                    autoplay: false,
-                                                    muted: true,
-                                                    controls: ["play", "volume", "fullscreen"],
-                                                }}
-                                            />
+                                                    }}
+                                                    options= {{
+                                                        autoplay: false,
+                                                        muted: true,
+                                                        controls: ["play", "volume", "fullscreen"],
+                                                    }}
+                                                />
+                                            :
+                                                <Plyr
+                                                    source={{
+                                                        type:"video",
+                                                        sources: [
+                                                        {
+                                                            src: key, // YouTube video ID
+                                                            provider: "youtube",
+                                                        },
+                                                        ],
+
+                                                    }}
+                                                    options= {{
+                                                        autoplay: false,
+                                                        muted: true,
+                                                        controls: ["play", "volume", "fullscreen"],
+                                                    }}
+                                                />                                            
                                         }
                                     </div>
                                 )

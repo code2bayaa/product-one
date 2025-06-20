@@ -214,20 +214,20 @@ const RECOMMENDATIONS = () => {
                             </NavLink>
                         </div>
                     </div>
-                        <div className={windowWidth > 800 ? "w-[90%] movie-scene min-h-[320px] mx-[5%] my-[2%]":"w-[100%] movie-scene min-h-[320px] my-[2%]"}>
+                        <div className={windowWidth > 800 ? "w-[90%] movie-scene min-h-[320px] mx-[5%] my-[2%]":"w-[100%] movie-scene min-h-[220px] my-[2%]"}>
 
                             <h1 style={{textAlign:"center",textDecoration:"underline"}}>RECOMMENDED { stream === "movies" ? "MOVIES" : "TV"}</h1>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={recommendations?.page} index={"recommendation"} total_pages={recommendations?.total_pages}/>
 
-                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 
                                 {
                                     recommendations.results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={`/${stream}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                        <NavLink key={movie_key} to={`/${stream}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] m-[1%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
+                                                <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                    <h2 className="text-[15px] font-bold">{name || original_name || title || original_title}</h2>
+                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                 </div>
                                             </div>

@@ -807,8 +807,8 @@ const EPISODE = () => {
                     credits && serie && images && imdb ? 
                         <>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[300px]":"w-[100%] h-[300px]"}>
-                                <PICTURE picture={serie.still_path} classes={"shadow-lg h-[100%] shadow-blue-500/50"} />
+                            <div className={windowWidth > 800 ? "w-[37%] h-[300px]":"w-[100%] h-[200px]"}>
+                                <PICTURE picture={serie.still_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50" : "shadow-lg h-[100%] object-contain shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>
@@ -833,26 +833,26 @@ const EPISODE = () => {
                                 <div className="w-[100%] flex flex-row flex-wrap">
                                     <NavLink
                                         to={`/series/video/series/${id}/${serie.season_number}/${serie.episode_number}/${background}`}
-                                        className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}
                                     >
                                         trailors
                                     </NavLink>
                                     <NavLink
                                         to={`/video/episode/${serie.id}/${name}/${serie.season_number}/${serie.episode_number}/${serie.air_date}/${imdb.imdb_id}/${background}`}
-                                        className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}
                                     >
                                         play <FontAwesomeIcon icon={faPlayCircle} />
                                     </NavLink>
                                     <NavLink
                                         to={`/series/similar/series/${id}/${background}`}
-                                        className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}
                                     >
                                         similar series
                                     </NavLink>
                                     <NavLink
                                         to={`/series/
                                             commendations/series/${id}/${background}`}
-                                        className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[20px] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}
                                     >
                                         recommended series
                                     </NavLink>

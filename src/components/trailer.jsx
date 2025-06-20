@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useLayoutEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Plyr from "plyr-react";
 import { useQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
@@ -27,8 +27,12 @@ const TRAILER = () => {
         };
     },[])
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         setVideo(true)
+
+        return () => {
+            setVideo(false)
+        }
     },[videos])
     const fetchVideo = useQuery(gql`
         query Video (

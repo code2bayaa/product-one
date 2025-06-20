@@ -293,5 +293,8 @@ video, iframe{
   .swiper-button-next, .swiper-button-prev{
     width:15% !important;
   }
+  #build{
+    font-size: 80% !important;
+  }
   
 }

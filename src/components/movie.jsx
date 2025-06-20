@@ -16,6 +16,7 @@ const MOVIE = () => {
     const [credits,setCredit] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     const [playlist,setPlaylist] = useState(null)
+    const [generateGenre, setGenerateGenre] = useState([])
     // const [fetchedImage, setFetchedImage] = useState(null)
     useEffect(() => {
         const handleResize = () => {
@@ -24,6 +25,27 @@ const MOVIE = () => {
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
     },[])
+
+    const FETCH_GENRE_QUERY = gql`
+        query Genre {
+            genre {
+                success
+                date
+                data {
+                    id
+                    name
+                    mode
+                }
+            }
+        }
+    `
+    const [fetchGenre] = useLazyQuery(FETCH_GENRE_QUERY,{
+        // pollInterval: 500, // fetches new data at that interval
+        notifyOnNetworkStatusChange: true,
+        // variables,
+        // skip: !variables.page, // Skip query execution if variables are not set
+    });
+
     const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
 
         const FETCH_IMAGE_QUERY = gql`
@@ -568,7 +590,19 @@ const MOVIE = () => {
                 }
             })
         }            
-
+        const setGenreIDS = async(genre) => {
+            const {data} = await fetchGenre()
+            if(data.genre.success){
+                console.log(genre)
+                console.log(data.genre.data)
+                const genreData = data.genre.data.filter(({id,mode}) => genre.includes(Number(id)) && mode === "movie")
+                console.log(genreData)
+                setGenerateGenre(() => [...genreData])
+            }else{
+                setGenerateGenre(() => [])
+            }
+            
+        }
         const fetched = await fetchSingleMovie({
         variables : { id }})
         console.log(fetched)
@@ -576,14 +610,17 @@ const MOVIE = () => {
             console.log("Using cached data:", fetched.data);
             setMovie(() => ({...fetched.data.single}));
             checkFeedback(fetched.data.single.id)
+            setGenreIDS(fetched.data.single.genre_ids)
         }else {
             const movie = await freshFetch()
             setMovie(() => ({...movie}));
             checkFeedback(movie.id)
+            setGenreIDS(movie.genre_ids)
         }
-        // }
+
+        return true
         
-    },[fetchSingleMovie,id,mutateInsertMovie])
+    },[fetchSingleMovie,id,mutateInsertMovie,fetchGenre])
 
     const fetchCredits = useCallback(async() => {
         // const credits_response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/credits?api_key=${process.env.REACT_APP_api_key}`);
@@ -801,50 +838,56 @@ const MOVIE = () => {
         {
             credits && movie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
-                        <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] min-h-[100%]":"w-[100%] min-h-[70%]"}>
-                                <PICTURE picture={movie.poster_path} classes={"shadow-lg h-[100%] shadow-blue-500/50"} />
+                        <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] h-[100%] flex flex-col flex-wrap"}>
+                            <div className={windowWidth > 800 ? "w-[37%] min-h-[100%]":"w-[100%] h-[40%]"}>
+                                <PICTURE picture={movie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
-                                <h1 className="text-[30px]">{movie.original_title || movie.title}</h1>
+                                <h1 className="text-[30px] text-[#ffd800]">{movie.original_title || movie.title}</h1>
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{movie.tagline}"</p>
-                                <h3>{movie.release_date}</h3>
-                                <h3>{movie.revenue}</h3>
-                                <p style={{fontStyle:"italic"}}>{movie.status}</p>
-                                {/* <h3>{movie.video ? "available":"not available"}</h3> */}
-                                <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + "h " + (movie.runtime % 60) + "min" : movie.runtime + "min" }</h4>
+                                <div className={windowWidth > 800 ? "" : "w-[100%] gap-2 flex flex-row flex-wrap"}>
+                                    <h3>{movie.release_date}</h3>
+                                    <h3>{movie.revenue}</h3>
+                                    <p style={{fontStyle:"italic"}}>{movie.status}</p>
+                                    <h3>{movie.video ? "available":"not available"}</h3>
+                                    <p className="text-[#ffd800]"><FontAwesomeIcon icon={faStar} /> {movie.vote_average.toFixed(1)}</p>
+                                    <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + " h " + (movie.runtime % 60) + " min" : movie.runtime + " min" }</h4>
+                                    {
+                                        generateGenre.map(({name}) => name).join(" || ")
+                                    }
+                                </div>
                                 <article>
                                     {movie.overview}
                                 </article>
                                 <div className="w-[100%] flex flex-row flex-wrap">
                                     <NavLink
                                         to={`/movies/video/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         trailors
                                     </NavLink>
                                     <NavLink
                                         to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "text-[#ffd800] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "text-[#ffd800] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         play <FontAwesomeIcon icon={faPlayCircle} />
                                     </NavLink>
                                     <NavLink
                                         to={`/movies/similar/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         similar movies
                                     </NavLink>
                                     <NavLink
                                         to={`/movies/recommendations/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         recommended movies
                                     </NavLink>
                                     <div className="w-[100%]">
                                         <button
                                             type="button"
-                                            className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                            className="w-[80%] rounded-md mt-[1%] ml-[10%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
                                             onClick={() => addToPlayList()}
                                         >
                                             {
@@ -867,20 +910,20 @@ const MOVIE = () => {
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
+                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[220px] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
                                 {/* <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/> */}
 
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[40%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
+                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%] rounded-xl"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className="text-[15px] font-bold">{name ? name : original_name ? original_name : name}</h2>
+                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"font-bold"}>{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
                                                         <h3 style={{fontStyle:"italic"}}>{character}</h3>
                                                     </div>
@@ -893,17 +936,17 @@ const MOVIE = () => {
                         }
                         {
                             credits.crew && credits.crew.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
+                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[220px] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
 
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     
                                     {
                                         credits.crew.map(({job,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[40%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
+                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%] rounded-xl"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>

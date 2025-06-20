@@ -27,7 +27,7 @@ const SWEETPAGE = ({intitializeMovies,page,index,total_pages}) => {
         intitializeMovies({runContent:[index],type:index,adjustable:true,page:changed,genreId:'',regionId:'',languageId:'',yearId:0})
     }
     return (
-        <div className="w-[100%] flex flex-col">
+        <div className={windowWidth > 800 ? "w-[100%] flex flex-col" : "w-[60%] ml-[20%] flex flex-col"}>
             <button
                 className={windowWidth > 800 ? "w-[15%] border-[2px]":"min-w-[15%] border-[2px]"}
                 onClick={() => setView(!view)}

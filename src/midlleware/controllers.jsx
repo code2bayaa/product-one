@@ -713,7 +713,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     }
 
     return (
-        <div className="w-[100%] h-[auto] text-white" style={{background:"linear-gradient(25deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+        <div className="w-[100%] h-[auto] text-white" style={{background:windowWidth > 800 ? "linear-gradient(25deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)":"transparent"}}>
             <div className="w-[100%] flex flex-col flex-wrap">
                 <div className="w-[100%] h-[auto] border-r-[3px] border-[#2E2E3A]">
                     {/* <h1 className="text-[30px] font-bold">Controllers</h1> */}
@@ -723,7 +723,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                             <>
                                 <button
                                     onClick={() => getGenre("movie")}
-                                    className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}`}
+                                    className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[100px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                                 >
                                     Genre Movie 
                                     {
@@ -735,7 +735,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                                 </button>
                                 <button
                                     onClick={() => getGenre("tv")}
-                                    className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}`}
+                                    className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[100px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                                 >
                                     Genre TV 
                                     {
@@ -749,7 +749,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                             :
                             <button
                                 onClick={() => getGenre()}
-                                className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}`}
+                                className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                             >
                                 Genre 
                                 {
@@ -762,7 +762,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                         }
                         <button
                             onClick={() => getRegion()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedRegion ? "active" : "pending"}`}
+                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Region 
                             {
@@ -774,7 +774,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                         </button>
                         <button
                             onClick={() => getLanguage()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedLanguage ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedLanguage ? "active" : "pending"}`}
+                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedLanguage ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Language 
                             {
@@ -786,7 +786,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                         </button>
                         <button
                             onClick={() => getYears()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedYear ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedYear ? "active" : "pending"}`}
+                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedYear ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Year 
                             {
@@ -800,7 +800,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                             type === "people" ?
                                 <button
                                     onClick={() => getJobs()}
-                                    className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedJob ? "active" : "pending"}` : `min-w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedJob ? "active" : "pending"}`}
+                                    className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedJob ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                                 >
                                     Actor Jobs 
                                     {

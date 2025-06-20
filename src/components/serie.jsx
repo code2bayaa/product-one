@@ -834,19 +834,19 @@ const SERIE = () => {
                                 <div className="w-[100%] flex flex-row flex-wrap">
                                     <NavLink
                                         to={`/series/video/series/${serie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
+                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
                                     >
                                         trailors
                                     </NavLink>
                                     <NavLink
                                         to={`/series/similar/series/${serie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
+                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
                                     >
                                         similar series
                                     </NavLink>
                                     <NavLink
                                         to={`/series/recommendations/series/${serie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
+                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
                                     >
                                         recommended series
                                     </NavLink>

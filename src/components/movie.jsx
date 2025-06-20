@@ -849,7 +849,7 @@ const MOVIE = () => {
                                     <h3>{movie.release_date}</h3>
                                     <h3>{movie.revenue}</h3>
                                     <p style={{fontStyle:"italic"}}>{movie.status}</p>
-                                    <h3>{movie.video ? "available":"not available"}</h3>
+                                    <h3>{movie.video ? "available":"CAM"}</h3>
                                     <p className="text-[#ffd800]"><FontAwesomeIcon icon={faStar} /> {movie.vote_average.toFixed(1)}</p>
                                     <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + " h " + (movie.runtime % 60) + " min" : movie.runtime + " min" }</h4>
                                     {
@@ -862,25 +862,25 @@ const MOVIE = () => {
                                 <div className="w-[100%] flex flex-row flex-wrap">
                                     <NavLink
                                         to={`/movies/video/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         trailors
                                     </NavLink>
                                     <NavLink
                                         to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "text-[#ffd800] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "text-[#ffd800] w-[23%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         play <FontAwesomeIcon icon={faPlayCircle} />
                                     </NavLink>
                                     <NavLink
                                         to={`/movies/similar/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         similar movies
                                     </NavLink>
                                     <NavLink
                                         to={`/movies/recommendations/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
                                     >
                                         recommended movies
                                     </NavLink>

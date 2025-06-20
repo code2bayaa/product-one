@@ -225,7 +225,8 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                     if(type === "mp4"){
                         // setPlaying(`${url}/${video.index}`)
                         // router(`/play/${url}/${video.index}/${type}/${background}`)
-                        window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
+                        // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
+                        window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
                         // setFetchedPlay(() => true)
                         
                         
@@ -245,8 +246,8 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                         //     setOpen(true)
                         // }
 
-                        window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
-
+                        // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
+                        window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
                         return null
                         
                     }

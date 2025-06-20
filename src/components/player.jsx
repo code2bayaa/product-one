@@ -17,6 +17,7 @@ const PLAYER = () => {
     const [rating, setRating] = useState(3.2)
     const [stars,setStars] = useState(0)
     const [users, setUsers] = useState(0)
+    const [user, setUser] = useState(null)
     const [paid, setPaid] = useState(false)
     // const videoRef = useRef(null)
     // const [mkv, setMKV] = useState(false)
@@ -37,6 +38,7 @@ const PLAYER = () => {
                 //pay with credits from session | user
                 if(isLoggedIn){
                     
+                    setUser(isLoggedIn.user)
                     const response = await fetch(`${process.env.REACT_APP_user_paid}`,{
                         credentials: "include",
                         method:"POST",
@@ -105,6 +107,8 @@ const PLAYER = () => {
 
                 }else{
                     let user = localStorage.getItem("session")
+
+                    setUser(user)
                     const res = await fetch(`${process.env.REACT_APP_paid}`,{
                         method:"POST",
                         headers:{
@@ -342,20 +346,21 @@ const PLAYER = () => {
                     :
                         ""
                 }
+                {console.log(`${process.env.REACT_APP_host_play}/${id}/${index}/${user}`)}
                 {
-                    type === "mkv" ?
-                    (
-                        <video controls className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_player_env}${host}/${index}`} />
+                    // type === "mkv" ?
+                    // (
+                        <video controls className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_host_play}/${id}/${index}/${user}`} />
 
-                    )
-                    :
-                    (
-                        <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">
-                            <source src={`${process.env.REACT_APP_player_env}${host}/${index}`} type="video/mp4" />
-                            Your browser does not support the video tag.
+                    // )
+                    // :
+                    // (
+                    //     <video id="plyr-video" crossOrigin="true" className="w-[100%] h-[500px]">
+                    //         <source src={`${process.env.REACT_APP_host_play}/${id}/${index}/${user}`} type="video/mp4" />
+                    //         Your browser does not support the video tag.
                             
-                        </video>
-                    )
+                    //     </video>
+                    // )
 
                 }
 

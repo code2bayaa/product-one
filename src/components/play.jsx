@@ -211,6 +211,7 @@ const PLAY = () => {
                         //every other user --- most fetch
                         console.log("ordinarily...")
                         const cleanedTokens = cleanTokens(fetchPlay.data?.play?.tokens)
+                        console.log(cleanedTokens)
                         setPlay(() => ([...cleanedTokens]))
                         
                     }

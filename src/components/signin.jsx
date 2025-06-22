@@ -136,19 +136,19 @@ const SIGNIN = () => {
                 :
                 <MOBILE/>
             }
-            <div className="flex flex-1 items-center w-[80%] ml-[20%] justify-center min-h-screen">
-                <div className="bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 flex flex-col items-center  w-[60%]">
+            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[80%] ml-[20%]" : "w-[100%]"} justify-center min-h-screen`}>
+                <div className={`bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 flex flex-col items-center  ${windowWidth > 800 ? "w-[60%]" : "w-[100%]"}`}>
                     <img src="/image/footer3.png" alt="late developers https://late-developers.com" className="w-1/2 mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-center text-[#18181c] mb-6">Sign in to your account</h2>
-                    <div className="w-full flex flex-col gap-4">
+                    <div className={`${windowWidth > 800 ? "w-full" : "w-[100%]"} flex flex-col gap-4`}>
                         {/* Google Sign-In */}
                         <div className="flex flex-col items-center w-full mb-2">
                             <div id="google-signin-btn" style={{ width: "100%", display: "flex", justifyContent: "center" }}></div>
                             <div className="my-4 text-gray-400 text-sm">or</div>
                         </div>
                         {/* Email/Password Sign-In */}
-                        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-                            <div className="flex flex-row gap-2 w-full">
+                        <form onSubmit={handleSubmit} className={`${windowWidth > 800 ? "w-full" : "w-[100%]"} flex flex-col gap-4`}>
+                            <div className={`flex gap-2 ${windowWidth > 800 ? "w-full flex-row" : "w-[100%] flex-col"}`}>
                                 <input
                                     type="email"
                                     placeholder="Email"

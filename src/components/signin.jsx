@@ -111,6 +111,7 @@ const SIGNIN = () => {
         });
     
         const {status, message} = await response.json()
+        console.log("message",message)
         if(!status){
           Swal.fire("oops!",message,"error");
           setLoading(false)

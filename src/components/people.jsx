@@ -499,7 +499,7 @@ const PEOPLE = () => {
             }
             <div className={windowWidth > 800 ? "w-[80%] duration-150 min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] duration-100 flex flex-col"}>
             {
-                people && people.length > 0 ?
+                people ?
                 <>
                     <div className="w-[100%]">
                         <CONTROLLERS intitializeMovies={intitializePeople} type={"people"}/>
@@ -514,9 +514,9 @@ const PEOPLE = () => {
                                 <div id={box && box.index} className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] m-[1%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%] rounded-xl"} />
+                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>

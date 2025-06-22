@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
 
-const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) => {
+const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
 
     const [loading, setLoading] = useState(false);
     // const [open,setOpen] = useState(false);
@@ -334,7 +334,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size}) =
                 onClick={(e) => runStream(e,token)}
                 type="button"
                 key={index}
-                className="bg-[transparent] m-[1%] border-[2px] text-white w-[48%] h-[auto] text-[20px] font-bold"
+                className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth > 800 ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
             >
                 {quality}
                 {rate > 0 && (

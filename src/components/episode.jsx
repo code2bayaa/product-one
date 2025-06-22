@@ -11,10 +11,52 @@ import Swal from "sweetalert2";
 
 const EPISODE = () => {
     const { id, season, episodeID, episode, name, background } = useParams();
-    // console.log({
-    //     season,episode,name
-        
-    // })
+    const [layouts,setLayouts] = useState(true)
+    useEffect(() => {
+
+        const sendForm = async({url,options}) => {
+
+            const response = await fetch(
+                url,
+                options,
+                {credentials:"initial"}
+            )
+
+            
+            return await response.json()
+
+        }
+
+        async function runLocale(){
+            let user_location = localStorage.getItem("location") || null;
+            if(!user_location){
+                const urls = [
+                    "https://ipinfo.io/json",
+                    // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
+                    "https://ipapi.co/json/",
+                    "https://api.ipgeolocation.io/ipgeo?apiKey=02be68312fd5432fa07048f4b27b6542"
+                ]
+
+                const locations = await Promise.all(urls.map(async(url) => {
+                    return await sendForm({url, options : {
+                        method:"GET",
+                        headers : {'Content-type': 'application/json; charset=UTF-8'},
+                    }})
+                }))
+
+                user_location = locations
+            }else{
+                user_location = JSON.parse(user_location);
+            }
+            // return user_location;
+            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa" && user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Australia"){
+                setLayouts(false)
+            }  
+            console.log(user_location,"user location")
+        }
+
+        runLocale()
+    },[])
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
@@ -837,12 +879,17 @@ const EPISODE = () => {
                                     >
                                         trailors
                                     </NavLink>
-                                    <NavLink
-                                        to={`/video/episode/${serie.id}/${name}/${serie.season_number}/${serie.episode_number}/${serie.air_date}/${imdb.imdb_id}/${background}`}
-                                        className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}
-                                    >
-                                        play <FontAwesomeIcon icon={faPlayCircle} />
-                                    </NavLink>
+                                    {
+                                        layouts && (
+                                            <NavLink
+                                                to={`/video/episode/${serie.id}/${name}/${serie.season_number}/${serie.episode_number}/${serie.air_date}/${imdb.imdb_id}/${background}`}
+                                                className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}
+                                            >
+                                                play <FontAwesomeIcon icon={faPlayCircle} />
+                                            </NavLink>
+                                        )
+                                    }
+
                                     <NavLink
                                         to={`/series/similar/series/${id}/${background}`}
                                         className={windowWidth > 800 ? "text-[20px] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "w-[80%] ml-[10%] text-center min-h-[40px] m-[1%] bg-[transparent] border-[2px]"}

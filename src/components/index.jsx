@@ -9,52 +9,9 @@ const EMPIRE = () => {
         
     const divRefs = useRef([]);
     const [windowWidth, setWindowWidth] = useState(0);
-    const [layouts, setLayouts] = useState(false);
+    // const [layouts, setLayouts] = useState(false);
 
     useEffect(() => {
-
-        const sendForm = async({url,options}) => {
-
-            const response = await fetch(
-                url,
-                options,
-                {credentials:"initial"}
-            )
-
-            
-            return await response.json()
-
-        }
-
-        async function runLocale(){
-            let user_location = localStorage.getItem("location") || null;
-            if(!user_location){
-                const urls = [
-                    "https://ipinfo.io/json",
-                    // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
-                    "https://ipapi.co/json/",
-                    "https://api.ipgeolocation.io/ipgeo?apiKey=02be68312fd5432fa07048f4b27b6542"
-                ]
-
-                const locations = await Promise.all(urls.map(async(url) => {
-                    return await sendForm({url, options : {
-                        method:"GET",
-                        headers : {'Content-type': 'application/json; charset=UTF-8'},
-                    }})
-                }))
-
-                user_location = locations
-            }else{
-                user_location = JSON.parse(user_location);
-            }
-            // return user_location;
-            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa" && user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Australia"){
-                setLayouts(true)
-            }  
-            console.log(user_location,"user location")
-        }
-
-        runLocale().then(() => {
             gsap.registerPlugin(ScrollTrigger);
             divRefs.current.forEach((divRef) => {
                 if (!divRef) return;
@@ -106,7 +63,6 @@ const EMPIRE = () => {
                     );
                 })
             });
-        })
     },[windowWidth])
     useEffect(() => {
         const handleResize = () => {
@@ -118,16 +74,6 @@ const EMPIRE = () => {
     }, [windowWidth]);
     
     return (
-        <>
-        {
-            layouts ?
-                <div className="w-[100%] h-[100%] text-black text-center" style={{background:"url(/image/grey.jpg)"}}>
-                    <h1>WELCOME TO LATE DEVELOPERS</h1>
-                    <h2>PRODUCT ONE</h2>
-                    <p>To invest or contact info@late-developers.com</p>
-                    <p>More information at https://late-developers.com/uko</p>
-                </div>
-            :
         <div className={windowWidth > 800 ? "w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap":"w-[100%] h-[auto] text-white flex flex-row flex-wrap"} style={{background:"url(/image/grey.jpg)"}}>
             {
                 windowWidth > 800 ? 
@@ -208,8 +154,6 @@ const EMPIRE = () => {
                 </div>
             </div>
         </div>
-                }
-    </>
     )
 
 }

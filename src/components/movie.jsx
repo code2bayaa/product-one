@@ -17,6 +17,7 @@ const MOVIE = () => {
     const [windowWidth, setWindowWidth] = useState(0);
     const [playlist,setPlaylist] = useState(null)
     const [generateGenre, setGenerateGenre] = useState([])
+    const [layouts, setLayouts] = useState(true)
     // const [fetchedImage, setFetchedImage] = useState(null)
     useEffect(() => {
         const handleResize = () => {
@@ -24,6 +25,52 @@ const MOVIE = () => {
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
+    },[])
+
+    useEffect(() => {
+
+        const sendForm = async({url,options}) => {
+
+            const response = await fetch(
+                url,
+                options,
+                {credentials:"initial"}
+            )
+
+            
+            return await response.json()
+
+        }
+
+        async function runLocale(){
+            let user_location = localStorage.getItem("location") || null;
+            if(!user_location){
+                const urls = [
+                    "https://ipinfo.io/json",
+                    // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
+                    "https://ipapi.co/json/",
+                    "https://api.ipgeolocation.io/ipgeo?apiKey=02be68312fd5432fa07048f4b27b6542"
+                ]
+
+                const locations = await Promise.all(urls.map(async(url) => {
+                    return await sendForm({url, options : {
+                        method:"GET",
+                        headers : {'Content-type': 'application/json; charset=UTF-8'},
+                    }})
+                }))
+
+                user_location = locations
+            }else{
+                user_location = JSON.parse(user_location);
+            }
+            // return user_location;
+            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa" && user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Australia"){
+                setLayouts(false)
+            }  
+            console.log(user_location,"user location")
+        }
+
+        runLocale()
     },[])
 
     const FETCH_GENRE_QUERY = gql`
@@ -849,7 +896,7 @@ const MOVIE = () => {
                                     <h3>{movie.release_date}</h3>
                                     <h3>{movie.revenue}</h3>
                                     <p style={{fontStyle:"italic"}}>{movie.status}</p>
-                                    <h3>{movie.video ? "available":"CAM"}</h3>
+                                    {/* <h3>{movie.video ? "available":"CAM"}</h3> */}
                                     <p className="text-[#ffd800]"><FontAwesomeIcon icon={faStar} /> {movie.vote_average.toFixed(1)}</p>
                                     <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + " h " + (movie.runtime % 60) + " min" : movie.runtime + " min" }</h4>
                                     {
@@ -866,12 +913,18 @@ const MOVIE = () => {
                                     >
                                         trailors
                                     </NavLink>
-                                    <NavLink
-                                        to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "text-[#ffd800] w-[23%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
-                                    >
-                                        play <FontAwesomeIcon icon={faPlayCircle} />
-                                    </NavLink>
+                                    {
+                                        layouts && 
+                                        (
+                                            <NavLink
+                                                to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
+                                                className={windowWidth > 800 ? "text-[#ffd800] w-[23%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                            >
+                                                play <FontAwesomeIcon icon={faPlayCircle} />
+                                            </NavLink>                                            
+                                        )
+                                    }
+
                                     <NavLink
                                         to={`/movies/similar/movies/${movie.id}/${fetchedImageBackgrounds}`}
                                         className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}

@@ -12,6 +12,17 @@ const EMPIRE = () => {
     // const [layouts, setLayouts] = useState(false);
 
     useEffect(() => {
+        async function runTest(){
+            const response = await fetch("https://late-developers.com/node-test")
+            const data = await response.json()
+
+            console.log(data,"init data")
+
+        }
+
+        runTest()
+    })
+    useEffect(() => {
             gsap.registerPlugin(ScrollTrigger);
             divRefs.current.forEach((divRef) => {
                 if (!divRef) return;

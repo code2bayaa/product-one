@@ -13,7 +13,7 @@ const EMPIRE = () => {
 
     useEffect(() => {
         async function runTest(){
-            const response = await fetch("https://late-developers.com/node-test")
+            const response = await fetch("https://uko.late-developers.com/test",{credentials:"include"})
             const data = await response.json()
 
             console.log(data,"init data")

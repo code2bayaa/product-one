@@ -420,7 +420,9 @@ const MOVIES = () => {
         intitializeMovies(
             {runContent:[
             // "latest",
-            "discover","popular","trending","top_rated","upcoming","now_playing"],
+            "discover",
+            // "popular",
+            "trending","top_rated","upcoming","now_playing"],
             adjustable:true
         })
 

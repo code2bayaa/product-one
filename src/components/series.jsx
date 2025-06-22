@@ -283,7 +283,9 @@ const SERIES = () => {
         intitializeMovies(
             {runContent:[
             // "latest",
-                "airing","trending","popular","top rated","discover","on air"
+                "airing","trending",
+                // "popular",
+                "top rated","discover","on air"
             ],
             adjustable:true
         })

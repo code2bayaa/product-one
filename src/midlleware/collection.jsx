@@ -195,7 +195,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
         }
         if (token) {
             setLoading(true)
-            const HTMLMARK = e.target.innerHTML
+            const HTMLMARK = e.target.innerText
             e.target.innerText = "loading..."
             
             console.log("clicked play...")
@@ -268,7 +268,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                         //     tokens:getToken
                         // }})
             }else{
-                e.target.innerHTML = HTMLMARK
+                e.target.innerText = HTMLMARK
                 setLoading(false)
                 Swal.fire({
                     icon: 'error',
@@ -281,7 +281,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                         //in case no video file found -- destroy token
             // setPlay(null)
             setLoading(false)
-            e.target.innerHTML = HTMLMARK
+            e.target.innerText = HTMLMARK
             const responseDestroy = await fetch(`${process.env.REACT_APP_destroy_token}`,{
                 method:"POST",
                 headers:{
@@ -336,7 +336,6 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                 key={index}
                 className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth > 800 ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
             >
-                {title}
                 {quality}
                 {rate > 0 && (
                     <span className="text-[#ffd800] ml-2">

@@ -1,13 +1,14 @@
 import { faBars, faBarsStaggered } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import NAVBAR from "./nav"
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
+// import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import { NavLink } from "react-router-dom";
 import SWEETPAGE from "../midlleware/pages";
 import PICTURE from "../midlleware/picture";
+import CryptoJS from "crypto-js";
 
 const MOBILE = () => {
     const [open, setOpen] = useState(false)
@@ -26,232 +27,144 @@ const MOBILE = () => {
         };
     },[])
 
-    const FETCH_MOVIES_QUERY = gql`
-        query fetchMovie (
-            $page: Int!,
-            $search : String!,
-            $index : String!,
-            $type:String!
-        ){
-            fetchMovie(
-                search:$search,
-                page:$page,
-                index:$index,
-                type:$type
-            ) {
-                results {
-                    adult
-                    backdrop_path
-                    genre_ids
-                    id
-                    original_language
-                    original_title
-                    overview
-                    popularity
-                    poster_path
-                    release_date
-                    title
-                    video 
-                    vote_average
-                    vote_count
-                }
-                page
-                total_pages
-                total_results                
-                success
-                error
-                message
-            }
-        }
-    `
-    const [fetchMovies,fetchedMoviesData] = useLazyQuery(FETCH_MOVIES_QUERY,{
-        // pollInterval: 500, // fetches new data at that interval
-        notifyOnNetworkStatusChange: true,
-    });
-
-    const INSERT_MOVIES_MUTATION = gql`
-        mutation searchMovies(
-            $page:Int!,
-            $results:[SEARCH_MOVIE_RESULTS_INPUT],
-            $total_pages:Int!,
-            $total_results:Int!,
-            $data :SEARCH_DATA_INPUT,
-            $type:String!,
-        ) {
-            searchMovies(
-                page:$page,
-                results:$results,
-                total_pages:$total_pages,
-                total_results:$total_results,
-                data:$data,
-                type:$type,
-            ) {
-                success
-                message
-            }
-        }
-    `;
-
-    const [mutateInsertMovies] = useMutation(INSERT_MOVIES_MUTATION, {
-        onCompleted: (data) => {
-            console.log(data)
-            if (data.searchMovies.success) {
-                if(data.searchMovies.message === "already inserted")
-                    console.log("movie inserting already started...")
-                console.log("Movies successfully inserted into MySQL:", data.searchMovies.message);
-                fetchedMoviesData.refetch()
-                .then(status => console.log(status,"status"))
-            } else {
-                console.error("Failed to insert movies into MySQL:", data.searchMovies.message, data.searchMovies.error);
-            }
-        },
-        onError: (error) => {
-            console.error("Error inserting movies into MySQL:", error.message);
-        },
-    });
-
-    const FETCH_PERSON_QUERY = gql`
-        query FetchPerson (
-            $page: Int!,
-            $index : String!,
-            $search:String!,
-        ){
-            fetchPerson(
-                page:$page,
-                search:$search,
-                index:$index,
-            ) {
-                results {
-                    adult
-                    gender
-                    profile_path
-                    id
-                    known_for_department
-                    name
-                    original_name
-                    popularity
-
-                }
-                page
-                total_pages
-                total_results                
-                success
-                error
-                message
-            }
-        }
-    `
-    const [fetchPerson,fetchedPersonData] = useLazyQuery(FETCH_PERSON_QUERY,{
-        notifyOnNetworkStatusChange: true,
-    });
-
-    const INSERT_PERSON_MUTATION = gql`
-        mutation searchPerson(
-            $page:Int!,
-            $results:[SEARCH_PERSON_RESULTS_INPUT],
-            $total_pages:Int!,
-            $total_results:Int!,
-            $data :SEARCH_PERSON_DATA_INPUT,
-            $type:String!,
-        ) {
-            searchPerson(
-                page:$page,
-                results:$results,
-                total_pages:$total_pages,
-                total_results:$total_results,
-                data:$data,
-                type:$type,
-            ) {
-                success
-                message
-            }
-        }
-    `;
-
-    const [mutateInsertPerson] = useMutation(INSERT_PERSON_MUTATION, {
-        onCompleted: (data) => {
-            console.log(data)
-            if (data.searchPerson.success) {
-                if(data.searchPerson.message === "already inserted")
-                    console.log("person inserting already started...")
-                fetchedPersonData.refetch()
-                .then(status => console.log(status,"status"))
-            } else {
-                console.error("Failed to insert person into MySQL:", data.searchPerson.message, data.searchPerson.error);
-            }
-        },
-        onError: (error) => {
-            console.error("Error inserting person into MySQL:", error.message);
-        },
-    });
-
-    const intitializeMovies = useCallback(({runContent}) => {
+    const intitializeSearch = ({runContent,search}) => {
         if(search){
-            runContent.forEach(async({index, api, page, select, insert, type, object}) => {
-    
+            function getCurrentWeek() {
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const pastDaysOfYear = (now - startOfYear) / 86400000;
+                return Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+            }
+
+            // Usage:
+            const currentWeek = getCurrentWeek();
+            console.log(currentWeek,typeof currentWeek);
+            console.log("searching for...",search)
+            runContent.forEach(async({index, api, page, type, select, insert}) => {
+                console.log("running")
+                const hashed = page + search + type
+                const hashedKey = CryptoJS.SHA256(hashed).toString();
+                console.log("hashedKey",hashedKey)
                 async function freshFetch(){
                     const response = await fetch(`${process.env.REACT_APP_movie_db}${api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&query=${search}&page=${page}`);
                     const data = await response.json();
         
+                    console.log(data,"fresh")
                     if (data.results.length > 0) {
-                        let key = (search_content && search_content.findIndex((cont) => cont.index === index)) || -1
-                        if(key > -1){
-                            setSearchContent(prevSearch => {
-                                prevSearch[key] = {index, page, total_pages:data.total_pages, results: data.results, name: search, api}
-                                return [...prevSearch]
-                            })
+                        setSearchContent((prevSearch) => {
+                            prevSearch = prevSearch || [];
+                            const updatedSearch = [...prevSearch]
+                            const existingIndex = updatedSearch.findIndex(
+                                (search) => search.index === index
+                            );
         
-                        }else
-                            setSearchContent(prevSearch => ([...prevSearch, {index, page, total_pages:data.total_pages, results: data.results, name: search, api}]));
+                            if (existingIndex > -1) {
+                                updatedSearch[existingIndex].results = [
+                                    ...data?.results,
+                                ];
+                                // updatedSearch[existingIndex].people_next = fetched?.data?.people_next
+                            } else {
+                                updatedSearch.push({
+                                    index,
+                                    results: data?.results,
+                                    page,
+                                    total_pages: data?.total_pages,
+                                    // total_results:fetched.data.people.total_results,
+                                    // people_next:fetched?.data?.people_next
+                                    name:search,
+                                    api
+                                });
+                            }
+        
+                            return updatedSearch;
+                        });                            
                     } else {
                         setSearchContent([{index:"not found", results: [], name: search}]);
                     }
 
-                    insert({
-                        variables: {
+                    const responseInsert = await fetch(`${insert}`,{
+                        method:"POST",
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body:JSON.stringify({
                             page,
                             results:data.results,
-                            total_pages:data.total_pages,
-                            total_results:data.total_results,
+                            total_pages:data?.total_pages || 0,
+                            total_results:data?.total_results || 0,
                             data :{
                                 index:"search",
                                 search
-                            },                            
+                            },   
+                            date:currentWeek,                         
                             type,
-                        },
+                            hashedKey
+                        })
                     })
-                }
 
-                const fetched = await select({
-                    variables : {
+                    const {success, error, message} = await responseInsert.json()
+
+                    console.log(error,message)
+                    if(success){
+                        console.log("inserted")
+                    }else{
+                        console.log("error inserting...")
+                    }
+                }
+// {success, page, results, total_pages, total_results, error}
+                const responseSelect = await fetch(`${select}`,{
+                    method:"POST",
+                    headers:{
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify({
                         page,
                         search,
                         index: "search",
-                        type
-                }})
-                console.log(fetched)
+                        type,
+                        date:currentWeek,
+                        hashedKey
+                    })
+                })
 
-                if (fetched.data) {
-                    console.log("Using cached data:", fetched.data);
-                    if(fetched.data[object].error === "insert movies" || fetched.data[object].error === "no records found"){
+                const selectData = await responseSelect.json()
+
+                console.log(selectData,"select")
+
+                    if(selectData.error === "insert movies" || selectData.error === "no records found"){
                         console.log("no records found")
                         freshFetch()
-                    }else if(fetched.data[object].results && fetched.data[object].results.length > 0){
+                    }else if(selectData.success && selectData.results && selectData.results.length > 0){
                         console.log("finally using cached data")
-                        let key = (search_content && search_content.findIndex((cont) => cont.index === index)) || -1
-                        if(key > -1){
-                            setSearchContent(prevSearch => {
-                                prevSearch[key] = {index, page, total_pages:fetched.data[object].total_pages, results: fetched.data[object].results, name: search, api}
-                                return [...prevSearch]
-                            })
+                        setSearchContent((prevSearch) => {
+                            prevSearch = prevSearch || [];
+                            const updatedSearch = [...prevSearch]
+                            const existingIndex = updatedSearch.findIndex(
+                                (search) => search.index === index
+                            );
         
-                        }else
-                            setSearchContent(prevSearch => ([...prevSearch, {index, page, total_pages:fetched.data[object].total_pages, results: fetched.data[object].results, name: search, api}])); 
+                            if (existingIndex > -1) {
+                                updatedSearch[existingIndex].results = [
+                                    ...selectData?.results,
+                                ];
+                                // updatedSearch[existingIndex].people_next = fetched?.data?.people_next
+                            } else {
+                                updatedSearch.push({
+                                    index,
+                                    results:selectData?.results,
+                                    page:selectData?.page,
+                                    total_pages:selectData?.total_pages,
+                                    name:search,
+                                    api
+                                });
+                            }
+        
+                            return updatedSearch;
+                        });                            
+                    } else {
+                        console.log("fresh...")
+                        freshFetch()
                     }
-
-                } else {
-                    freshFetch()
-                }
             })
         }else{
             Swal.fire({
@@ -262,21 +175,16 @@ const MOBILE = () => {
             });
         }
 
-    },[search,search_content])
-
-    useEffect(() => {
-        console.log("changing search...")
-        if(search){
-            intitializeMovies({runContent:[
-                {"index":"series","api":"search/tv",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"tv","object":"fetchMovie"},
-                {"index":"movies","api":"search/movie",page:1,"select":fetchMovies,"insert":mutateInsertMovies,"type":"movie","object":"fetchMovie"},
-                {"index":"people","api":"search/person",page:1,"select":fetchPerson,"insert":mutateInsertPerson,"type":"person","object":"fetchPerson"}
-            ]})
-        }
-    },[search,intitializeMovies,fetchMovies,fetchPerson,mutateInsertMovies,mutateInsertPerson])
+    }
 
     const editMachine = (e) => {
-        setSearch(() => e.target.value);
+        const searchValue = e.target.value.toLowerCase().trim();
+        setSearch(() => searchValue);
+        intitializeSearch({runContent:[
+            {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_search,"insert":process.env.REACT_APP_search_insert,"type":"tv"},
+            {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_search,"insert":process.env.REACT_APP_search_insert,"type":"movie"},
+            {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_search_person,"insert":process.env.REACT_APP_search_insert_person,"type":"person"}
+        ],search:searchValue})
     }
 
     return (
@@ -289,16 +197,16 @@ const MOBILE = () => {
                                 <div className="w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" key={node}>
                                     <h1 className="my-t-[5%]">{index}</h1>
                                     <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
-                                    <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/>
-                                    <div className="w-[100%] movie-scene h-[300px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
+                                    <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages}/>
+                                    <div className="w-[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
                                         {
                                             results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
                                                 <NavLink key={search_key} to={`/${index}/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
 
                                                     <div key={search_key} className="w-[100%] h-[100%]">
-                                                        <PICTURE picture={poster_path || backdrop_path || profile_path} />
+                                                        <PICTURE classes={'object-cover h-[100%]'} picture={poster_path || backdrop_path || profile_path} />
                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                            <h2 className="text-[15px] font-bold">{name || original_name || title || original_title}</h2>
+                                                            <h2 className="text-[10px] font-bold">{name || original_name || title || original_title}</h2>
                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { 
                                                             vote_average ? 
                                                                 parseFloat(vote_average).toFixed(1)

@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
 
-const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
+const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
 
     const [loading, setLoading] = useState(false);
     // const [open,setOpen] = useState(false);
@@ -196,7 +196,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size,win
         if (token) {
             setLoading(true)
             const HTMLMARK = e.target.innerHTML
-            e.target.innerHTML = "loading..."
+            e.target.innerText = "loading..."
             
             console.log("clicked play...")
             //
@@ -219,7 +219,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size,win
                 const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
                 if(video){
                     const type = video && video.hasOwnProperty("name") && video.name.split(".").pop()
-                    e.target.innerHTML = HTMLMARK
+                    e.target.innerText = HTMLMARK
                     // setPlay(null)
                     setLoading(false)
                     if(type === "mp4"){
@@ -336,6 +336,7 @@ const COLLECTIONS = ({index,token,quality,id,background,maxRate,seeders,size,win
                 key={index}
                 className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth > 800 ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
             >
+                {title}
                 {quality}
                 {rate > 0 && (
                     <span className="text-[#ffd800] ml-2">

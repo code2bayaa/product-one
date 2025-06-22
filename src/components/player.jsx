@@ -30,13 +30,14 @@ const PLAYER = () => {
         try{
             async function authentication(){
                 const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
-                const {status,message} = await res.json()
-                console.log(message)
-                return status
+                return  await res.json()
+                // console.log(message)
+                // return status
             }
             authentication().then(async isLoggedIn => {
+                console.log(isLoggedIn)
                 //pay with credits from session | user
-                if(isLoggedIn){
+                if(isLoggedIn.status){
                     
                     setUser(isLoggedIn.user)
                     const response = await fetch(`${process.env.REACT_APP_user_paid}`,{
@@ -52,7 +53,7 @@ const PLAYER = () => {
                     })
 
                     const response_data = await response.json()
-                    console.log(response_data.message)
+                    console.log(response_data)
 
                     if(response_data.status){
                         const res = await fetch(`${process.env.REACT_APP_update_user_credits}`,{

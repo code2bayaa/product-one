@@ -11,17 +11,17 @@ const EMPIRE = () => {
     const [windowWidth, setWindowWidth] = useState(0);
     // const [layouts, setLayouts] = useState(false);
 
-    useEffect(() => {
-        async function runTest(){
-            const response = await fetch("https://uko.late-developers.com/test",{credentials:"include"})
-            const data = await response.json()
+    // useEffect(() => {
+    //     async function runTest(){
+    //         const response = await fetch("https://uko.late-developers.com/test",{credentials:"include"})
+    //         const data = await response.json()
 
-            console.log(data,"init data")
+    //         console.log(data,"init data")
 
-        }
+    //     }
 
-        runTest()
-    })
+    //     runTest()
+    // })
     useEffect(() => {
             gsap.registerPlugin(ScrollTrigger);
             divRefs.current.forEach((divRef) => {

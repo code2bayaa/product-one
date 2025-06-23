@@ -884,12 +884,12 @@ const MOVIE = () => {
                 }
         {
             credits && movie && images ? 
-                    <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] flex flex-col overflow-y-auto movie-scene":"w-[98%] mx-[1%] h-[100%] flex flex-col movie-scene"}>
-                        <div className={windowWidth > 800 ? "w-[100%] h-[67%] flex flex-row flex-wrap":"w-[100%] min-h-[60%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] min-h-[100%]":"w-[100%] h-[40%]"}>
+                    <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] flex flex-col overflow-y-auto movie-scene":"w-[98%] mx-[1%] h-[100%] flex flex-col overflow-y-auto movie-scene"}>
+                        <div className={windowWidth > 800 ? "w-[100%] h-[67%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
+                            <div className={windowWidth > 800 ? "w-[37%] min-h-[100%]":"w-[100%] h-[auto]"}>
                                 <PICTURE picture={movie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
                             </div>
-                            <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
+                            <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-[auto]"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{movie.original_title || movie.title}</h1>
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{movie.tagline}"</p>
                                 <div className={windowWidth > 800 ? "" : "w-[100%] gap-2 flex flex-row flex-wrap"}>
@@ -963,7 +963,7 @@ const MOVIE = () => {
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[220px] my-[2%]"}>
+                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[auto] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
                                 {/* <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/> */}

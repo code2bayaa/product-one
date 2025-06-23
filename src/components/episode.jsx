@@ -849,8 +849,8 @@ const EPISODE = () => {
                     credits && serie && images && imdb ? 
                         <>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[300px]":"w-[100%] h-[200px]"}>
-                                <PICTURE picture={serie.still_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50" : "shadow-lg h-[100%] object-contain shadow-blue-500/50"} />
+                            <div className={windowWidth > 800 ? "w-[37%] h-[300px]":"w-[100%] h-[auto]"}>
+                                <PICTURE picture={serie.still_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50" : "shadow-lg h-[200px] object-contain shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>

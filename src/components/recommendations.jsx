@@ -188,27 +188,27 @@ const RECOMMENDATIONS = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene duration-100 flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene duration-100"}>
                 {
                     recommendations ?
                     <> 
-                    <div className={windowWidth > 800 ? "w-[100%] h-[90%] flex flex-wrap flex-row":"w-[100%] h-[auto] flex flex-wrap flex-row"} style={{boxShadow:"0px 4px 10px #fff"}}>
-                        <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[50%]"}>
+                    <div className={windowWidth > 800 ? "w-[100%] h-[90%] flex flex-wrap flex-row":"w-[100%] h-[auto]"} style={{boxShadow:"0px 4px 10px #fff"}}>
+                        <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[auto]"}>
                             {
                                 recommendations.results.length > 2  &&<Carousel images={[...recommendations.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
                             }                        
                         </div>
-                        <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[auto]"}>
                             <NavLink to={`/${stream}/${recommendations.results.length > 0 && recommendations.results[recommendations.results.length - 1].id}`} className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(1)} classes={"h-[400px]"} />
                             </NavLink>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[50%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[100%] h-[auto]"}>
                             <NavLink to={`/${stream}/${recommendations.results.length > 0 && recommendations.results[recommendations.results.length - 2].id}`} className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(2)} classes={"h-[400px] object-cover bg-position-[0% 10%]"} />
                             </NavLink>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[60%]": "w-[50%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[60%]": "w-[100%] h-[auto]"}>
                             <NavLink to={`/${stream}/${recommendations.results.length > 0 && recommendations.results[recommendations.results.length - 3].id}`} className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(3)} classes={"h-[400px] object-cover bg-position-[0% 10%]"} />
                             </NavLink>

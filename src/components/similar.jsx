@@ -194,30 +194,30 @@ const SIMILAR = () => {
                 }
         {
             similar ? 
-                <div className={windowWidth > 800 ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] overflow-y-auto movie-scene duration-150 mx-[1%] min-h-[100%] flex flex-col"}>
-                    <div className={windowWidth > 800 ? "w-[100%] z-0 h-[90%] flex flex-wrap flex-row":"w-[100%] h-[auto] flex flex-wrap flex-row"} style={{boxShadow:"0px 4px 10px #fff"}}>
-                        <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[60%]"}>
+                <div className={windowWidth > 800 ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] overflow-y-auto movie-scene duration-150 mx-[1%] h-[100%] flex flex-col"}>
+                    <div className={windowWidth > 800 ? "w-[100%] z-0 h-[90%] flex flex-wrap flex-row":"w-[100%] h-[auto] gap-1"} style={{boxShadow:"0px 4px 10px #fff"}}>
+                        <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[auto]"}>
                             {
                                 similar.results.length > 2  &&<Carousel images={[...similar.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
                             }
                         </div>
-                        <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[auto]"}>
                             <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 1].id}`} className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(1)} classes={"h-[400px]"} />
                             </NavLink>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[50%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[100%] h-[auto]"}>
                             <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 2].id}`} className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(2)} classes={"h-[400px]"} />
                             </NavLink>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[50%] h-[60%]"}>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[100%] h-[auto]"}>
                             <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 3].id}`} className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(3)} classes={"h-[400px]"} />
                             </NavLink>
                         </div>
                     </div>
-                    <div className={windowWidth > 800 ? "w-[90%] duration-50 movie-scene h-[50%] mx-[5%] my-[2%]" : "w-[100%] duration-50 movie-scene min-h-[220px] my-[2%]"}>
+                    <div className={windowWidth > 800 ? "w-[90%] duration-50 movie-scene h-[50%] mx-[5%] my-[2%]" : "w-[100%] duration-50 movie-scene h-[auto] my-[2%]"}>
 
                         <h1 style={{textAlign:"center",textDecoration:"underline"}}>SIMILAR {stream === "movies" ? "MOVIES" : "TV"}</h1>
                         <SWEETPAGE intitializeMovies={intitializeMovies} page={similar?.page} index={""} total_pages={similar?.total_pages}/>

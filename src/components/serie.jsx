@@ -808,11 +808,11 @@ const SERIE = () => {
             {
             credits && serie && images ? 
                     <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
-                        <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] min-h-[60%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[100%]":"w-[100%] h-[50%]"}>
+                        <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] h-[auto] flex flex-col flex-wrap"}>
+                            <div className={windowWidth > 800 ? "w-[37%] h-[100%]":"w-[100%] h-[auto]"}>
                                 <PICTURE picture={serie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50":"shadow-lg h-[200px] shadow-blue-500/50  object-contain"} />
                             </div>
-                            <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
+                            <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-[auto]"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{serie.tagline}"</p>
                                 <h3>{serie.first_air_date} <FontAwesomeIcon icon={faAngleDoubleRight} /> {serie.last_air_date}</h3>

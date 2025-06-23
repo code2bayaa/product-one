@@ -85,7 +85,7 @@ const EMPIRE = () => {
     }, [windowWidth]);
     
     return (
-        <div className={windowWidth > 800 ? "w-[100%] h-[100%] overflow-hidden flex flex-row flex-wrap":"w-[100%] h-[auto] text-white flex flex-row flex-wrap"} style={{background:"url(/image/grey.jpg)"}}>
+        <div className={windowWidth > 800 ? "w-[100%] h-[100%] overflow-hidden flex flex-row flex-wrap":"w-[100%] h-[100%] text-white flex flex-row flex-wrap"} style={{background:"url(/image/grey.jpg)"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] absolute h-[100%] text-[#fff] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -94,7 +94,7 @@ const EMPIRE = () => {
                 :
                 <MOBILE/>
             }
-            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[100%] overflow-y-auto" }`}>
+            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[100%] overflow-y-auto movie-scene" }`}>
                 <h2>STILL UNDER CONSTRUCTION</h2>
                 <div className={`${windowWidth > 800 ? "w-[90%] home text-[#000] h-[90%] mx-[5%] overflow-y-auto movie-scene":"w-[100%] text-[#000] home h-[auto]"}`}>
                     {

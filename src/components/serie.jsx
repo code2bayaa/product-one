@@ -796,7 +796,7 @@ const SERIE = () => {
     return (
         
 
-        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
@@ -807,10 +807,10 @@ const SERIE = () => {
             }
             {
             credits && serie && images ? 
-                    <div className={windowWidth > 800 ? "duration-150 w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 mx-[1%] min-h-[100%] flex flex-col"}>
-                        <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[60%]":"w-[100%] h-[50%]"}>
-                                <PICTURE picture={serie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50":"shadow-lg h-[200px] shadow-blue-500/50  object-contain"} />
+                    <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
+                        <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] min-h-[60%] flex flex-col flex-wrap"}>
+                            <div className={windowWidth > 800 ? "w-[37%] h-[100%]":"w-[100%] h-[50%]"}>
+                                <PICTURE picture={serie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50":"shadow-lg h-[200px] shadow-blue-500/50  object-contain"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>
@@ -951,12 +951,12 @@ const SERIE = () => {
                                 </div>
                             </div>
                         }
-                        <div className="w-[90%] mx-[5%] mt-[1%] flex flex-row h-[auto] flex-wrap">
+                        <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] min-w-[48%] h-[70%]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-cover h-[100%]"} />
+                                        <div className="m-[0.5%] w-[48%] h-[50%]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-contain h-[100%]"} />
                                         </div>
                                     )
                                 )

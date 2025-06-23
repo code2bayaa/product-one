@@ -470,7 +470,7 @@ const MOVIES = () => {
     // },[])
 
     return (
-        <div className="w-[100%] duration-250 h-[auto] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
+        <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -482,7 +482,7 @@ const MOVIES = () => {
             {/* <div className="w-[100%]">
                 {console.log(recommend)}
             </div> */}
-            <div className={windowWidth > 800 ? "w-[80%] h-[auto] ml-[20%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
                 </div>

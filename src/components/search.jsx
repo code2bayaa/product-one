@@ -215,14 +215,14 @@ const SEARCH = () => {
     }
 
     return (
-        <div className="w-[100%] min-h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
-            <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+        <div className="w-[100%] min-h-[100%] flex flex-row flex-wrap" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+            <div className="w-[20%] h-[100%] text-white absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                 <NAVBAR/>
             </div>
-            <div className="w-[80%] min-h-[100%] ml-[20%] flex flex-col">
-                <div className="w-[100%] h-[auto] grid justify-items-center">
+            <div className="w-[80%] h-[100%] ml-[20%] overflow-y-auto flex flex-col">
+                <div className="w-[100%] h-[60px] mt-[1%] grid justify-items-center">
                     <form
-                        className="w-[90%] h-[50px] flex flex-row items-center justify-between mt-[1%]"
+                        className="w-[90%] h-[50px] flex flex-row items-center justify-between"
                         onSubmit={(e) => searchMachine(e)}
                         style={{boxShadow:"0px 4px 6px #ffd600"}}
                     >

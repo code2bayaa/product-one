@@ -835,7 +835,7 @@ const EPISODE = () => {
 
     return (
 
-        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -844,7 +844,7 @@ const EPISODE = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] min-h-[100%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%]  h-[85%] overflow-y-auto movie-scene flex flex-col"}>
                 {
                     credits && serie && images && imdb ? 
                         <>
@@ -1013,12 +1013,12 @@ const EPISODE = () => {
                                 </div>
                             </div>
                         }
-                        <div className="w-[90%] mx-[5%] mt-[1%] flex flex-row h-[auto] flex-wrap">
+                        <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] min-w-[48%] h-[70%]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-cover h-[100%]"} />
+                                        <div className="m-[0.5%] w-[48%] h-[50%]" key={node + index}>
+                                            <PICTURE picture={file_path} classes={"object-contain h-[100%]"} />
                                         </div>
                                     )
                                 )

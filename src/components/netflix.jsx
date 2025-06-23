@@ -282,7 +282,7 @@ const NETFLIX = () => {
 
 
     return (
-        <div className="w-[100%] duration-250 h-[auto] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
+        <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -291,7 +291,7 @@ const NETFLIX = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] h-[auto] ml-[20%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
                 {/* <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
                 </div> */}
@@ -306,7 +306,7 @@ const NETFLIX = () => {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={poster_path} />
+                                                <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                     <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{title || original_title || name || original_name }</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>

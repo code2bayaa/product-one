@@ -299,11 +299,11 @@ const PERSON = () => {
     const fetchPerson = useCallback(async() => {
 
         const checkFeedback = (id) => {
-            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    fetch(`${process.env.REACT_APP_followers_select}`,{
+                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_followers_select : process.env.REACT_APP_followers_select_live}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -604,10 +604,10 @@ const PERSON = () => {
     const addToFollowers = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url :process.env.REACT_APP_api_url_live ,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            fetch(`${process.env.REACT_APP_followers}`,{
+            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_followers : process.env.REACT_APP_followers_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -662,10 +662,10 @@ const PERSON = () => {
             {
                 series && movies && person && images ?
                 <>
-                    <div className="w-[100%] h-[60%]">
-                        <div className="w-[90%] ml-[5%] h-[60%] text-justify justify-center items-center">
-                            <div className={windowWidth > 800 ? "w-[40%] min-h-[300px] m-[1%] float-left":"w-[80%] min-h-[300px] m-[1%] float-left"}>
-                                <PICTURE picture={person.profile_path} classes={"object-contain h-[100%] shadow-lg shadow-blue-500/50"} />
+                    {/* <div className="w-[100%] h-[60%]"> */}
+                        <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "h-[60%]" : "h-[auto]"} text-justify justify-center items-center`}>
+                            <div className={windowWidth > 800 ? "w-[40%] min-h-[300px] m-[1%] float-left":"w-[80%] h-[auto] m-[1%] float-left"}>
+                                <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-blue-500/50"} />
                             </div>
 
                             <h1 className="text-[30px]">{person.name}</h1>
@@ -699,7 +699,7 @@ const PERSON = () => {
                                 </button>
                             </div>                            
                         </div>
-                                <div className={windowWidth > 800 ? "w-[90%] min-h-[100%] ml-[5%] flex flex-col":"w-[100%] min-h-[100%] flex flex-col"}>
+                                <div className={windowWidth > 800 ? "w-[90%] min-h-[100%] ml-[5%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
                                     {
 
                                         ((series.cast && series.cast.length > 0) || (series.crew && series.crew.length > 0)) &&
@@ -806,7 +806,7 @@ const PERSON = () => {
                                         </div>
                                     }
                                 </div>
-                            </div>
+                            {/* </div> */}
                             </>
                         :
                 <LOAD/>

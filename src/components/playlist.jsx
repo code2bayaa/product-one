@@ -8,7 +8,7 @@ import { gql, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2";
 import SWEETPAGE from "../midlleware/pages";
 import { NavLink } from "react-router-dom";
-import LOAD from "../midlleware/load";
+// import LOAD from "../midlleware/load";
 
 const PLAYLIST = () => {
     const [windowWidth, setWindowWidth] = useState(0);
@@ -157,7 +157,7 @@ const PLAYLIST = () => {
     },[fetchPlaylist, userID])
 
     useEffect(() => {
-        fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         .then(res => {
             if (!res.ok) {
                 throw new Error('Network response was not ok');
@@ -249,7 +249,8 @@ const PLAYLIST = () => {
 
                         )
                     :
-                    <LOAD/>
+                        <img src="/image/playlist.svg" width={200} height={200} className="w-[80%] ml-[10%] h-[80%]" alt="late developers https://late-developers.com" />
+
                 }                
             </div>
         </div>

@@ -12,8 +12,8 @@ const NAVBAR = () => {
     // const [count,setCount] = useState(0)
     const [coins,setCoins] = useState(0.0)
     const router = useNavigate()
-    const api_url = process.env.REACT_APP_api_url
-    const linkUrl = process.env.REACT_APP_signup
+    const api_url = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live
+    const linkUrl = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_live
 
     // console.log(linkUrl,"link")
 
@@ -49,7 +49,7 @@ const NAVBAR = () => {
       authentication()
       .then(status => {
             if(status){
-                fetch(process.env.REACT_APP_check_user_credits,{credentials: "include"})
+                fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_user_credits : process.env.REACT_APP_check_user_credits_live,{credentials: "include"})
                 .then(res => res.json())
                 .then(({sum,message}) => {
                     console.log(message,sum)
@@ -61,7 +61,7 @@ const NAVBAR = () => {
 
             }else{
                 let user = localStorage.getItem("session")
-                fetch(`${process.env.REACT_APP_check_report_credits}`,{
+                fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_report_credits : process.env.REACT_APP_check_report_credits_live}`,{
                     method:"POST",
                     headers:{
                         "Content-Type":"application/json",
@@ -89,7 +89,7 @@ const NAVBAR = () => {
     const customSignout = async() => {
         try {
 
-            const response = await fetch(process.env.REACT_APP_signout,{credentials: "include"});
+            const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signout : process.env.REACT_APP_signout_live,{credentials: "include"});
         
             const {status,message} = await response.json()
 

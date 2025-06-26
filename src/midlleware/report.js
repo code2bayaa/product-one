@@ -4,13 +4,24 @@ import { v4 as uuidv4 } from 'uuid';
 const COLLECT = async() => {
 
     try{
-        const api_url = process.env.REACT_APP_report
+        const api_url = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_report : process.env.REACT_APP_report_live
 
         let user = localStorage.getItem("session")
         let user_location = localStorage.getItem("location")
         let device = localStorage.getItem("device")
-        const date = new Date()
-        const time = date.toLocaleTimeString()
+        const dateDATA = new Date()
+        // const time = dateDATA.toLocaleTimeString()
+        const time = dateDATA.toISOString().slice(11, 19);
+        const getFormattedDate = () => {
+            const now = new Date();
+            const year = String(now.getFullYear()).slice(-2);
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // ...inside your /daily route...
+        const date = getFormattedDate();
 
         const sendForm = async({url,options}) => {
 
@@ -107,7 +118,8 @@ const COLLECT = async() => {
         // if(user_location && JSON.parse(user_location) && (JSON.parse(user_location).length > 1) && JSON.parse(user_location)[2].continent_name && JSON.parse(user_location)[2].continent_name !== "Africa"){
         //     window.location.href = "https://late-developers.com"
         //     return null
-        // }   
+        // } 
+        console.log(date,"date")  
             sendForm({
                 url:api_url,
                 options:{

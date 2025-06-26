@@ -29,7 +29,7 @@ const PLAYER = () => {
     useEffect(() => {
         try{
             async function authentication(){
-                const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+                const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
                 return  await res.json()
                 // console.log(message)
                 // return status
@@ -40,7 +40,7 @@ const PLAYER = () => {
                 if(isLoggedIn.status){
                     
                     setUser(isLoggedIn.user)
-                    const response = await fetch(`${process.env.REACT_APP_user_paid}`,{
+                    const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_user_paid : process.env.REACT_APP_user_paid_live}`,{
                         credentials: "include",
                         method:"POST",
                         headers:{
@@ -56,7 +56,7 @@ const PLAYER = () => {
                     console.log(response_data)
 
                     if(response_data.status){
-                        const res = await fetch(`${process.env.REACT_APP_update_user_credits}`,{
+                        const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_update_user_credits : process.env.REACT_APP_update_user_credits_live}`,{
                             credentials: "include",
                             method:"POST",
                             headers:{
@@ -73,7 +73,7 @@ const PLAYER = () => {
                         console.log(message,success)
                         setPaid(success)
                     }else{
-                        const res = await fetch(`${process.env.REACT_APP_pay_user_credits}`,{
+                        const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_pay_user_credits : process.env.REACT_APP_pay_user_credits_live}`,{
                             credentials: "include",
                             method:"POST",
                             headers:{
@@ -110,7 +110,7 @@ const PLAYER = () => {
                     let user = localStorage.getItem("session")
 
                     setUser(user)
-                    const res = await fetch(`${process.env.REACT_APP_paid}`,{
+                    const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_paid : process.env.REACT_APP_paid_live}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json",
@@ -125,7 +125,7 @@ const PLAYER = () => {
                     const res_data = await res.json()
                     console.log(res_data.message)
                     if(res_data.status){
-                        const res = await fetch(`${process.env.REACT_APP_update_report_credits}`,{
+                        const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_update_report_credits : process.env.REACT_APP_update_report_credits_live}`,{
                             method:"POST",
                             headers:{
                                 "Content-Type":"application/json",
@@ -142,7 +142,7 @@ const PLAYER = () => {
                         console.log(success,message)
                         setPaid(success)
                     }else{
-                        const response = await fetch(`${process.env.REACT_APP_pay_report_credits}`,{
+                        const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_pay_report_credits : process.env.REACT_APP_pay_report_credits_live}`,{
                             method:"POST",
                             headers:{
                                 "Content-Type":"application/json",
@@ -279,7 +279,7 @@ const PLAYER = () => {
 
     useEffect(() => {
         const getRate = async() => {
-            const response = await fetch(`${process.env.REACT_APP_pull}`, {
+            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_pull : process.env.REACT_APP_pull_live}`, {
                 method: "POST",
                 credentials: "include",
                 body:JSON.stringify({
@@ -300,7 +300,7 @@ const PLAYER = () => {
     },[id])
 
     const ratingChanged = async(rating) => {
-        const response = await fetch(`${process.env.REACT_APP_rate_add}`, {
+        const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_rate_add : process.env.REACT_APP_rate_add_live}`, {
           method: "POST",
           credentials: "include",
           body:JSON.stringify({
@@ -347,11 +347,10 @@ const PLAYER = () => {
                     :
                         ""
                 }
-                {console.log(`${process.env.REACT_APP_host_play}/${id}/${index}/${user}`)}
                 {
                     // type === "mkv" ?
                     // (
-                        <video controls className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_host_play}/${id}/${index}/${user}`} />
+                        <video controls className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_host_play : process.env.REACT_APP_host_play_live}/${id}/${index}/${user}`} />
 
                     // )
                     // :

@@ -98,16 +98,17 @@ const PLAY = () => {
 
     const cleanTokens = (tokens) => {
         if(!tokens || tokens.length === 0) return []
+        const smallest = tokens.filter(({size}) => size.match(/mib/i))
+        const largest = tokens.filter(({size}) => size.match(/gib/i))
+        const all = [...smallest,...largest];
         // Sort tokens by seeders descending, but do NOT try to set state inside sort!
-        const sorted = [...tokens].sort((a, b) => b.seeders - a.seeders);
+        const sorted = [...all].sort((a, b) => b.seeders - a.seeders);
         if (sorted.length > 0) {
             setMaxRate(sorted[0].seeders);
         }
-        const smallest = sorted.filter(({size}) => size.match(/mib/i))
-        const largest = sorted.filter(({size}) => size.match(/gib/i))
-        const all = [...smallest,...largest];
 
-        return all;
+
+        return sorted;
     }
 
     const fetchToken = useCallback(async() => {
@@ -115,7 +116,7 @@ const PLAY = () => {
         try{
                 const fetchFresh = async() => {
 
-                    const response = await fetch(`${process.env.REACT_APP_stream}`,{
+                    const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_stream : process.env.REACT_APP_stream_live}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json",

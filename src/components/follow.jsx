@@ -132,7 +132,7 @@ const FOLLOW = () => {
     },[fetchFollowers])
 
     useEffect(() => {
-        fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         .then(res => {
             if (!res.ok) {
                 throw new Error('Network response was not ok');

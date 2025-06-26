@@ -193,9 +193,9 @@ const SEARCH = () => {
         try{
             e.preventDefault();
             intitializeSearch({runContent:[
-                {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_search,"insert":process.env.REACT_APP_search_insert,"type":"tv"},
-                {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_search,"insert":process.env.REACT_APP_search_insert,"type":"movie"},
-                {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_search_person,"insert":process.env.REACT_APP_search_insert_person,"type":"person"}
+                {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search : process.env.REACT_APP_search_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert : process.env.REACT_APP_search_insert_live,"type":"tv"},
+                {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search : process.env.REACT_APP_search_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert : process.env.REACT_APP_search_insert_live,"type":"movie"},
+                {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_person : process.env.REACT_APP_search_person_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert_person : process.env.REACT_APP_search_insert_person_live,"type":"person"}
             ],search})
 
         }catch(error){
@@ -208,9 +208,9 @@ const SEARCH = () => {
         const searchValue = e.target.value.toLowerCase().trim();
         setSearch(() => searchValue);
         intitializeSearch({runContent:[
-            {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_search,"insert":process.env.REACT_APP_search_insert,"type":"tv"},
-            {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_search,"insert":process.env.REACT_APP_search_insert,"type":"movie"},
-            {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_search_person,"insert":process.env.REACT_APP_search_insert_person,"type":"person"}
+                {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search : process.env.REACT_APP_search_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert : process.env.REACT_APP_search_insert_live,"type":"tv"},
+                {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search : process.env.REACT_APP_search_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert : process.env.REACT_APP_search_insert_live,"type":"movie"},
+                {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_person : process.env.REACT_APP_search_person_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert_person : process.env.REACT_APP_search_insert_person_live,"type":"person"}
         ],search:searchValue})
     }
 

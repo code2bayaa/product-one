@@ -11,7 +11,7 @@ const SUBSCRIBE = () => {
     const [windowWidth,setWindowWidth] = useState(0)
     const [payment, setPayment] = useState(null)
     const [loading, setLoading] = useState({paypal:false,mpesa:false})
-    const [credits, setCredits] = useState(1500);
+    const [credits, setCredits] = useState(1000);
     const modalRef = useRef(null);
     const [usd, setUsd] = useState(1);
     const router = useNavigate()
@@ -45,7 +45,7 @@ const SUBSCRIBE = () => {
     // Update USD when credits change and vice versa
     const handleCreditsChange = (e) => {
         let val = parseInt(e.target.value) || 0;
-        // Ensure minimum credits is 1500
+        // Ensure minimum credits is 1000
         if (val < 1000) val = 1000;
         setCredits(val);
         setUsd((val / 1000).toFixed(2));
@@ -62,7 +62,7 @@ const SUBSCRIBE = () => {
 
         try{
             setLoading({...loading,mpesa:true})
-            const res = await fetch(process.env.REACT_APP_init_mpesa,{
+            const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_mpesa : process.env.REACT_APP_init_mpesa_live,{
                 credentials: "include",
                 method:"POST",
                 body : JSON.stringify({
@@ -136,7 +136,7 @@ const SUBSCRIBE = () => {
     const runPurchase = async({data,payment}) => {
         console.log("running purchase...")
         //insert payment
-        const res = await fetch(process.env.REACT_APP_payment,{
+        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_payment : process.env.REACT_APP_payment_live,{
             credentials: "include",
             method:"POST",
             body : JSON.stringify({
@@ -162,7 +162,7 @@ const SUBSCRIBE = () => {
 
         console.log("include credits")
         //include credits
-        const response = await fetch(process.env.REACT_APP_add_user_credits,{
+        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_add_user_credits : process.env.REACT_APP_add_user_credits_live,{
             credentials: "include",
             method:"POST",
             body : JSON.stringify({
@@ -192,7 +192,7 @@ const SUBSCRIBE = () => {
     }
     const payWithPayPal = async() => {
         setLoading({...loading,paypal:true})
-        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         const {status,message} = await res.json()
         console.log(message)
         if(status){
@@ -209,7 +209,7 @@ const SUBSCRIBE = () => {
         }
 
     }
-    //1500 === $1
+    //1000 === $1
     return (
         <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {
@@ -223,14 +223,14 @@ const SUBSCRIBE = () => {
             <div className={`flex text-center justify-center items-center ${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[auto]" }`}>
                 <div className="bg-[#18181c] rounded-lg shadow-lg p-8 max-w-md w-full flex flex-col items-center">
                     <h2 className="text-2xl font-bold mb-4 text-[#ffd800]">Subscribe with Credits</h2>
-                    <p className="mb-4 text-center">1 USD = <span className="font-bold">1500 credits</span></p>
+                    <p className="mb-4 text-center">1 USD = <span className="font-bold">1000 credits</span></p>
                     <div className="flex flex-col gap-4 w-full">
                         <label className="flex flex-col text-left">
                             <span>Credits</span>
                             <input
                                 type="number"
-                                min="1500"
-                                step="1500"
+                                min="1000"
+                                step="1000"
                                 value={credits}
                                 onChange={handleCreditsChange}
                                 className="mt-1 p-2 rounded bg-[#222] text-white border border-[#444]"
@@ -318,7 +318,7 @@ const SUBSCRIBE = () => {
 
                                     try {
 
-                                        const response = await fetch(process.env.REACT_APP_init_paypal_orders, {
+                                        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_paypal_orders : process.env.REACT_APP_init_paypal_orders_live, {
                                             method: "POST",
                                             credentials: "include",
                                             headers: {
@@ -373,7 +373,7 @@ const SUBSCRIBE = () => {
                                 onApprove={async (data, actions) => {
                                     try {
                                         // console.log(data,"approve data")
-                                        const response = await fetch(process.env.REACT_APP_init_paypal_capture,
+                                        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_paypal_capture : process.env.REACT_APP_init_paypal_capture_live,
                                             {
                                                 method: "POST",
                                                 headers: {

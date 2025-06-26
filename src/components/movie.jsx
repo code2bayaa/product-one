@@ -17,7 +17,7 @@ const MOVIE = () => {
     const [windowWidth, setWindowWidth] = useState(0);
     const [playlist,setPlaylist] = useState(null)
     const [generateGenre, setGenerateGenre] = useState([])
-    const [layouts, setLayouts] = useState(true)
+    const [layouts, setLayouts] = useState(false)
     // const [fetchedImage, setFetchedImage] = useState(null)
     useEffect(() => {
         const handleResize = () => {
@@ -64,8 +64,11 @@ const MOVIE = () => {
                 user_location = JSON.parse(user_location);
             }
             // return user_location;
-            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa" && user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Australia"){
-                setLayouts(false)
+            const continent = user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name
+            console.log(continent,"continent")
+            const continents = ["Africa","Australia"]
+            if(continents.include(continent)){
+                setLayouts(true)
             }  
             console.log(user_location,"user location")
         }
@@ -616,12 +619,12 @@ const MOVIE = () => {
         const checkFeedback = (id) => {
             console.log(id,"id")
             //authentication
-            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    console.log(`${process.env.REACT_APP_playlist_select}`)
-                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                    console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
+                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -763,7 +766,7 @@ const MOVIE = () => {
     useEffect(() => {
         async function addRecommendations(){
             const user = localStorage.getItem("session")
-            const response = await fetch(`${process.env.REACT_APP_add_recommendations}`, {
+            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_add_recommendations : process.env.REACT_APP_add_recommendations_live}`, {
                 method: "POST",
                 credentials: "include",
                 body:JSON.stringify({
@@ -826,11 +829,11 @@ const MOVIE = () => {
     const addToPlayList = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            console.log(`${process.env.REACT_APP_playlist}`)
-            fetch(`${process.env.REACT_APP_playlist}`,{
+            console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`)
+            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"

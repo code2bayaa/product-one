@@ -23,7 +23,7 @@ const SIGNIN = () => {
         picture
       }))
       // You can now send token or userObject to your backend for further processing
-      const res = await fetch(process.env.REACT_APP_google_signin, {
+      const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_google_signin : process.env.REACT_APP_google_signin_live, {
           method: "POST",
           credentials: "include",
           body:JSON.stringify({
@@ -97,7 +97,7 @@ const SIGNIN = () => {
           setLoading(false)
           return null
         }
-        const response = await fetch(process.env.REACT_APP_signin, {
+        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signin : process.env.REACT_APP_signin_live, {
           method: "POST",
           credentials: "include",
           body:JSON.stringify({

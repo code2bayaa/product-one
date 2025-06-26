@@ -5,7 +5,7 @@ const SOCKETS = new (function(){
     this.connect = async() => {
         this.socketModule = await new Promise((resolve) => {
             resolve(io(
-                    process.env.REACT_APP_sandbox === "development"
+                    process.env.REACT_APP_environment === "development"
                     ? process.env.REACT_APP_socket_api_sandbox
                     :
                     process.env.REACT_APP_socket_api_live))

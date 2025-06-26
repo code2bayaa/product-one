@@ -11,7 +11,7 @@ import Swal from "sweetalert2";
 
 const EPISODE = () => {
     const { id, season, episodeID, episode, name, background } = useParams();
-    const [layouts,setLayouts] = useState(true)
+    const [layouts,setLayouts] = useState(false)
     useEffect(() => {
 
         const sendForm = async({url,options}) => {
@@ -49,9 +49,12 @@ const EPISODE = () => {
                 user_location = JSON.parse(user_location);
             }
             // return user_location;
-            if(user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Africa" && user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name !== "Australia"){
-                setLayouts(false)
-            }  
+            const continent = user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name
+            console.log(continent,"continent")
+            const continents = ["Africa","Australia"]
+            if(continents.include(continent)){
+                setLayouts(true)
+            } 
             console.log(user_location,"user location")
         }
 
@@ -612,11 +615,11 @@ const EPISODE = () => {
         const checkFeedback = (id) => {
             console.log(id,"id")
             //authentication
-            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -788,10 +791,10 @@ const EPISODE = () => {
     const addToPlayList = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            fetch(`${process.env.REACT_APP_playlist}`,{
+            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"

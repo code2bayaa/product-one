@@ -21,6 +21,7 @@
     "gsap": "^3.13.0",
     "hls.js": "^1.6.5",
     "jquery": "^3.7.1",
+    "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "plyr": "^3.7.8",
     "plyr-react": "^5.3.0",
@@ -38,7 +39,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "set REACT_APP_environment=production && react-scripts build",
     "build:css": "tailwindcss -i ./src/index.css -o ./src/tailwind-output.css --watch",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

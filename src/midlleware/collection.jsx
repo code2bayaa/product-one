@@ -46,7 +46,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             }
 
             async function authentication(){
-                const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+                const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
                 const {status,message,user} = await res.json()
                 console.log(message)
                 return ({status,user})
@@ -54,7 +54,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             const isLoggedIn = await authentication()
 
             if(isLoggedIn.status){
-                const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+                const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
                     method: "POST",
                     body:JSON.stringify({
                         id,
@@ -69,7 +69,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                 return sessionDestroy({status, error, message, newToken})
             }else{
                 let user = localStorage.getItem("session")
-                const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
+                const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
                     method: "POST",
                     body:JSON.stringify({
                         id,
@@ -91,7 +91,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
     const runStream = async(e,token) => { 
         //check for credits
         async function authentication(){
-            const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             const {status,message,user} = await res.json()
             console.log(message)
             return ({status,user})
@@ -103,7 +103,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
         if(isLoggedIn.status){
             user = isLoggedIn.user
 
-            const response = await fetch(`${process.env.REACT_APP_user_paid}`,{
+            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_user_paid : process.env.REACT_APP_user_paid_live}`,{
                 credentials: "include",
                 method:"POST",
                 headers:{
@@ -122,7 +122,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                 hasPaid = true
             }
 
-            const res = await fetch(process.env.REACT_APP_check_user_credits,{credentials: "include"})
+            const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_user_credits : process.env.REACT_APP_check_user_credits_live,{credentials: "include"})
             const {sum,message} = await res.json()
             console.log(message)
             //affordable for one movie | episode
@@ -131,7 +131,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             }
         }else{
             user = localStorage.getItem("session")
-            const res = await fetch(`${process.env.REACT_APP_paid}`,{
+            const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_paid : process.env.REACT_APP_paid_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
@@ -164,7 +164,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                 })
             }
 
-            const response = await fetch(`${process.env.REACT_APP_check_report_credits}`,{
+            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_report_credits : process.env.REACT_APP_check_report_credits_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
@@ -200,7 +200,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             
             console.log("clicked play...")
             //
-            const response = await fetch(`${process.env.REACT_APP_play}`,{
+            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_play : process.env.REACT_APP_play_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
@@ -282,7 +282,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             // setPlay(null)
             setLoading(false)
             e.target.innerText = HTMLMARK
-            const responseDestroy = await fetch(`${process.env.REACT_APP_destroy_token}`,{
+            const responseDestroy = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",

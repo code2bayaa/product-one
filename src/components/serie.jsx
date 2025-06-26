@@ -572,12 +572,12 @@ const SERIE = () => {
         const checkFeedback = (id) => {
             console.log(id,"id")
             //authentication
-            fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    console.log(`${process.env.REACT_APP_playlist_select}`)
-                    fetch(`${process.env.REACT_APP_playlist_select}`,{
+                    console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
+                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -747,11 +747,11 @@ const SERIE = () => {
     const addToPlayList = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_api_url,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            console.log(`${process.env.REACT_APP_playlist}`)
-            fetch(`${process.env.REACT_APP_playlist}`,{
+            console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`)
+            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"

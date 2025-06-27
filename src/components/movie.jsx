@@ -67,7 +67,7 @@ const MOVIE = () => {
             const continent = user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name
             console.log(continent,"continent")
             const continents = ["Africa","Australia"]
-            if(continents.include(continent)){
+            if(continents.includes(continent)){
                 setLayouts(true)
             }  
             console.log(user_location,"user location")
@@ -640,12 +640,12 @@ const MOVIE = () => {
                 }
             })
         }            
-        const setGenreIDS = async(genre) => {
+        const setGenreIDS = async(genre = []) => {
             const {data} = await fetchGenre()
             if(data.genre.success){
                 console.log(genre)
-                console.log(data.genre.data)
-                const genreData = data.genre.data.filter(({id,mode}) => genre.includes(Number(id)) && mode === "movie")
+                console.log(data.genre?.data)
+                const genreData = data.genre?.data.filter(({id,mode}) => genre.includes(Number(id)) && mode === "movie")
                 console.log(genreData)
                 setGenerateGenre(() => [...genreData])
             }else{

@@ -642,10 +642,10 @@ const MOVIE = () => {
         }            
         const setGenreIDS = async(genre = []) => {
             const {data} = await fetchGenre()
-            if(data.genre.success){
+            if(data && data.genre && data.genre.success){
                 console.log(genre)
                 console.log(data.genre?.data)
-                const genreData = data.genre?.data.filter(({id,mode}) => genre.includes(Number(id)) && mode === "movie")
+                const genreData = data.genre?.data.filter(({id,mode}) => genre && genre.includes(Number(id)) && mode === "movie")
                 console.log(genreData)
                 setGenerateGenre(() => [...genreData])
             }else{
@@ -943,7 +943,7 @@ const MOVIE = () => {
                                     <div className="w-[100%]">
                                         <button
                                             type="button"
-                                            className="w-[80%] rounded-md mt-[1%] ml-[10%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                            className="w-[98%] rounded-md mt-[1%] ml-[1%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
                                             onClick={() => addToPlayList()}
                                         >
                                             {
@@ -975,7 +975,7 @@ const MOVIE = () => {
                                     
                                     {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150 m-[1%]":"w-[40%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                            <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[40%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE picture={profile_path} classes={"object-cover h-[100%] rounded-xl"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

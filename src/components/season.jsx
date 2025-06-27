@@ -707,7 +707,7 @@ const SEASON = () => {
             credits && serie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene duration-100 h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 overflow-y-auto movie-scene mx-[1%] h-[85%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[100%]":"w-[100%] h-[auto]"}>
+                            <div className={windowWidth > 800 ? "w-[37%] h-[100%] backdrop-blur-md":"w-[100%] h-[auto] backdrop-blur-md"}>
                                 <PICTURE picture={serie.poster_path} classes={windowWidth > 800 ? "shadow-lg shadow-blue-500/50 h-[100%]":"shadow-lg shadow-blue-500/50 h-[200px] object-contain"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>

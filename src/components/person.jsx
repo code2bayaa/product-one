@@ -352,10 +352,12 @@ const PERSON = () => {
         query Played(
             $id:ID!
             $type:String!
+            $hashedKey:String!
         ){
             played(
                 id:$id
                 type:$type
+                hashedKey:$hashedKey
             ){
 
                 cast {
@@ -490,7 +492,7 @@ const PERSON = () => {
             async function freshFetch(){
                 const response = await fetch(`${api}`);
                 const movies_data = await response.json();
-                
+                console.log(movies_data,"movie")
                 setMovies(() => ({...movies_data})); 
                 mutateInsertMovie({ variables: {
                     ...movies_data,
@@ -664,7 +666,7 @@ const PERSON = () => {
                 <>
                     {/* <div className="w-[100%] h-[60%]"> */}
                         <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "h-[60%]" : "h-[auto]"} text-justify justify-center items-center`}>
-                            <div className={windowWidth > 800 ? "w-[40%] min-h-[300px] m-[1%] float-left":"w-[80%] h-[auto] m-[1%] float-left"}>
+                            <div className={windowWidth > 800 ? "w-[40%] min-h-[300px] m-[1%] float-left backdrop-blur-md":"w-[98%] h-[auto] m-[1%] backdrop-blur-md"}>
                                 <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-blue-500/50"} />
                             </div>
 
@@ -714,7 +716,7 @@ const PERSON = () => {
                                                             series.cast && series.cast.map(({character,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
-                                                                        <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={poster_path} />
+                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
@@ -737,7 +739,7 @@ const PERSON = () => {
                                                                 series.crew && series.crew.map(({job,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                     <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                         <div className="w-[100%] h-[100%]">
-                                                                            <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={poster_path} />
+                                                                            <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                             <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                                 <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
@@ -767,7 +769,7 @@ const PERSON = () => {
                                                             movies.cast && movies.cast.map(({character,adult,backdrop_path,genre_ids,name,id,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
-                                                                        <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={poster_path} />
+                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
@@ -789,7 +791,7 @@ const PERSON = () => {
                                                             movies.crew && movies.crew.map(({job,adult,backdrop_path,genre_ids,id,original_language,name,original_name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
-                                                                        <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={poster_path} />
+                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>

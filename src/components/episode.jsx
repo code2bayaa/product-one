@@ -50,7 +50,7 @@ const EPISODE = () => {
             }
             // return user_location;
             const continent = user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name
-            console.log(continent,"continent")
+            // console.log(continent,"continent")
             const continents = ["Africa","Australia"]
             if(continents.includes(continent)){
                 setLayouts(true)
@@ -852,7 +852,7 @@ const EPISODE = () => {
                     credits && serie && images && imdb ? 
                         <>
                         <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[300px]":"w-[100%] h-[auto]"}>
+                            <div className={windowWidth > 800 ? "w-[37%] h-[300px] backdrop-blur-md":"w-[100%] backdrop-blur-md h-[auto]"}>
                                 <PICTURE picture={serie.still_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50" : "shadow-lg h-[200px] object-contain shadow-blue-500/50"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>

@@ -198,6 +198,7 @@ const PEOPLE = () => {
                         return result;
                     }
                     let all_results = [...temp_people[key].results]
+                    console.log(all_results)
 
                     // Remove duplicates by id (optional, if your data can have duplicates)
                     const uniqueResults = Array.from(

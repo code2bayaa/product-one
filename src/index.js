@@ -187,7 +187,7 @@ const router = createBrowserRouter([
 ])
 const client = new ApolloClient({
 
-  uri: process.env.environment === "development" ? process.env.REACT_APP_graphql : process.env.REACT_APP_graphql_live,
+  uri: process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_graphql : process.env.REACT_APP_graphql_live,
 
   cache: new InMemoryCache(),
 

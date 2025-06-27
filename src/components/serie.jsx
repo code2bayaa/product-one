@@ -809,7 +809,7 @@ const SERIE = () => {
             credits && serie && images ? 
                     <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] h-[auto] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] h-[100%]":"w-[100%] h-[auto]"}>
+                            <div className={windowWidth > 800 ? "w-[37%] backdrop-blur-md h-[100%]":"w-[100%] backdrop-blur-md h-[auto]"}>
                                 <PICTURE picture={serie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50":"shadow-lg h-[200px] shadow-blue-500/50  object-contain"} />
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-[auto]"}>

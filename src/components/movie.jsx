@@ -65,7 +65,7 @@ const MOVIE = () => {
             }
             // return user_location;
             const continent = user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name
-            console.log(continent,"continent")
+            // console.log(continent,"continent")
             const continents = ["Africa","Australia"]
             if(continents.includes(continent)){
                 setLayouts(true)

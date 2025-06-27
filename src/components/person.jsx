@@ -666,7 +666,7 @@ const PERSON = () => {
                 <>
                     {/* <div className="w-[100%] h-[60%]"> */}
                         <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "h-[60%]" : "h-[auto]"} text-justify justify-center items-center`}>
-                            <div className={windowWidth > 800 ? "w-[40%] min-h-[300px] m-[1%] float-left backdrop-blur-md":"w-[98%] h-[auto] m-[1%] backdrop-blur-md"}>
+                            <div className={windowWidth > 800 ? "w-[40%] h-[auto] m-[1%] float-left backdrop-blur-md":"w-[98%] h-[auto] m-[1%] backdrop-blur-md"}>
                                 <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-blue-500/50"} />
                             </div>
 
@@ -711,7 +711,7 @@ const PERSON = () => {
                                                     series.cast && series.cast.length > 0 && 
                                                     <>
                                                         <h2>PLAYED AS CAST</h2> 
-                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             series.cast && series.cast.map(({character,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
@@ -734,7 +734,7 @@ const PERSON = () => {
                                                     series.crew && series.crew.length > 0 &&  
                                                     <>
                                                         <h2>PLAYED AS CREW</h2>
-                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                             {
                                                                 series.crew && series.crew.map(({job,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                     <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
@@ -764,7 +764,7 @@ const PERSON = () => {
                                                 movies.cast && movies.cast.length > 0 && 
                                                 <>
                                                     <h2>PLAYED AS CAST</h2>
-                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             movies.cast && movies.cast.map(({character,adult,backdrop_path,genre_ids,name,id,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
@@ -786,7 +786,7 @@ const PERSON = () => {
                                                 movies.crew && movies.crew.length > 0 && 
                                                 <>
                                                     <h2>PLAYED AS CREW</h2>
-                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             movies.crew && movies.crew.map(({job,adult,backdrop_path,genre_ids,id,original_language,name,original_name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>

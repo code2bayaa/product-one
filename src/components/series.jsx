@@ -302,7 +302,7 @@ const SERIES = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[98%] overflow-y-auto movie-scene duration-150 mx-[1%] h-[85%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] overflow-y-auto movie-scene duration-150 h-[100%] flex flex-col"}>
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"tv"}/>
                 </div>

@@ -6,11 +6,11 @@ const home = [
         article:
         <>
         <span>UKO is your gateway to endless entertainment</span>
-        <span>— all without a subscription fee.</span>
         <span>Watch your favorite shows, movies, and series using UKO Credits,</span>
         <span>our smart viewing currency.</span>
         <span>Earn more credits simply by watching short ads,</span>
-        <span>making your streaming experience both rewarding and cost-free.</span>
+        <span>making your streaming experience both rewarding and cost-free</span>
+        <span>— buy credits at a monthly subscription fee.</span>
         </>,     
         image:["/image/screen1.jpeg","/image/screen2.jpeg","/image/screen3.png"],
     },

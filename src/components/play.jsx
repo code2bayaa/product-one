@@ -289,7 +289,7 @@ const PLAY = () => {
                 :
                     <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%] h-[auto] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] flex flex-col overflow-y-auto":"w-[100%] h-[auto] flex flex-col"}>
                 <h2 style={{fontSize:"180%",textAlign:"center"}}>COLLECTION</h2>
                 <h2 style={{fontSize:"130%",textAlign:"center",color:"#ffd800"}}>Play the Best Quality</h2>
            {

@@ -19,11 +19,21 @@ const PLAYER = () => {
     const [users, setUsers] = useState(0)
     const [user, setUser] = useState(null)
     const [paid, setPaid] = useState(false)
+    const [windowWidth, setWindowWidth] = useState(0)
     // const videoRef = useRef(null)
     // const [mkv, setMKV] = useState(false)
     // const [playID,setPlayID] = useState(null)
     // const api_url = process.env.REACT_APP_api_url
-    
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        window.addEventListener("resize", handleResize);
+        handleResize(); // Call it once to set the initial value
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    },[]) 
 
     //pay with credits
     useEffect(() => {
@@ -336,7 +346,7 @@ const PLAYER = () => {
     }
 
     return (
-        <div className="w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(45deg, rgba(0,0,0,0.75), hsl(220, 70%, 10%)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+        <div className={`${windowWidth > 800 ? "w-[100%] min-h-[100%]  bg-cover bg-no-repeat bg-center text-white":"w-[100%] h-[100%] overflow-y-auto bg-cover bg-no-repeat bg-center text-white"}`} style={{backgroundImage:`linear-gradient(45deg, rgba(0,0,0,0.75), hsl(220, 70%, 10%)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
             <div className='w-[100%] text-[#ffd800] h-[60px] flex flex-row flex-wrap'>
                 {
                     (type === "mkv") ? 
@@ -350,7 +360,7 @@ const PLAYER = () => {
                 {
                     // type === "mkv" ?
                     // (
-                        <video controls className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_host_play : process.env.REACT_APP_host_play_live}/${id}/${index}/${user}`} />
+                        <video controls autoplay muted className="w-[100%] h-[500px]" src={`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_host_play : process.env.REACT_APP_host_play_live}/${id}/${index}/${user}`} />
 
                     // )
                     // :

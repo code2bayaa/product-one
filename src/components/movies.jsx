@@ -498,229 +498,86 @@ const MOVIES = () => {
         })        
     },[fetchMovies,mutateInsertMovies]);
 
+    const intitializeMoviesInit = useCallback(async({
+        runContent,
+        page,
+        adjustable = false,
+        genreId = '',
+        regionId = '',
+        languageId='',
+        yearId=0
+    }) => {
+        
+        const fetchMoviesFromAPI = async (actual_index) => {
 
-    useEffect(() => {
-        const intitializeMoviesInit = async({
-            runContent,
-            page,
-            adjustable = false,
-            genreId = '',
-            regionId = '',
-            languageId='',
-            yearId=0
-        }) => {
-            
-            const fetchMoviesFromAPI = async (actual_index) => {
-
-                const current_date = new Date().toISOString().split("T")[0]
-
-                const temp_movies = [
-                    { index: "discover", results: [], api: "discover/movie", page: 1, total_pages: 0 },
-                    { index: "popular", results: [], api: "movie/popular", page: 1, total_pages: 0 },
-                    { index: "trending", results: [], api: "trending/movie/day", page: 1, total_pages: 0 },
-                    { index: "top_rated", results: [], api: "movie/top_rated", page: 1, total_pages: 0 },
-                    { index: "upcoming", results: [], api: "movie/upcoming", page: 1, total_pages: 0 },
-                    { index: "now_playing", results: [], api: "movie/now_playing", page: 1, total_pages: 0 },
-                ];
-                const key = temp_movies.findIndex(({ index }) => index === actual_index);
-
-                if (page) {
-                    temp_movies[key].page = page;
-                }
-                const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "movie"
-                const hashedKey = CryptoJS.SHA256(hashed).toString();
-
-                async function freshFetch(){
-                    // Fetch data from the API if not found in the cache
-                    const response = await fetch(
-                        `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
-                    );
-                    const data = await response.json();
-                    
-                    const themeResults = data?.results || []
-
-                    if (themeResults.length > 0) {
-                        temp_movies[key].results = [
-                            ...temp_movies[key].results,
-                            ...data.results,
-                        ];
-                        temp_movies[key].total_pages = data.total_pages;
-                        temp_movies[key].total_results = data.total_results;
-
-                        // Update the movies state
-                        setMovies((prevMovies) => {
-                            prevMovies = prevMovies || [];
-                            const updatedMovies = [...prevMovies];
-                            const existingIndex = updatedMovies.findIndex(
-                                (movie) => movie.index === actual_index
-                            );
-
-                            if (existingIndex > -1) {
-                                updatedMovies[existingIndex].results = [
-                                    // ...updatedMovies[existingIndex].results,
-                                    ...data.results,
-                                ];
-                            } else {
-                                updatedMovies.push(temp_movies[key]);
-                            }
-
-                            return updatedMovies;
-                        });
-
-                        mutateInsertMovies({
-                            variables: {
-                                page:temp_movies[key].page,
-                                results:data.results,
-                                total_pages:data.total_pages,
-                                total_results:data.total_results,
-                                hashedKey,
-                                data :{
-                                    genre: genreId,
-                                    region: regionId,
-                                    language: languageId,
-                                    year: yearId,
-                                    index:actual_index,
-                                    date:current_date,
-                                    type:"movie",
-                                },
-                                                    
-                            },
-                        });
-
-                        return true
-                    }
-                    return false
-                }
-
-                if(adjustable || genreId || regionId || languageId || yearId){
-                    const fetched = await fetchMovies({
-                        variables : {
-                        page: temp_movies[key].page,
-                        data : {
-                            genre: genreId,
-                            year: yearId,
-                            region: regionId,
-                            language: languageId,  
-                            index: actual_index,
-                            date: current_date,
-                            type:"movie"
-                        },
-                        hashedKey
-                    }})
-
-                    if (fetched.data) {
-                        if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
-                            console.log("less items")
-                            return await freshFetch()
-                        }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
-                            console.log("no records found")
-                            return await freshFetch()
-                        }else{
-                            console.log("finally using cached data")
-                            setMovies((prevMovies) => {
-                                prevMovies = prevMovies || [];
-                                const updatedMovies = [...prevMovies]
-                                const existingIndex = updatedMovies.findIndex(
-                                    (movie) => movie.index === actual_index
-                                );
-            
-                                if (existingIndex > -1) {
-                                    updatedMovies[existingIndex].results = [
-                                        ...fetched.data.movie.results,
-                                    ];
-                                } else {
-                                    updatedMovies.push({
-                                        index: actual_index,
-                                        results: fetched.data.movie.results,
-                                        page: fetched.data.movie.page,
-                                        total_pages: fetched.data.movie.total_pages,
-                                        total_results:fetched.data.movie.total_results
-                                    });
-                                }
-            
-                                return updatedMovies;
-                            });
-                        
-
-                            return true
-                        }
-
-                    } else {
-                        console.log("nothing")
-                        return await freshFetch()
-                    }
-                    
-                }
-
-            };
-            
-            runContent.forEach((index) => {
-                    fetchMoviesFromAPI(index)
-                    // .then(status => {
-                    //     if(!status){
-                    //     //     Swal.fire({
-                    //     //         title:"internet connection error",
-                    //     //         text: "Please try again.",
-                    //     //         icon: "error", // Set the icon to "error"
-                    //     //         confirmButtonText: "OK",
-                                
-                    //     //     })
-                    //     }
-                    // })
-            })        
-        }       
-        intitializeMoviesInit({
-            runContent: [
-                "popular",
-                "trending",
-                "top_rated",
-                "upcoming",
-                "now_playing"
-            ],
-            adjustable: true
-        })
-
-    },[fetchMovies,mutateInsertMovies])
-
-    useEffect(() => {
-        const intitializeMoviesCountry = async() => {
-            
             const current_date = new Date().toISOString().split("T")[0]
-            const countryCode = country
-            console.log(countryCode,"country")
 
-            let setIndex = "uko_movie" + countryCode
+            const temp_movies = [
+                { index: "discover", results: [], api: "discover/movie", page: 1, total_pages: 0 },
+                { index: "popular", results: [], api: "movie/popular", page: 1, total_pages: 0 },
+                { index: "trending", results: [], api: "trending/movie/day", page: 1, total_pages: 0 },
+                { index: "top_rated", results: [], api: "movie/top_rated", page: 1, total_pages: 0 },
+                { index: "upcoming", results: [], api: "movie/upcoming", page: 1, total_pages: 0 },
+                { index: "now_playing", results: [], api: "movie/now_playing", page: 1, total_pages: 0 },
+            ];
+            const key = temp_movies.findIndex(({ index }) => index === actual_index);
 
-            const hashed = setIndex + "movie"
+            if (page) {
+                temp_movies[key].page = page;
+            }
+            const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "movie"
             const hashedKey = CryptoJS.SHA256(hashed).toString();
 
-            // console.log(current_date,"date")
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
                 const response = await fetch(
-                    `${process.env.REACT_APP_movie_db}discover/movie?api_key=${process.env.REACT_APP_api_key}&with_origin_country=${countryCode}&sort_by=release_date.desc`
+                    `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
                 );
                 const data = await response.json();
                 
                 const themeResults = data?.results || []
 
                 if (themeResults.length > 0) {
+                    temp_movies[key].results = [
+                        ...temp_movies[key].results,
+                        ...data.results,
+                    ];
+                    temp_movies[key].total_pages = data.total_pages;
+                    temp_movies[key].total_results = data.total_results;
 
-                    setThemes(() => [...themeResults.filter(({poster_path,backdrop_path}) => poster_path || backdrop_path)])
+                    // Update the movies state
+                    setMovies((prevMovies) => {
+                        prevMovies = prevMovies || [];
+                        const updatedMovies = [...prevMovies];
+                        const existingIndex = updatedMovies.findIndex(
+                            (movie) => movie.index === actual_index
+                        );
+
+                        if (existingIndex > -1) {
+                            updatedMovies[existingIndex].results = [
+                                // ...updatedMovies[existingIndex].results,
+                                ...data.results,
+                            ];
+                        } else {
+                            updatedMovies.push(temp_movies[key]);
+                        }
+
+                        return updatedMovies;
+                    });
 
                     mutateInsertMovies({
                         variables: {
-                            page:1,
+                            page:temp_movies[key].page,
                             results:data.results,
                             total_pages:data.total_pages,
                             total_results:data.total_results,
                             hashedKey,
                             data :{
-                                genre: '',
-                                region: '',
-                                language: '',
-                                year: 0,
-                                index:setIndex,
+                                genre: genreId,
+                                region: regionId,
+                                language: languageId,
+                                year: yearId,
+                                index:actual_index,
                                 date:current_date,
                                 type:"movie",
                             },
@@ -733,47 +590,191 @@ const MOVIES = () => {
                 return false
             }
 
+            if(adjustable || genreId || regionId || languageId || yearId){
+                const fetched = await fetchMovies({
+                    variables : {
+                    page: temp_movies[key].page,
+                    data : {
+                        genre: genreId,
+                        year: yearId,
+                        region: regionId,
+                        language: languageId,  
+                        index: actual_index,
+                        date: current_date,
+                        type:"movie"
+                    },
+                    hashedKey
+                }})
 
-            console.log(setIndex,"setIndex")
-            const fetched = await fetchMovies({
-                variables : {
-                page: 1,
-                data : {
-                    genre: '',
-                    year: '',
-                    region: '',
-                    language: '',  
-                    index: setIndex,
-                    date: current_date,
-                    type:"movie"
-                },
-                hashedKey
-            }})
-            console.log(fetched)
-            
-            if (fetched.data) {
-                if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
-                    console.log("less items")
+                if (fetched.data) {
+                    if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
+                        console.log("less items")
                         return await freshFetch()
-                }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
-                    console.log("no records found")
+                    }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
+                        console.log("no records found")
                         return await freshFetch()
-                }else{
-                    console.log("finally using cached data")
-                        setThemes(() => [...fetched.data.movie.results.filter(({backdrop_path,poster_path}) => poster_path || backdrop_path)])
+                    }else{
+                        console.log("finally using cached data")
+                        setMovies((prevMovies) => {
+                            prevMovies = prevMovies || [];
+                            const updatedMovies = [...prevMovies]
+                            const existingIndex = updatedMovies.findIndex(
+                                (movie) => movie.index === actual_index
+                            );
+        
+                            if (existingIndex > -1) {
+                                updatedMovies[existingIndex].results = [
+                                    ...fetched.data.movie.results,
+                                ];
+                            } else {
+                                updatedMovies.push({
+                                    index: actual_index,
+                                    results: fetched.data.movie.results,
+                                    page: fetched.data.movie.page,
+                                    total_pages: fetched.data.movie.total_pages,
+                                    total_results:fetched.data.movie.total_results
+                                });
+                            }
+        
+                            return updatedMovies;
+                        });
+                    
 
-                    return true
+                        return true
+                    }
+
+                } else {
+                    console.log("nothing")
+                    return await freshFetch()
                 }
-
-            } else {
-                console.log("nothing")
-                return await freshFetch()
+                
             }
-            
-        }        
-        console.log("country changed:" + country)
+
+        };
+        
+        runContent.forEach((index) => {
+                fetchMoviesFromAPI(index)
+                // .then(status => {
+                //     if(!status){
+                //     //     Swal.fire({
+                //     //         title:"internet connection error",
+                //     //         text: "Please try again.",
+                //     //         icon: "error", // Set the icon to "error"
+                //     //         confirmButtonText: "OK",
+                            
+                //     //     })
+                //     }
+                // })
+        })        
+    },[fetchMovies,mutateInsertMovies])
+
+    useEffect(() => {       
+        intitializeMoviesInit({
+            runContent: [
+                "popular",
+                "trending",
+                "top_rated",
+                "upcoming",
+                "now_playing"
+            ],
+            adjustable: true
+        })
+
+    },[intitializeMoviesInit])
+
+    const intitializeMoviesCountry = useCallback(async() => {
+    
+    const current_date = new Date().toISOString().split("T")[0]
+    const countryCode = country
+    console.log(countryCode,"country")
+
+    let setIndex = "uko_movie" + countryCode
+
+    const hashed = setIndex + "movie"
+    const hashedKey = CryptoJS.SHA256(hashed).toString();
+
+    // console.log(current_date,"date")
+    async function freshFetch(){
+        // Fetch data from the API if not found in the cache
+        const response = await fetch(
+            `${process.env.REACT_APP_movie_db}discover/movie?api_key=${process.env.REACT_APP_api_key}&with_origin_country=${countryCode}&sort_by=release_date.desc`
+        );
+        const data = await response.json();
+        
+        const themeResults = data?.results || []
+
+        if (themeResults.length > 0) {
+
+            setThemes(() => [...themeResults.filter(({poster_path,backdrop_path}) => poster_path || backdrop_path)])
+
+            mutateInsertMovies({
+                variables: {
+                    page:1,
+                    results:data.results,
+                    total_pages:data.total_pages,
+                    total_results:data.total_results,
+                    hashedKey,
+                    data :{
+                        genre: '',
+                        region: '',
+                        language: '',
+                        year: 0,
+                        index:setIndex,
+                        date:current_date,
+                        type:"movie",
+                    },
+                                        
+                },
+            });
+
+            return true
+        }
+        return false
+    }
+
+
+    console.log(setIndex,"setIndex")
+    const fetched = await fetchMovies({
+        variables : {
+        page: 1,
+        data : {
+            genre: '',
+            year: '',
+            region: '',
+            language: '',  
+            index: setIndex,
+            date: current_date,
+            type:"movie"
+        },
+        hashedKey
+    }})
+    console.log(fetched)
+    
+    if (fetched.data) {
+        if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
+            console.log("less items")
+                return await freshFetch()
+        }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
+            console.log("no records found")
+                return await freshFetch()
+        }else{
+            console.log("finally using cached data")
+                setThemes(() => [...fetched.data.movie.results.filter(({backdrop_path,poster_path}) => poster_path || backdrop_path)])
+
+            return true
+        }
+
+    } else {
+        console.log("nothing")
+        return await freshFetch()
+    }
+    
+},[country,fetchMovies,mutateInsertMovies]) 
+
+    useEffect(() => {       
+        // console.log("country changed:" + country)
         intitializeMoviesCountry()
-    },[country,fetchMovies,mutateInsertMovies])
+    },[country,intitializeMoviesCountry])
 
     // useEffect(() => {
     //     //recommendations based on sessions

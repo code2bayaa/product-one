@@ -355,166 +355,165 @@ const SERIES = () => {
         })
     },[fetchMovies,mutateInsertMovies])
 
-    useEffect(() => {
+    const intitializeMoviesInit = useCallback(async({
+        runContent,
+        page,
+        adjustable = false,
+        genreId = '',
+        regionId = '',
+        languageId='',
+        yearId=0
+    }) => {
+        
+        const fetchMoviesFromAPI = async (actual_index) => {
 
-        const intitializeMoviesInit = async ({
-            runContent,
-            page,
-            adjustable = false,
-            genreId = '',
-            regionId = '',
-            languageId='',
-            yearId=0
-        }) => {
-            
-            const fetchMoviesFromAPI = async (actual_index) => {
+            const current_date = new Date().toISOString().split("T")[0]
+            const temp_movies = [
+                // {"index":"discover","results":[],"api":"discover/tv",page:1,total_pages:0},
+                {"index":"airing","results":[],"api":"tv/airing_today",page:1,total_pages:0},
+                {"index":"trending","results":[],"api":"trending/tv/day",page:1,total_pages:0},
+                {"index":"popular","results":[],"api":"tv/popular",page:1,total_pages:0},
+                {"index":"top rated","results":[],"api":"tv/top_rated",page:1,total_pages:0},                
+                {"index":"on air","results":[],"api":"tv/on_the_air",page:1,total_pages:0}
+            ];
+            const key = temp_movies.findIndex(({ index }) => index === actual_index);
 
-                const current_date = new Date().toISOString().split("T")[0]
-                const temp_movies = [
-                    // {"index":"discover","results":[],"api":"discover/tv",page:1,total_pages:0},
-                    {"index":"airing","results":[],"api":"tv/airing_today",page:1,total_pages:0},
-                    {"index":"trending","results":[],"api":"trending/tv/day",page:1,total_pages:0},
-                    {"index":"popular","results":[],"api":"tv/popular",page:1,total_pages:0},
-                    {"index":"top rated","results":[],"api":"tv/top_rated",page:1,total_pages:0},                
-                    {"index":"on air","results":[],"api":"tv/on_the_air",page:1,total_pages:0}
-                ];
-                const key = temp_movies.findIndex(({ index }) => index === actual_index);
+            if (page) {
+                temp_movies[key].page = page;
+            }
 
-                if (page) {
-                    temp_movies[key].page = page;
+            const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "tv"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
+
+            async function freshFetch(){
+                // Fetch data from the API if not found in the cache
+                const response = await fetch(
+                    `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
+                );
+                const data = await response.json();
+
+                // console.log(data)
+                if (data.results.length > 0) {
+                    temp_movies[key].results = [
+                        ...temp_movies[key].results,
+                        ...data.results,
+                    ];
+                    temp_movies[key].total_pages = data.total_pages;
+                    temp_movies[key].total_results = data.total_results;
+
+                    // Update the movies state
+                    setMovies((prevMovies) => {
+                        prevMovies = prevMovies || [];
+                        const updatedMovies = [...prevMovies];
+                        const existingIndex = updatedMovies.findIndex(
+                            (movie) => movie.index === actual_index
+                        );
+
+                        if (existingIndex > -1) {
+                            updatedMovies[existingIndex].results = [
+                                // ...updatedMovies[existingIndex].results,
+                                ...data.results,
+                            ];
+                        } else {
+                            updatedMovies.push(temp_movies[key]);
+                        }
+
+                        return updatedMovies;
+                    });
+
+
+                    // Insert the fetched data into MySQL using the mutation
+                    mutateInsertMovies({
+                        variables: {
+                            page:temp_movies[key].page,
+                            results:data.results,
+                            total_pages:data.total_pages,
+                            total_results:data.total_results,
+                            data :{
+                                genre: genreId,
+                                region: regionId,
+                                language: languageId,
+                                year: yearId,
+                                index:actual_index,
+                                date:current_date,
+                            },
+                            hashedKey,
+                            type:"tv",
+                        },
+                    });
+
+                    return true
                 }
+                return false
+            }
 
-                const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "tv"
-                const hashedKey = CryptoJS.SHA256(hashed).toString();
+            if(adjustable || genreId || regionId || languageId || yearId){
+                const fetched = await fetchMovies({
+                    variables : {
+                    page: temp_movies[key].page,
+                    genre: genreId,
+                    region: regionId,
+                    language: languageId,
+                    year: yearId,
+                    index: actual_index,
+                    date: current_date,
+                    hashedKey  
+                }})
+                console.log(fetched)
 
-                async function freshFetch(){
-                    // Fetch data from the API if not found in the cache
-                    const response = await fetch(
-                        `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
-                    );
-                    const data = await response.json();
-
-                    // console.log(data)
-                    if (data.results.length > 0) {
-                        temp_movies[key].results = [
-                            ...temp_movies[key].results,
-                            ...data.results,
-                        ];
-                        temp_movies[key].total_pages = data.total_pages;
-                        temp_movies[key].total_results = data.total_results;
-
-                        // Update the movies state
+                if (fetched.data) {
+                    console.log("Using cached data:", fetched.data);
+                    if(fetched.data.tv.success && fetched.data.tv.results &&  fetched.data.tv.results.length < 20){
+                        console.log("less items")
+                        return await freshFetch()
+                    }else if(fetched.data.tv.error === "insert tv" || fetched.data.tv.error === "no records found"){
+                        console.log("no records found")
+                        return await freshFetch()
+                    }else{
+                        console.log("finally using cached data")
                         setMovies((prevMovies) => {
                             prevMovies = prevMovies || [];
-                            const updatedMovies = [...prevMovies];
+                            const updatedMovies = [...prevMovies]
                             const existingIndex = updatedMovies.findIndex(
-                                (movie) => movie.index === actual_index
+                                (tv) => tv.index === actual_index
                             );
 
                             if (existingIndex > -1) {
                                 updatedMovies[existingIndex].results = [
                                     // ...updatedMovies[existingIndex].results,
-                                    ...data.results,
+                                    ...fetched.data.tv.results,
                                 ];
                             } else {
-                                updatedMovies.push(temp_movies[key]);
+                                updatedMovies.push({
+                                    index: actual_index,
+                                    results: fetched.data.tv.results,
+                                    page: fetched.data.tv.page,
+                                    total_pages: fetched.data.tv.total_pages,
+                                    total_results:fetched.data.tv.total_results
+                                });
                             }
 
                             return updatedMovies;
                         });
-
-
-                        // Insert the fetched data into MySQL using the mutation
-                        mutateInsertMovies({
-                            variables: {
-                                page:temp_movies[key].page,
-                                results:data.results,
-                                total_pages:data.total_pages,
-                                total_results:data.total_results,
-                                data :{
-                                    genre: genreId,
-                                    region: regionId,
-                                    language: languageId,
-                                    year: yearId,
-                                    index:actual_index,
-                                    date:current_date,
-                                },
-                                hashedKey,
-                                type:"tv",
-                            },
-                        });
-
                         return true
                     }
-                    return false
+
+                } else {
+                    return await freshFetch()
                 }
+            }
 
-                if(adjustable || genreId || regionId || languageId || yearId){
-                    const fetched = await fetchMovies({
-                        variables : {
-                        page: temp_movies[key].page,
-                        genre: genreId,
-                        region: regionId,
-                        language: languageId,
-                        year: yearId,
-                        index: actual_index,
-                        date: current_date,
-                        hashedKey  
-                    }})
-                    console.log(fetched)
+        };
+        runContent.forEach((index) => {
+            fetchMoviesFromAPI(index)
+            .then(status => {
+                if(!status){
 
-                    if (fetched.data) {
-                        console.log("Using cached data:", fetched.data);
-                        if(fetched.data.tv.success && fetched.data.tv.results &&  fetched.data.tv.results.length < 20){
-                            console.log("less items")
-                            return await freshFetch()
-                        }else if(fetched.data.tv.error === "insert tv" || fetched.data.tv.error === "no records found"){
-                            console.log("no records found")
-                            return await freshFetch()
-                        }else{
-                            console.log("finally using cached data")
-                            setMovies((prevMovies) => {
-                                prevMovies = prevMovies || [];
-                                const updatedMovies = [...prevMovies]
-                                const existingIndex = updatedMovies.findIndex(
-                                    (tv) => tv.index === actual_index
-                                );
-
-                                if (existingIndex > -1) {
-                                    updatedMovies[existingIndex].results = [
-                                        // ...updatedMovies[existingIndex].results,
-                                        ...fetched.data.tv.results,
-                                    ];
-                                } else {
-                                    updatedMovies.push({
-                                        index: actual_index,
-                                        results: fetched.data.tv.results,
-                                        page: fetched.data.tv.page,
-                                        total_pages: fetched.data.tv.total_pages,
-                                        total_results:fetched.data.tv.total_results
-                                    });
-                                }
-
-                                return updatedMovies;
-                            });
-                            return true
-                        }
-
-                    } else {
-                        return await freshFetch()
-                    }
                 }
-
-            };
-            runContent.forEach((index) => {
-                fetchMoviesFromAPI(index)
-                .then(status => {
-                    if(!status){
-
-                    }
-                })
             })
-        }        
+        })
+    },[fetchMovies,mutateInsertMovies])     
+    useEffect(() => {       
         intitializeMoviesInit(
             {runContent:[
             // "latest",
@@ -526,7 +525,7 @@ const SERIES = () => {
             adjustable:true
         })
 
-    },[fetchMovies,mutateInsertMovies])
+    },[intitializeMoviesInit])
 
     useEffect(() => {
         const intitializeMoviesCountry = async() => {

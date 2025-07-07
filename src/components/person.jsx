@@ -298,6 +298,40 @@ const PERSON = () => {
 
     const fetchPerson = useCallback(async() => {
 
+        async function freshFetch(){
+            const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}?api_key=${process.env.REACT_APP_api_key}`);
+            const data = await response.json();
+            console.log(data)
+            mutateInsertPerson({
+                variables: {
+                    single : {...data}
+                }
+            });
+            return {...data}
+        } 
+
+        const fetched = await fetchPersonData({
+            variables : { id }})
+        // console.log(fetched)
+        if(fetched.data && fetched.data.person && !fetched.data.person.biography){
+            //first check person
+            console.log("first time")
+            const personData = await freshFetch()
+            
+            return setPerson(() => ({...personData}));
+        }else if(fetched.data && fetched.data.person.success){
+            // console.log("Using cached data:", fetched.data);
+            
+            return setPerson(() => ({...fetched.data.person}));
+        }else {
+            const personData = await freshFetch()
+            return setPerson(() => ({...personData}));
+        }
+    
+        
+    },[fetchPersonData, id, mutateInsertPerson])
+
+    useEffect(() => {
         const checkFeedback = (id) => {
             fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             .then(async res => {
@@ -319,34 +353,9 @@ const PERSON = () => {
                 }
             })
         } 
-
-        async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}?api_key=${process.env.REACT_APP_api_key}`);
-            const data = await response.json();
-            console.log(data)
-            mutateInsertPerson({
-                variables: {
-                    single : {...data}
-                }
-            });
-            return {...data}
-        } 
-
-        const fetched = await fetchPersonData({
-            variables : { id }})
-        console.log(fetched)
-        if(fetched.data && fetched.data.person.success){
-            console.log("Using cached data:", fetched.data);
-            checkFeedback(fetched.data.person.id)
-            return setPerson(() => ({...fetched.data.person}));
-        }else {
-            const personData = await freshFetch()
-            checkFeedback(personData.id)
-            return setPerson(() => ({...personData}));
-        }
-    
-        
-    },[fetchPersonData, id, mutateInsertPerson])
+        if(person && person.id)
+            checkFeedback(person.id)
+    },[person])
 
     const FETCH_MOVIE_QUERY = gql`
         query Played(

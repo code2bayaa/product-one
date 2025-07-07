@@ -1,14 +1,15 @@
 import { useEffect, useState, useCallback } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
-import { faStar } from "@fortawesome/free-solid-svg-icons"
+import { faArrowAltCircleDown, faArrowAltCircleUp, faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import CONTROLLERS from "../midlleware/controllers"
+// import CONTROLLERS from "../midlleware/controllers"
+import Carousel from "../midlleware/carousel";
 import { NavLink } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import CryptoJS from "crypto-js";
-
+import Slider from "react-slick";
 // import Swal from "sweetalert2"
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
@@ -16,10 +17,44 @@ import MOBILE from "./mobileBar";
 const MOVIES = () => {
 
     const [movies, setMovies] = useState(null)
+    const [country, setCountry] = useState(null)
+    const [reveal, setReveal] = useState(false)
+    const [themes, setThemes] = useState(null)
+    const [countries, setCountries] = useState(null)
     // const [recommend,setRecommend] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     // const [variables,setVariables] = useState({})
     // const client = useApolloClient(); // Apollo Client instance for accessing the cache
+
+    const FETCH_COUNTRIES = gql`
+        query Region {
+            region {
+                date
+                data {
+                    iso_3166_1
+                    english_name
+                }
+            }
+        }
+
+    `
+    const [fetch_countries] = useLazyQuery(FETCH_COUNTRIES,{
+        // pollInterval: 500, // fetches new data at that interval
+        notifyOnNetworkStatusChange: true,
+        // variables,
+        // skip: !variables.page, // Skip query execution if variables are not set
+    });
+
+    useEffect(() => {
+        const runCountries = async() => {
+            const fetched = await fetch_countries()
+            // console.log(fetched.data?.region?.data)
+            const countries_data = fetched?.data?.region?.data || []
+            setCountries(() => [...countries_data])
+            
+        }
+       runCountries() 
+    },[fetch_countries])
 
     useEffect(() => {
         const handleResize = () => {
@@ -31,7 +66,48 @@ const MOVIES = () => {
             window.removeEventListener("resize", handleResize);
         };
     },[])
+    useEffect(() => {
+        const runLocale = async() => {
+            const sendForm = async({url,options}) => {
 
+                const response = await fetch(
+                    url,
+                    options,
+                    {credentials:"initial"}
+                )
+
+                
+                return await response.json()
+
+            }            
+            let user_location = localStorage.getItem("location") || null;
+            if(!user_location){
+                const urls = [
+                    "https://ipinfo.io/json",
+                    // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
+                    "https://ipapi.co/json/",
+                    "https://api.ipgeolocation.io/ipgeo?apiKey=02be68312fd5432fa07048f4b27b6542"
+                ]
+
+                const locations = await Promise.all(urls.map(async(url) => {
+                    return await sendForm({url, options : {
+                        method:"GET",
+                        headers : {'Content-type': 'application/json; charset=UTF-8'},
+                    }})
+                }))
+
+                user_location = locations
+            }else{
+                user_location = JSON.parse(user_location);
+            }
+            // return user_location;
+            const country_code = user_location && user_location.length > 1 && user_location[2].country_code2 && user_location[2].country_code2
+            setCountry(country_code)
+        }
+
+        runLocale()
+    },[])
+    
     const FETCH_MOVIES_QUERY = gql`
         query Movie (
             $page: Int!,
@@ -169,6 +245,7 @@ const MOVIES = () => {
         const fetchMoviesFromAPI = async (actual_index) => {
 
             const current_date = new Date().toISOString().split("T")[0]
+
             const temp_movies = [
                 { index: "discover", results: [], api: "discover/movie", page: 1, total_pages: 0 },
                 { index: "popular", results: [], api: "movie/popular", page: 1, total_pages: 0 },
@@ -192,10 +269,10 @@ const MOVIES = () => {
                     `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
                 );
                 const data = await response.json();
-
-                console.log(data)
                 
-                if (data.results.length > 0) {
+                const themeResults = data?.results || []
+
+                if (themeResults.length > 0) {
                     temp_movies[key].results = [
                         ...temp_movies[key].results,
                         ...data.results,
@@ -222,6 +299,8 @@ const MOVIES = () => {
 
                         return updatedMovies;
                     });
+                
+
 
                     // console.log(
                     //     {
@@ -272,7 +351,7 @@ const MOVIES = () => {
 
                     // console.log(writtenData,"written")
 
-                    console.log(actual_index,"actual_index")
+                    // console.log(actual_index,"actual_index")
                     // Insert the fetched data into MySQL using the mutation
                     mutateInsertMovies({
                         variables: {
@@ -329,6 +408,7 @@ const MOVIES = () => {
             
                 // console.log(genreId,"genreId")
             if(adjustable || genreId || regionId || languageId || yearId){
+                console.log(actual_index,"actual_index")
                 const fetched = await fetchMovies({
                     variables : {
                     page: temp_movies[key].page,
@@ -360,7 +440,7 @@ const MOVIES = () => {
                             return await freshFetch()
                         // return true
                     }else{
-                        // console.log("finally using cached data")
+                        console.log("finally using cached data")
                         setMovies((prevMovies) => {
                             prevMovies = prevMovies || [];
                             const updatedMovies = [...prevMovies]
@@ -385,6 +465,8 @@ const MOVIES = () => {
         
                             return updatedMovies;
                         });
+                    
+
                         return true
                     }
 
@@ -416,17 +498,282 @@ const MOVIES = () => {
         })        
     },[fetchMovies,mutateInsertMovies]);
 
+
     useEffect(() => {
-        intitializeMovies(
-            {runContent:[
-            // "latest",
-            "discover",
-            // "popular",
-            "trending","top_rated","upcoming","now_playing"],
-            adjustable:true
+        const intitializeMoviesInit = async({
+            runContent,
+            page,
+            adjustable = false,
+            genreId = '',
+            regionId = '',
+            languageId='',
+            yearId=0
+        }) => {
+            
+            const fetchMoviesFromAPI = async (actual_index) => {
+
+                const current_date = new Date().toISOString().split("T")[0]
+
+                const temp_movies = [
+                    { index: "discover", results: [], api: "discover/movie", page: 1, total_pages: 0 },
+                    { index: "popular", results: [], api: "movie/popular", page: 1, total_pages: 0 },
+                    { index: "trending", results: [], api: "trending/movie/day", page: 1, total_pages: 0 },
+                    { index: "top_rated", results: [], api: "movie/top_rated", page: 1, total_pages: 0 },
+                    { index: "upcoming", results: [], api: "movie/upcoming", page: 1, total_pages: 0 },
+                    { index: "now_playing", results: [], api: "movie/now_playing", page: 1, total_pages: 0 },
+                ];
+                const key = temp_movies.findIndex(({ index }) => index === actual_index);
+
+                if (page) {
+                    temp_movies[key].page = page;
+                }
+                const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "movie"
+                const hashedKey = CryptoJS.SHA256(hashed).toString();
+
+                async function freshFetch(){
+                    // Fetch data from the API if not found in the cache
+                    const response = await fetch(
+                        `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
+                    );
+                    const data = await response.json();
+                    
+                    const themeResults = data?.results || []
+
+                    if (themeResults.length > 0) {
+                        temp_movies[key].results = [
+                            ...temp_movies[key].results,
+                            ...data.results,
+                        ];
+                        temp_movies[key].total_pages = data.total_pages;
+                        temp_movies[key].total_results = data.total_results;
+
+                        // Update the movies state
+                        setMovies((prevMovies) => {
+                            prevMovies = prevMovies || [];
+                            const updatedMovies = [...prevMovies];
+                            const existingIndex = updatedMovies.findIndex(
+                                (movie) => movie.index === actual_index
+                            );
+
+                            if (existingIndex > -1) {
+                                updatedMovies[existingIndex].results = [
+                                    // ...updatedMovies[existingIndex].results,
+                                    ...data.results,
+                                ];
+                            } else {
+                                updatedMovies.push(temp_movies[key]);
+                            }
+
+                            return updatedMovies;
+                        });
+
+                        mutateInsertMovies({
+                            variables: {
+                                page:temp_movies[key].page,
+                                results:data.results,
+                                total_pages:data.total_pages,
+                                total_results:data.total_results,
+                                hashedKey,
+                                data :{
+                                    genre: genreId,
+                                    region: regionId,
+                                    language: languageId,
+                                    year: yearId,
+                                    index:actual_index,
+                                    date:current_date,
+                                    type:"movie",
+                                },
+                                                    
+                            },
+                        });
+
+                        return true
+                    }
+                    return false
+                }
+
+                if(adjustable || genreId || regionId || languageId || yearId){
+                    const fetched = await fetchMovies({
+                        variables : {
+                        page: temp_movies[key].page,
+                        data : {
+                            genre: genreId,
+                            year: yearId,
+                            region: regionId,
+                            language: languageId,  
+                            index: actual_index,
+                            date: current_date,
+                            type:"movie"
+                        },
+                        hashedKey
+                    }})
+
+                    if (fetched.data) {
+                        if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
+                            console.log("less items")
+                            return await freshFetch()
+                        }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
+                            console.log("no records found")
+                            return await freshFetch()
+                        }else{
+                            console.log("finally using cached data")
+                            setMovies((prevMovies) => {
+                                prevMovies = prevMovies || [];
+                                const updatedMovies = [...prevMovies]
+                                const existingIndex = updatedMovies.findIndex(
+                                    (movie) => movie.index === actual_index
+                                );
+            
+                                if (existingIndex > -1) {
+                                    updatedMovies[existingIndex].results = [
+                                        ...fetched.data.movie.results,
+                                    ];
+                                } else {
+                                    updatedMovies.push({
+                                        index: actual_index,
+                                        results: fetched.data.movie.results,
+                                        page: fetched.data.movie.page,
+                                        total_pages: fetched.data.movie.total_pages,
+                                        total_results:fetched.data.movie.total_results
+                                    });
+                                }
+            
+                                return updatedMovies;
+                            });
+                        
+
+                            return true
+                        }
+
+                    } else {
+                        console.log("nothing")
+                        return await freshFetch()
+                    }
+                    
+                }
+
+            };
+            
+            runContent.forEach((index) => {
+                    fetchMoviesFromAPI(index)
+                    // .then(status => {
+                    //     if(!status){
+                    //     //     Swal.fire({
+                    //     //         title:"internet connection error",
+                    //     //         text: "Please try again.",
+                    //     //         icon: "error", // Set the icon to "error"
+                    //     //         confirmButtonText: "OK",
+                                
+                    //     //     })
+                    //     }
+                    // })
+            })        
+        }       
+        intitializeMoviesInit({
+            runContent: [
+                "popular",
+                "trending",
+                "top_rated",
+                "upcoming",
+                "now_playing"
+            ],
+            adjustable: true
         })
 
-    },[intitializeMovies])
+    },[fetchMovies,mutateInsertMovies])
+
+    useEffect(() => {
+        const intitializeMoviesCountry = async() => {
+            
+            const current_date = new Date().toISOString().split("T")[0]
+            const countryCode = country
+            console.log(countryCode,"country")
+
+            let setIndex = "uko_movie" + countryCode
+
+            const hashed = setIndex + "movie"
+            const hashedKey = CryptoJS.SHA256(hashed).toString();
+
+            // console.log(current_date,"date")
+            async function freshFetch(){
+                // Fetch data from the API if not found in the cache
+                const response = await fetch(
+                    `${process.env.REACT_APP_movie_db}discover/movie?api_key=${process.env.REACT_APP_api_key}&with_origin_country=${countryCode}&sort_by=release_date.desc`
+                );
+                const data = await response.json();
+                
+                const themeResults = data?.results || []
+
+                if (themeResults.length > 0) {
+
+                    setThemes(() => [...themeResults.filter(({poster_path,backdrop_path}) => poster_path || backdrop_path)])
+
+                    mutateInsertMovies({
+                        variables: {
+                            page:1,
+                            results:data.results,
+                            total_pages:data.total_pages,
+                            total_results:data.total_results,
+                            hashedKey,
+                            data :{
+                                genre: '',
+                                region: '',
+                                language: '',
+                                year: 0,
+                                index:setIndex,
+                                date:current_date,
+                                type:"movie",
+                            },
+                                                
+                        },
+                    });
+
+                    return true
+                }
+                return false
+            }
+
+
+            console.log(setIndex,"setIndex")
+            const fetched = await fetchMovies({
+                variables : {
+                page: 1,
+                data : {
+                    genre: '',
+                    year: '',
+                    region: '',
+                    language: '',  
+                    index: setIndex,
+                    date: current_date,
+                    type:"movie"
+                },
+                hashedKey
+            }})
+            console.log(fetched)
+            
+            if (fetched.data) {
+                if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
+                    console.log("less items")
+                        return await freshFetch()
+                }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
+                    console.log("no records found")
+                        return await freshFetch()
+                }else{
+                    console.log("finally using cached data")
+                        setThemes(() => [...fetched.data.movie.results.filter(({backdrop_path,poster_path}) => poster_path || backdrop_path)])
+
+                    return true
+                }
+
+            } else {
+                console.log("nothing")
+                return await freshFetch()
+            }
+            
+        }        
+        console.log("country changed:" + country)
+        intitializeMoviesCountry()
+    },[country,fetchMovies,mutateInsertMovies])
 
     // useEffect(() => {
     //     //recommendations based on sessions
@@ -468,26 +815,120 @@ const MOVIES = () => {
     //     }
     //     getRecommendation()
     // },[])
+  const settings = {
+    // dots: true,
+    infinite: true,
+    autoplaySpeed: 5,
+    speed:5000,
+    swipeToSlide:true,
+    draggable:true,
+    slidesToShow: 5,
+    slidesToScroll: 5,
+    autoplay:true,
+    arrows:false,
+    pauseOnHover:true,
+    dots:false,
+    cssEase:"ease",
+    responsive: [{
 
-    return (
-        <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
-            {
-                windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
-                    <NAVBAR/>
-                </div>
-                :
-                <MOBILE/>
-            }
-            {/* <div className="w-[100%]">
-                {console.log(recommend)}
-            </div> */}
-            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 5,
+          infinite: true
+        }
+   
+      }, {
+   
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 1,
+          dots: false
+        }
+   
+      }, {
+   
+        breakpoint: 300,
+        settings: "unslick" // destroys slick
+   
+      }]
+  };
+
+
+const loadComponent = () => {
+
+    if(themes && movies){
+        return (
+            <>
+                {
+                    windowWidth > 800 ? 
+                            
+                        <div className="w-[100%]">
+                            <Slider {...settings}>
+                            {
+                                themes && themes.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
+                                    <NavLink key={movie_key} to={`/movies/${id}`} className="w-[25%] h-[100%] hover:skew-4 contrast-150">
+                                        <div className="w-[100%] h-[100%]">
+                                            <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || backdrop_path} />
+                                            {/* <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center"> */}
+                                                {/* <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title ? title : original_title ? original_title : title}</h2> */}
+                                                {/* <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p> */}
+                                                {/* <article className="text-[15px]">{overview}</article>
+                                                <p className="text-[15px]">Release Date: {release_date}</p>
+                                                <p className="text-[15px]">Vote Average: {vote_average}</p>
+                                                <p className="text-[15px]">Vote Count: {vote_count}</p> */}
+                                            {/* </div> */}
+                                        </div>
+                                    </NavLink>
+                                )
+                            }
+                            </Slider>                    
+                        </div>
+                    :
+                    <div className="w-[100%]">
+                        {
+                            themes.length > 0 && <Carousel type="movies" mode="init" images={[...themes].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                        }
+                    </div>                 
+                }
                 <div className="w-[100%]">
-                    <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
+                    <button
+                        type="button"
+                        onClick={() => setReveal(!reveal)}
+                        className={windowWidth > 800 ? "w-[40%] border-[#ffd800] border-[2px] m-[1%] rounded-xl" : "w-[100%] border-[#ffd800] border-[2px] m-[1%] rounded-xl"}
+                    >
+                        UKO: 
+                        {country} 
+                        {
+                            reveal ? 
+                                <FontAwesomeIcon icon={faArrowAltCircleUp}/>
+                            :
+                            <FontAwesomeIcon icon={faArrowAltCircleDown}/>
+                        }
+                    </button>
+                    <NavLink
+                        to="/discover/movie"
+                        className={windowWidth > 800 ? "w-[60%] h-[60px] text-red-200 underline m-[1%] rounded-md" : "w-[100%] h-[60px] text-red-200 underline m-[1%] rounded-md"}
+                    >
+                        discover more movies
+                    </NavLink>
+                    <div className={`w-[100%] ${reveal ? "flex" : "hidden"} movie-scene h-[60px] overflow-x-auto text-white flex-col flex-wrap`}>
+                        {
+                            countries && countries.map(({english_name,iso_3166_1},index) => 
+                                <button
+                                 type="button"
+                                 className="border-[2px] h-[100%] mr-[1%] min-w-[15%]"
+                                 onClick={() => setCountry(iso_3166_1)}
+                                 key={index}
+                                >
+                                    {english_name}
+                                </button>
+
+                            )
+                        }
+                    </div>
                 </div>
                 {
-                    movies ? movies.map(({index,results,page,total_pages},node) =>
+                    movies && movies.map(({index,results,page,total_pages},node) =>
                         <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" : "w-[100%] h-[auto] flex flex-wrap flex-col my-t-[5%]"} key={node}>
                             <h1 className="my-t-[5%]">{index}</h1>
                             <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
@@ -513,10 +954,39 @@ const MOVIES = () => {
                             </div>
                         </div>
 
-                    )
-                    :
-                    <LOAD/>
-                }
+                    )  
+                }                              
+            </>
+
+        )
+    }else{
+    console.log("loading...")
+        return (
+        <>
+            <LOAD/>
+        </>
+        )
+    }
+}
+    return (
+        <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
+            {
+                windowWidth > 800 ? 
+                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), rgb(9 11 29/var(--tw-bg-opacity)), #0f111a)"}}>
+                    <NAVBAR/>
+                </div>
+                :
+                <MOBILE/>
+            }
+            {/* <div className="w-[100%]">
+                {console.log(recommend)}
+            </div> */}
+            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-x-hidden overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
+                {/* <div className="w-[100%]">
+                    <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
+                </div> */}
+                { loadComponent() }
+                           
             </div>
             <div className="w-[100%] h-[5%] flex flex-row bg-[#000]">
                 <NavLink

@@ -3,7 +3,7 @@ import { useQuery, gql, useMutation } from '@apollo/client';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 
-const CONTROLLERS = ({intitializeMovies,type}) => {
+const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
     const [genre, setGenre] = useState(null)
     const [region, setRegion] = useState(null)
@@ -28,7 +28,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     const [genreTVName, setGenreTVName] = useState('')
     const [jobName, setJobName] = useState('')
     const [windowWidth, setWindowWidth] = useState(0);
-    const [personType, setPersonType] = useState(null)
+    // const [extra, setextra] = useState(null)
 
     useEffect(() => {
         const handleResize = () => {
@@ -314,17 +314,17 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
 
         if(type === "people"){
             if(n === "movie"){
-                intitializeMovies({runContent:["discover movie"],page:1,genreId:'',regionId,languageId,yearId,jobId})
+                intitializeMovies({manualMode:type,page:1,genreId:'',regionId,languageId,yearId,jobId})
                 runMain()
             }else if(n === "tv"){
-                intitializeMovies({runContent:["discover tv"],page:1,genreId:genreTVId,regionId,languageId,yearId,jobId})
+                intitializeMovies({manualMode:type,page:1,genreId:genreTVId,regionId,languageId,yearId,jobId})
                 console.log("remove genre tv")
                 setGenreTVId('')
                 setGenreTVName('')
             }
-             // setPersonType(null)
+             // setextra(null)
         }else{
-            intitializeMovies({runContent:["discover"],page:1,genreId:'',regionId,languageId,yearId})
+            intitializeMovies({manualMode:type,page:1,genreId:'',regionId,languageId,yearId})
             runMain()
         }
             
@@ -333,103 +333,80 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     const removeJob = () => {
         setJobId('')
         setJobName('')
-        if(personType === "movie")
-            intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
-        else if(personType === "tv")
-            intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId,genreId:genreTVId,jobId:'Actor'})
+        if(extra === "movie")
+            intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
+        else if(extra === "tv")
+            intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId,genreId:genreTVId,jobId:'Actor'})
         else
-            intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
+            intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId,genreId,jobId:'Actor'})
     }
 
     const removeLanguage = () => {
         setLanguageId('')
         setLanguageName('')
         if(type === "people"){
-            if(personType === "movie")
-                intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId:'',yearId,genreId,jobId})
-            else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId:'',yearId,genreId:genreTVId,jobId})
+            if(extra === "movie")
+                intitializeMovies({manualMode:type,page:1,regionId,languageId:'',yearId,genreId,jobId})
+            else if(extra === "tv")
+                intitializeMovies({manualMode:type,page:1,regionId,languageId:'',yearId,genreId:genreTVId,jobId})
             else
-                intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId:'',yearId,genreId,jobId})
+                intitializeMovies({manualMode:type,page:1,regionId,languageId:'',yearId,genreId,jobId})
         }else
-            intitializeMovies({runContent:["discover"],page:1,regionId,languageId:'',yearId,genreId})
+            intitializeMovies({manualMode:type,page:1,regionId,languageId:'',yearId,genreId})
     }
 
     const removeRegion = () => {
         setRegionId('')
         setRegionName('')
         if(type === "people"){
-            if(personType === "movie")
-                intitializeMovies({runContent:["discover movie"],page:1,regionId:'',languageId,yearId,genreId,jobId})
-            else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId:'',languageId,yearId,genreId:genreTVId,jobId})
+            if(extra === "movie")
+                intitializeMovies({manualMode:type,page:1,regionId:'',languageId,yearId,genreId,jobId})
+            else if(extra === "tv")
+                intitializeMovies({manualMode:type,page:1,regionId:'',languageId,yearId,genreId:genreTVId,jobId})
             else
-                intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId:'',languageId,yearId,genreId,jobId})
+                intitializeMovies({manualMode:type,page:1,regionId:'',languageId,yearId,genreId,jobId})
         }else
-            intitializeMovies({runContent:["discover"],page:1,regionId:'',languageId,yearId,genreId})
+            intitializeMovies({manualMode:type,page:1,regionId:'',languageId,yearId,genreId})
     }
 
     const removeYear = () => {
         setYearId((new Date()).getFullYear())
         setYearName('')
         if(type === "people"){
-            if(personType === "movie")
-                intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId:0,genreId,jobId})
-            else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId:0,genreId:genreTVId,jobId})
+            if(extra === "movie")
+                intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId:0,genreId,jobId})
+            else if(extra === "tv")
+                intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId:0,genreId:genreTVId,jobId})
             else
-                intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId:0,genreId,jobId})
+                intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId:0,genreId,jobId})
         }else
-            intitializeMovies({runContent:["discover"],page:1,regionId,languageId,yearId:0,genreId})
+            intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId:0,genreId})
     }
     const filterGenre = (id,name) => {
-        // setMovies([])
-        // console.log("filtered",id)
+
         function runMain(){
             console.log("remove genre movie")
             setGenreId(id.toString())
             setGenreName(name)
         }
 
-        if(type === "people"){
-            if(personType === "movie"){
-                intitializeMovies({runContent:["discover movie"],page:1,genreId:id.toString(),regionId,languageId,yearId,jobId})
-                runMain()
-            }else if(personType === "tv"){
-                intitializeMovies({runContent:["discover tv"],page:1,genreId:id.toString(),regionId,languageId,yearId,jobId})
-                console.log("remove genre tv")
-                setGenreTVId(id.toString())
-                setGenreTVName(name)
-            }
-                
-
-            // setPersonType(null)
-        }else{
-            console.log("set discover..",id)
-            intitializeMovies({runContent:["discover"],page:1,genreId:id.toString(),regionId,languageId,yearId})
-            runMain()
-            // return null
-        }
+        intitializeMovies({manualMode:type,page:1,genreId:id.toString(),regionId,languageId,yearId})
+        runMain()
           
         console.log("filter genre")
-        setGenre(null)
-        setSelectedGenre(false)
+        setGenre(() => null)
+        setSelectedGenre(() => false)
         
     }
 
     const filterRegion = (id,name) => {
-        // console.log(id,"region")
         setRegionId(id)
         setRegionName(name)
         if(type === "people"){
-            if(personType === "movie")
-                intitializeMovies({runContent:["discover movie"],page:1,regionId:id,languageId,yearId,genreId,jobId})
-            else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId:id,languageId,yearId,genreId:genreTVId,jobId})
-            else
-                intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId:id,languageId,yearId,genreId,jobId})
+            intitializeMovies({manualMode:type,page:1,regionId:id,languageId,yearId,genreId,jobId})
+
         }else
-            intitializeMovies({runContent:["discover"],page:1,regionId:id,languageId,yearId,genreId})
+            intitializeMovies({manualMode:type,page:1,regionId:id,languageId,yearId,genreId})
         setRegion(null)
         setSelectedRegion(false)
     }
@@ -438,15 +415,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         // console.log(id,"region")
         setLanguageId(id)
         setLanguageName(name)
-        if(type === "people"){
-            if(personType === "movie")
-                intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId:id,yearId,genreId,jobId})
-            else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId:id,yearId,genreId:genreTVId,jobId})
-            else
-                intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId:id,yearId,genreId,jobId})
-        }else
-            intitializeMovies({runContent:["discover"],page:1,regionId,languageId:id,yearId,genreId})
+        intitializeMovies({manualMode:type,page:1,regionId,languageId:id,yearId,genreId})
         setLanguage(null)
         setSelectedLanguage(false)
     }
@@ -455,37 +424,26 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         setYearId(id)
         setYearName(id)
         if(type === "people"){
-            if(personType === "movie")
-                intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId:id,genreId,jobId})
-            else if(personType === "tv")
-                intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId:id,genreId:genreTVId,jobId})
-            else
-                intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId:id,genreId,jobId})
+            intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId:id,genreId,jobId}) 
         }else
-            intitializeMovies({runContent:["discover"],page:1,regionId,languageId,yearId:id,genreId})
+            intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId:id,genreId})
         // console.log("refresh")
         setYears(null)
         setSelectedYear(false)
     }
 
     const filterJob = id => {
-        setJobId(id)
-        setJobName(id)
-        if(personType === "movie")
-            intitializeMovies({runContent:["discover movie"],page:1,regionId,languageId,yearId,genreId,jobId:id})
-        else if(personType === "tv")
-            intitializeMovies({runContent:["discover tv"],page:1,regionId,languageId,yearId,genreId:genreTVId,jobId:id})
-        else
-            intitializeMovies({runContent:["discover movie","discover tv"],page:1,regionId,languageId,yearId,genreId,jobId:id})
-        // console.log("refresh")
-        setJob(null)
-        setSelectedJob(false)
+        setJobId(() => id)
+        setJobName(() => id)
+        intitializeMovies({manualMode:type,page:1,regionId,languageId,yearId,genreId,jobId:id})
+        setJob(() => null)
+        setSelectedJob(() => false)
     }
 
     const getLanguage = async() => {
         if(selectedLanguage){
             setSelectedLanguage(() => false)
-            setLanguage(null)
+            setLanguage(() => null)
         }else{
             try{
 
@@ -540,7 +498,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
     const getRegion = async() => {
         if(selectedRegion){
             setSelectedRegion(() => false)
-            setRegion(null)
+            setRegion(() => null)
         }else{
             try{
 
@@ -592,7 +550,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
         }
     }
 
-    const getGenre = async(n) => {
+    const getGenre = async() => {
         if(selectedGenre){
             // setSelectedGenre(false)
             console.log("get genre")
@@ -601,14 +559,12 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
             try{
 
                 async function fetchFresh(){
-                    const response = await fetch(`${process.env.REACT_APP_movie_db}genre/${type === "movie" ? "movie" : n === "movie" ? "movie" : "tv"}/list?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                    const response = await fetch(`${process.env.REACT_APP_movie_db}genre/${type === "movie" ? "movie" : extra === "movie" ? "movie" : "tv"}/list?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
                     const data = await response.json()
                     // console.log(data,"fresh fetch")
-                    return data.genres
-                        
+                    return data.genres                        
                 }
 
-                
                 if (fetchGenre.loading) console.log("fetching genre Loading...");
                 if (fetchGenre.error){
                     // console.log(fetchGenre.error.message)
@@ -626,7 +582,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                         if(fetchGenre.data.genre.error === "no records found"){
                             const getGenreData = await fetchFresh()
                             // setGenre(() => [...getGenreData])
-                            const typeGetGenreData = getGenreData.map((genres) => ({...genres, mode:n || type}))
+                            const typeGetGenreData = getGenreData.map((genres) => ({...genres, mode:extra || type}))
                             setGenre(() => [...typeGetGenreData])
                                 
                             mutateInsertGenre({ variables: { date, data:[...typeGetGenreData] } })
@@ -635,7 +591,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                             console.log("switching...")
                             //switching from movie to tv 
                             const getGenreData = await fetchFresh()
-                            const typeGetGenreData = getGenreData.map((genres) => ({...genres, mode:n || type}))
+                            const typeGetGenreData = getGenreData.map((genres) => ({...genres, mode:extra || type}))
 
                             const jointGenre = [...fetchGenre.data.genre.data.map(old => ({...old,__typename:undefined})),...typeGetGenreData]
                             console.log(jointGenre)
@@ -644,7 +600,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                         }else{
                             //every other user --- most fetch
                             console.log("ordinarily...")
-                            const new_genre = fetchGenre.data?.genre?.data.filter(({mode}) => mode === n || mode === type)
+                            const new_genre = fetchGenre.data?.genre?.data.filter(({mode}) => mode === extra || mode === type)
                             // console.log(new_genre,n,type)
                             console.log("ordinarily genre")
                             setGenre(() => [...new_genre])
@@ -670,12 +626,12 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
 
             }catch(err){
                 console.log(err)
-                fetch(`${process.env.REACT_APP_movie_db}genre/${type === "movie" ? "movie" : n === "movie" ? "movie" : "tv"}/list?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                fetch(`${process.env.REACT_APP_movie_db}genre/${type === "movie" ? "movie" : extra === "movie" ? "movie" : "tv"}/list?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
                 .then(data => data.json())
                 .then(({genres}) => setGenre(() => [...genres]))
             }
             
-            setPersonType(n)
+            // setextra(n)
         }
         setSelectedGenre(!selectedGenre)
     }
@@ -718,35 +674,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                 <div className="w-[100%] h-[auto] border-r-[3px] border-[#2E2E3A]">
                     {/* <h1 className="text-[30px] font-bold">Controllers</h1> */}
                     <div className="w-[100%] h-[auto] text-white flex flex-row flex-wrap items-center justify-center">
-                        {
-                            type === "people"?
-                            <>
-                                <button
-                                    onClick={() => getGenre("movie")}
-                                    className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[100px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
-                                >
-                                    Genre Movie 
-                                    {
-                                        selectedGenre ?
-                                        <FontAwesomeIcon icon={faArrowUp}/>
-                                        :
-                                        <FontAwesomeIcon icon={faArrowDown}/>    
-                                    }
-                                </button>
-                                <button
-                                    onClick={() => getGenre("tv")}
-                                    className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[100px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
-                                >
-                                    Genre TV 
-                                    {
-                                        selectedGenre ?
-                                        <FontAwesomeIcon icon={faArrowUp}/>
-                                        :
-                                        <FontAwesomeIcon icon={faArrowDown}/>    
-                                    }
-                                </button>
-                            </>
-                            :
+                        
                             <button
                                 onClick={() => getGenre()}
                                 className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
@@ -759,7 +687,7 @@ const CONTROLLERS = ({intitializeMovies,type}) => {
                                     <FontAwesomeIcon icon={faArrowDown}/>    
                                 }
                             </button>
-                        }
+                        
                         <button
                             onClick={() => getRegion()}
                             className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}

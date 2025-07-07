@@ -569,46 +569,55 @@ const SERIE = () => {
             return {...data}
         } 
 
-        const checkFeedback = (id) => {
-            console.log(id,"id")
-            //authentication
-            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
-            .then(async res => {
-                const {status, user} = await res.json()
-                if(status){
-                    console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
-                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
-                        method:"POST",
-                        headers:{
-                            "Content-Type":"application/json"
-                        },
-                        body:JSON.stringify({id, user, type:"tv"})
-                    })
-                    .then(res => res.json())
-                    .then(({status}) => {
-                        if(status){
-                            setPlaylist(() => true)
-                        }
-                    })
-                }
-            })
-        }
-
         const fetched = await fetchSingleTV({
             variables : { id }})
         console.log(fetched)
-        if(fetched.data && fetched.data.singleTV.success){
+        if(fetched.data && fetched.data.singleTV && !fetched.data.singleTV.seasons){
+            //first time serie single
+            console.log("first time")
+            const tv = await freshSingleFetch()
+            setSerie(() => ({...tv}));
+        }else if(fetched.data && fetched.data.singleTV.success){
             console.log("Using cached data:", fetched.data);
             setSerie(() => ({...fetched.data.singleTV}))
-            checkFeedback(fetched.data.singleTV.id)
         }else {
             const tv = await freshSingleFetch()
             setSerie(() => ({...tv}));
-            checkFeedback(tv.id)
         }
         
 
     },[fetchSingleTV,id,mutateInsertTV])
+
+    const checkFeedback = (id) => {
+        console.log(id,"id")
+        //authentication
+        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        .then(async res => {
+            const {status, user} = await res.json()
+            if(status){
+                console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
+                fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({id, user, type:"tv"})
+                })
+                .then(res => res.json())
+                .then(({status}) => {
+                    if(status){
+                        setPlaylist(() => true)
+                    }
+                })
+            }
+        })
+    }
+
+    useEffect(() => {
+        if (serie && serie.id) {
+            checkFeedback(serie.id);
+        }
+    }, [serie]);
 
     const fetchCredits = useCallback(async() => {
         try{
@@ -931,7 +940,7 @@ const SERIE = () => {
                                         credits.crew.map(({profile_path,jobs,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
                                             <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>

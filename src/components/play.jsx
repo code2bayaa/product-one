@@ -12,6 +12,7 @@ const PLAY = () => {
     const [play, setPlay] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0)
     const [maxRate, setMaxRate] = useState(0)
+    const [bests, setBests] = useState(null)
 
     useEffect(() => {
         const handleResize = () => {
@@ -98,13 +99,60 @@ const PLAY = () => {
 
     const cleanTokens = (tokens) => {
         if(!tokens || tokens.length === 0) return []
-        const smallest = tokens.filter(({size}) => size.match(/mib/i))
-        const largest = tokens.filter(({size}) => size.match(/gib/i))
-        const all = [...smallest,...largest];
+
+        const sorted = [...tokens].sort((a, b) => b.seeders - a.seeders);
+
+        // const all = [...smallest,...largest];
         // Sort tokens by seeders descending, but do NOT try to set state inside sort!
-        const sorted = [...all].sort((a, b) => b.seeders - a.seeders);
+        // let best = sorted[smallest];
+        // if(largestIndex < smallest){
+        //     let minimum = 20
+        //     largest.forEach((data) => {
+        //         const no = data.size.match(/[\d.]+/);
+        //         if(no < minimum){
+        //             minimum = no
+        //             best = data
+        //         }
+                    
+        //     })
+        // }
+        const maxRate = sorted[0].seeders
+        let newSorted = sorted.filter(({seeders}) => {
+            const limit = (Number(seeders)/Number(maxRate)) * 10
+
+            return limit > 9.5
+        })
+        const smallest = newSorted.filter(({size}) => size.match(/mib/i))
+        // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
+        const largest = newSorted.filter(({size}) => size.match(/gib/i))
+
+        if(smallest.length > 0)
+            newSorted = [...smallest,...largest]
+        else
+            newSorted = [...largest]
+
+        let minimum = newSorted[0].size.match(/[\d.]+/)[0];
+        let best = newSorted[0]
+        console.log(best)
+        newSorted.forEach((data,index) => {
+            if(index > 0){
+                const no = data.size.match(/[\d.]+/)[0];
+                console.log(no,"no")
+                if((Number(no) < Number(minimum))){
+                    minimum = no
+                    if(data.quality && /CAM/i.test(data.quality)){
+                        return
+                    }
+                    console.log("here...")
+                    best = data
+                        
+                }
+            }
+                
+        })
+        setBests(() => ({...best}))
         if (sorted.length > 0) {
-            setMaxRate(sorted[0].seeders);
+            setMaxRate(maxRate);
         }
 
 
@@ -140,6 +188,7 @@ const PLAY = () => {
                             showConfirmButton: false,
                             timer: 1500
                         })
+                        setPlay("no movies found")
                         return null
                     }
                     if(status){
@@ -291,7 +340,18 @@ const PLAY = () => {
             }
             <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] flex flex-col overflow-y-auto":"w-[100%] h-[auto] flex flex-col"}>
                 <h2 style={{fontSize:"180%",textAlign:"center"}}>COLLECTION</h2>
-                <h2 style={{fontSize:"130%",textAlign:"center",color:"#ffd800"}}>Play the Best Quality</h2>
+                {
+                    bests ? 
+                    <>
+                        <h2 style={{fontSize:"130%",textAlign:"center",color:"#ffd800"}}>Best Quality</h2>
+                        <COLLECTIONS key={play.length} windowWidth={windowWidth} size={bests.size} seeders={bests.seeders} maxRate={maxRate} title={bests.title} token={bests.token} index={play.length} quality={bests.quality} id={id} background={background}/>
+
+                        <h2 style={{fontSize:"100%",textAlign:"center",color:"#ffd800"}}>Other Qualities</h2>
+                    </>
+                    :
+                    ""
+                }
+                
            {
                 play && play.length > 0 ? 
                     <div className="w-[100%] h-[auto] flex flex-wrap flex-row justify-center items-center">
@@ -302,6 +362,11 @@ const PLAY = () => {
                         }
                     </div>
                 :
+                    play && play === "no movies found" ?
+                        <>
+                            <h2 className="text-[#ffd800]">Not Found</h2>
+                        </>
+                    :
                     <LOAD/>
             }
             </div>       

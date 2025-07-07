@@ -3,17 +3,18 @@ import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-// import CONTROLLERS from "../midlleware/controllers"
-import { NavLink } from "react-router-dom"
+import CONTROLLERS from "../midlleware/controllers"
+import { NavLink, useParams } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 import CryptoJS from "crypto-js";
+// import Swal from "sweetalert2"
 
-const DISNEY = () => {
+const DISCOVER = () => {
 
-    // const [people, setPeople] = useState(null)
+    let { mode, } = useParams();
     const [movies, setMovies] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
 
@@ -81,7 +82,7 @@ const DISNEY = () => {
             $total_pages:Int!,
             $total_results:Int!,
             $data :TRACK_DATA_INPUT,
-            $hashedKey:String!,
+            $hashedKey:String!
         ) {
             addMovies(
                 page:$page,
@@ -89,7 +90,7 @@ const DISNEY = () => {
                 total_pages:$total_pages,
                 total_results:$total_results,
                 data:$data,
-                hashedKey:$hashedKey,
+                hashedKey:$hashedKey
             ) {
                 success
                 message
@@ -115,54 +116,59 @@ const DISNEY = () => {
     });
 
     const intitializeMovies = useCallback(async({
-        runContent,
-        page,
+        page = 1,
         adjustable = false,
         genreId = '',
         regionId = '',
         languageId='',
+        manualMode,
         yearId=0
     }) => {
         
-        const fetchMoviesFromAPI = async (actual_index) => {
+        const fetchMoviesFromAPI = async () => {
 
+            
+            let mode = manualMode
+           
             const current_date = new Date().toISOString().split("T")[0]
-            const temp_movies = [
-                { index: "discover disney movie", results: [], api: "discover/movie", page: 1, total_pages: 0, type:"movie" },
-                { index: "discover disney tv", results: [], api: "discover/tv", page: 1, total_pages: 0, type:"tv" },
-                // { index: "discover disney person", results: [], api: "discover/person", page: 1, total_pages: 0 },
+            const temp = [
+                { index: "discover_movie", actual:"movie", results: [], api: "discover/movie", page: 1, total_pages: 0, type:"movie",people_page:1,total_results:0 },
+                { index: "discover_tv", actual:"tv", results: [], api: "discover/tv", page: 1, total_pages: 0,type:"tv" ,people_page:1,total_results:0},
             ];
-            const key = temp_movies.findIndex(({ index }) => index === actual_index);
+
+            const key = temp.findIndex(({ actual }) => actual === mode);
             if (page) {
-                temp_movies[key].page = page;
+                temp[key].page = page;
             }
 
-            const hashed = temp_movies[key].page + actual_index
+            const hashed = temp[key].page + temp[key].index + genreId + regionId + languageId + yearId
             const hashedKey = CryptoJS.SHA256(hashed).toString();
-            // console.log(current_date,"date")
+            console.log("initialize",mode)
+        
+
+            
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
-                //8 is for disney
+                //8 is for netflix
                 const response = await fetch(
-                    `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}&with_watch_providers=337&watch_region=US`
+                    `${process.env.REACT_APP_movie_db}${temp[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
                 );
                 const data = await response.json();
 
-                // console.log(data)
                 if (data.results.length > 0) {
-                    temp_movies[key].results = [
-                        ...temp_movies[key].results,
+                    temp[key].results = [
+                        ...temp[key].results,
                         ...data.results,
                     ];
-                    temp_movies[key].total_pages = data.total_pages;
-                    temp_movies[key].total_results = data.total_results;
+                    temp[key].total_pages = data.total_pages;
+                    temp[key].total_results = data.total_results;
 
                     // Update the movies state
                     setMovies((prevMovies) => {
                         prevMovies = prevMovies || [];
                         const updatedMovies = [...prevMovies];
                         const existingIndex = updatedMovies.findIndex(
-                            (movie) => movie.index === actual_index
+                            (movie) => movie.index === temp[key].index
                         );
 
                         if (existingIndex > -1) {
@@ -171,7 +177,7 @@ const DISNEY = () => {
                                 ...data.results,
                             ];
                         } else {
-                            updatedMovies.push(temp_movies[key]);
+                            updatedMovies.push(temp[key]);
                         }
 
                         return updatedMovies;
@@ -180,7 +186,7 @@ const DISNEY = () => {
                     // Insert the fetched data into MySQL using the mutation
                     mutateInsertMovies({
                         variables: {
-                            page:temp_movies[key].page,
+                            page:temp[key].page,
                             results:data.results,
                             total_pages:data.total_pages,
                             total_results:data.total_results,
@@ -189,37 +195,36 @@ const DISNEY = () => {
                                 region: regionId,
                                 language: languageId,
                                 year: yearId,
-                                index:actual_index,
+                                index:temp[key].index,
                                 date:current_date,
-                                type:temp_movies[key].type,
+                                type:temp[key].type,
                             },
-                            hashedKey 
+                            hashedKey,
+                            
                         },
                     });
+                
 
                     return true
                 }
                 return false
             }
 
-
-
-            if(adjustable){
+            if(adjustable || manualMode){
                 const fetched = await fetchMovies({
                     variables : {
-                    page: temp_movies[key].page,
+                    page: temp[key].page,
                     data : {
                         genre: genreId,
                         year: yearId,
                         region: regionId,
                         language: languageId,  
-                        index: actual_index,
+                        index: temp[key].index,
                         date: current_date,
-                        type:temp_movies[key].type
+                        type:temp[key].type
                     }, 
-                    hashedKey 
+                    hashedKey
                 }})
-                console.log(fetched)
                 if (fetched.data) {
                     // console.log("Using cached data:", fetched.data);
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
@@ -234,7 +239,7 @@ const DISNEY = () => {
                             prevMovies = prevMovies || [];
                             const updatedMovies = [...prevMovies]
                             const existingIndex = updatedMovies.findIndex(
-                                (movie) => movie.index === actual_index
+                                (movie) => movie.index === temp[key].index
                             );
         
                             if (existingIndex > -1) {
@@ -244,7 +249,7 @@ const DISNEY = () => {
                                 ];
                             } else {
                                 updatedMovies.push({
-                                    index: actual_index,
+                                    index: temp[key].index,
                                     results: fetched.data.movie.results,
                                     page: fetched.data.movie.page,
                                     total_pages: fetched.data.movie.total_pages,
@@ -260,26 +265,26 @@ const DISNEY = () => {
                 } else {
                     return await freshFetch()
                 }
-            }
+            
+                }
 
         };
-        runContent.forEach((index) => {
-            fetchMoviesFromAPI(index)
+        // runContent.forEach((index) => {
+            fetchMoviesFromAPI()
             .then(status => {
 
             })
-        })
+        // })
     },[fetchMovies,mutateInsertMovies]);
 
     useEffect(() => {
         intitializeMovies(
-            {runContent:[
-            "discover disney movie",
-            "discover disney tv"],
-            adjustable:true
+            {
+            adjustable:true,
+            manualMode:mode
         })
 
-    },[intitializeMovies])
+    },[intitializeMovies,mode])
 
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
@@ -292,30 +297,30 @@ const DISNEY = () => {
                 <MOBILE/>
             }
             <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
-                {/* <div className="w-[100%]">
-                    <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
-                </div> */}
+                <div className="w-[100%]">
+                    <CONTROLLERS intitializeMovies={intitializeMovies} type={mode}/>
+                </div>
                 {
-                    movies ? movies.map(({index,results,page,total_pages},node) =>
+                    movies ? movies.map(({results,page,total_pages,index,people_total_pages,people_page,box,people_next},node) =>
                         <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                             <h1 className="my-t-[5%]">{index}</h1>
                             <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
-                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                            <div className={`w-[100%] h-auto flex flex-row flex-wrap`}>
                                 {
-                                    results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,original_name,name,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                    results.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
+                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[33%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
+                                                <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path || backdrop_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{title || original_title || name || original_name}</h2>
+                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{title || original_title || name || original_name }</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                 </div>
                                             </div>
                                         </NavLink>
                                     )
                                 }
-                            </div>
+                            </div>                        
                         </div>
 
                     )
@@ -341,4 +346,4 @@ const DISNEY = () => {
     )
 }
 
-export default DISNEY
+export default DISCOVER

@@ -13,7 +13,7 @@ const NAVBAR = () => {
     const [coins,setCoins] = useState(0.0)
     const router = useNavigate()
     const api_url = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live
-    const linkUrl = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_live
+    // const linkUrl = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_live
 
     // console.log(linkUrl,"link")
 
@@ -176,6 +176,14 @@ const NAVBAR = () => {
                     disney
                 </NavLink>
                 <NavLink
+                    to="/anime"
+                    className={({ isActive, isPending }) =>
+                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                    }
+                >
+                    anime
+                </NavLink>                
+                <NavLink
                     to="/credits"
                     className={({ isActive, isPending }) =>
                         isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
@@ -210,13 +218,25 @@ const NAVBAR = () => {
                             sign in
                         </a>
                         <a
-                            href={`${linkUrl}`}
-                            target="_blank"
+                            // href={`${linkUrl}`}
+                            href="/signup"
+                            // target="_blank"
                             rel="noreferrer"
-                            style={{cursor:"pointer",background:"transparent",height:"40px",color:"#fff",textDecoration:"underline"}}
+                            className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            // style={{cursor:"pointer",background:"transparent",height:"40px",color:"#fff",textDecoration:"underline"}}
                         >
                             sign up
                         </a>
+                        <a
+                            // href={`${linkUrl}`}
+                            href="/forgot"
+                            // target="_blank"
+                            rel="noreferrer"
+                            className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            // style={{cursor:"pointer",background:"transparent",height:"40px",color:"#fff",textDecoration:"underline"}}
+                        >
+                            forgot password
+                        </a>                        
                     </>
                     :
                     <>
@@ -265,7 +285,15 @@ const NAVBAR = () => {
 
 
             </div>
-            <h3>webmaster: <NavLink to="https://late-developers.com" className="h-[30px]">late developers</NavLink></h3>
+            <h3>webmaster: 
+                <a
+                    href="https://late-developers.com"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    late developers
+                </a>
+            </h3>
         </div>
     )
 }

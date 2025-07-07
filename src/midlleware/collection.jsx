@@ -195,8 +195,8 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
         }
         if (token) {
             setLoading(true)
-            const HTMLMARK = e.target.innerText
-            e.target.innerText = "loading..."
+            // const HTMLMARK = e.target.innerText
+            // e.target.innerText = "loading..."
             
             console.log("clicked play...")
             //
@@ -219,7 +219,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                 const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
                 if(video){
                     const type = video && video.hasOwnProperty("name") && video.name.split(".").pop()
-                    e.target.innerText = HTMLMARK
+                    // e.target.innerText = HTMLMARK
                     // setPlay(null)
                     setLoading(false)
                     if(type === "mp4"){
@@ -268,7 +268,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                         //     tokens:getToken
                         // }})
             }else{
-                e.target.innerText = HTMLMARK
+                // e.target.innerText = HTMLMARK
                 setLoading(false)
                 Swal.fire({
                     icon: 'error',
@@ -281,7 +281,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                         //in case no video file found -- destroy token
             // setPlay(null)
             setLoading(false)
-            e.target.innerText = HTMLMARK
+            // e.target.innerText = HTMLMARK
             const responseDestroy = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`,{
                 method:"POST",
                 headers:{
@@ -336,16 +336,21 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                 key={index}
                 className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth > 800 ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
             >
-                {quality}
-                {rate > 0 && (
-                    <span className="text-[#ffd800] ml-2">
-                        <FontAwesomeIcon icon={faStar}/> {rate.toFixed(1)}
-                    </span>
-                )}
-                <span className="text-[italic] ml-2">
-                    {`${size.replace("i","").toLowerCase()}`}
-                </span>
-                
+                {
+                    loading ? "loading..."
+                    :
+                    <>
+                        {quality}
+                        {rate > 0 && (
+                            <span className="text-[#ffd800] ml-2">
+                                <FontAwesomeIcon icon={faStar}/> {rate.toFixed(1)}
+                            </span>
+                        )}
+                        <span className="text-[italic] ml-2">
+                            {`${size.replace("i","").toLowerCase()}`}
+                        </span>                    
+                    </>
+                }        
             </button>
          {/* {open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">

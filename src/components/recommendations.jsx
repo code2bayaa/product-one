@@ -192,10 +192,10 @@ const RECOMMENDATIONS = () => {
                 {
                     recommendations ?
                     <> 
-                    <div className={windowWidth > 800 ? "w-[100%] h-[90%] flex flex-wrap flex-row":"w-[100%] h-[auto]"} style={{boxShadow:"0px 4px 10px #fff"}}>
+                    <div className={windowWidth > 800 ? "w-[100%] h-[auto] flex flex-wrap flex-row":"w-[100%] h-[auto]"} style={{boxShadow:"0px 4px 10px #fff"}}>
                         <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[auto]"}>
                             {
-                                recommendations.results.length > 2  &&<Carousel images={[...recommendations.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                                recommendations.results.length > 2  &&<Carousel type={stream} images={[...recommendations.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
                             }                        
                         </div>
                         <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[auto]"}>

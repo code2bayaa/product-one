@@ -615,62 +615,78 @@ const MOVIE = () => {
                 variables: {...data},
             });
             return {...data}
-        } 
-        const checkFeedback = (id) => {
-            console.log(id,"id")
-            //authentication
-            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
-            .then(async res => {
-                const {status, user} = await res.json()
-                if(status){
-                    console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
-                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
-                        method:"POST",
-                        headers:{
-                            "Content-Type":"application/json"
-                        },
-                        body:JSON.stringify({id, user, type:"movie"})
-                    })
-                    .then(res => res.json())
-                    .then(({status}) => {
-                        if(status){
-                            setPlaylist(() => true)
-                        }
-                    })
-                }
-            })
         }            
-        const setGenreIDS = async(genre = []) => {
-            const {data} = await fetchGenre()
-            if(data && data.genre && data.genre.success){
-                console.log(genre)
-                console.log(data.genre?.data)
-                const genreData = data.genre?.data.filter(({id,mode}) => genre && genre.includes(Number(id)) && mode === "movie")
-                console.log(genreData)
-                setGenerateGenre(() => [...genreData])
-            }else{
-                setGenerateGenre(() => [])
-            }
-            
-        }
+
         const fetched = await fetchSingleMovie({
         variables : { id }})
         console.log(fetched)
-        if(fetched.data && fetched.data.single.success){
+        if(fetched.data && fetched.data.single && !fetched.data.single.runtime){
+            //first time
+            console.log("first time...")
+            const movie = await freshFetch()
+            setMovie(() => ({...movie}));
+        }else if(fetched.data && fetched.data.single.success){
             console.log("Using cached data:", fetched.data);
             setMovie(() => ({...fetched.data.single}));
-            checkFeedback(fetched.data.single.id)
-            setGenreIDS(fetched.data.single.genre_ids)
+            // checkFeedback(fetched.data.single.id)
+            // setGenreIDS(fetched.data.single.genre_ids)
         }else {
             const movie = await freshFetch()
             setMovie(() => ({...movie}));
-            checkFeedback(movie.id)
-            setGenreIDS(movie.genre_ids)
+            // checkFeedback(movie.id)
+            // setGenreIDS(movie.genre_ids)
         }
 
         return true
         
-    },[fetchSingleMovie,id,mutateInsertMovie,fetchGenre])
+    },[fetchSingleMovie,id,mutateInsertMovie])
+
+    const checkFeedback = (id) => {
+        console.log(id,"id")
+        //authentication
+        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        .then(async res => {
+            const {status, user} = await res.json()
+            if(status){
+                console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
+                fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({id, user, type:"movie"})
+                })
+                .then(res => res.json())
+                .then(({status}) => {
+                    if(status){
+                        setPlaylist(() => true)
+                    }
+                })
+            }
+        })
+    } 
+    const setGenreIDS = useCallback(async(genre = []) => {
+        const {data} = await fetchGenre()
+        if(data && data.genre && data.genre.success){
+            console.log(genre)
+            console.log(data.genre?.data)
+            const genreData = data.genre?.data.filter(({id,mode}) => genre && genre.includes(Number(id)) && mode === "movie")
+            console.log(genreData)
+            setGenerateGenre(() => [...genreData])
+        }else{
+            setGenerateGenre(() => [])
+        }
+        
+    },[fetchGenre]
+)
+    useEffect(() => {
+        if (movie && movie.id) {
+            checkFeedback(movie.id);
+        }
+        if(movie && movie.genre_ids){
+            setGenreIDS(movie.genre_ids)
+        }
+    }, [movie,setGenreIDS]);
 
     const fetchCredits = useCallback(async() => {
         // const credits_response = await fetch(`${process.env.REACT_APP_movie_db}movie/${id}/credits?api_key=${process.env.REACT_APP_api_key}`);
@@ -977,7 +993,7 @@ const MOVIE = () => {
                                         credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
                                             <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[40%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%] rounded-xl"} />
+                                                    <PICTURE picture={profile_path} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"font-bold"}>{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
@@ -1002,7 +1018,7 @@ const MOVIE = () => {
                                         credits.crew.map(({job,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
                                             <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[40%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%] rounded-xl"} />
+                                                    <PICTURE picture={profile_path} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>

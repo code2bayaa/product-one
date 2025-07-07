@@ -1,6 +1,6 @@
 import NAVBAR from "./nav";
 import {useEffect,useState,useCallback} from "react"
-import { useNavigate  } from "react-router-dom"
+import { NavLink, useNavigate  } from "react-router-dom"
 import Swal from "sweetalert2";
 import MOBILE from "./mobileBar";
 import {jwtDecode} from 'jwt-decode';
@@ -178,7 +178,7 @@ const SIGNIN = () => {
                                     />
                                     Remember me
                                 </label>
-                                <a
+                                {/* <a
                                     type="button"
                                     className="text-[#ffd800] hover:underline text-sm"
                                     href = "https://app.late-developers.com/users/forgot"
@@ -186,7 +186,13 @@ const SIGNIN = () => {
                                     rel="noopener noreferrer"
                                 >
                                     Forgot password?
-                                </a>
+                                </a> */}
+                                <NavLink
+                                to="/forgot"
+                                className="text-[#ffd800] hover:underline text-sm"
+                                >
+                                  forgot password
+                                </NavLink>
                             </div>
                             <button
                                 type="submit"

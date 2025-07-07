@@ -30,6 +30,12 @@ import SUBSCRIBE from './components/subscribe.jsx';
 import TESTSOCKETS from './components/test.jsx';
 import PLAYLIST from './components/playlist.jsx';
 import FOLLOW from './components/follow.jsx';
+import ANIME from './components/anime.jsx';
+import SIGNUP from './components/signup.jsx';
+import FORGOT from './components/forgot.jsx';
+import CHANGEPAGE from './components/code.jsx';
+import DISCOVER from './components/discover.jsx';
+import TALENT from './components/talented.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
 
@@ -182,6 +188,36 @@ const router = createBrowserRouter([
   {
     path:"/test",
     element:<TESTSOCKETS/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/anime",
+    element:<ANIME/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/signup",
+    element:<SIGNUP/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/forgot",
+    element:<FORGOT/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/forgot/code",
+    element:<CHANGEPAGE/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/discover/:mode/:extra",
+    element:<TALENT/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/discover/:mode",
+    element:<DISCOVER/>,
     elementError:<ERROR/>
   }
 ])

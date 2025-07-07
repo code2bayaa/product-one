@@ -11,7 +11,7 @@ import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 import CryptoJS from "crypto-js";
 
-const DISNEY = () => {
+const ANIME = () => {
 
     // const [people, setPeople] = useState(null)
     const [movies, setMovies] = useState(null)
@@ -128,8 +128,8 @@ const DISNEY = () => {
 
             const current_date = new Date().toISOString().split("T")[0]
             const temp_movies = [
-                { index: "discover disney movie", results: [], api: "discover/movie", page: 1, total_pages: 0, type:"movie" },
-                { index: "discover disney tv", results: [], api: "discover/tv", page: 1, total_pages: 0, type:"tv" },
+                { index: "anime movie", results: [], api: "discover/movie", page: 1, total_pages: 0, type:"movie" },
+                { index: "anime tv", results: [], api: "discover/tv", page: 1, total_pages: 0, type:"tv" },
                 // { index: "discover disney person", results: [], api: "discover/person", page: 1, total_pages: 0 },
             ];
             const key = temp_movies.findIndex(({ index }) => index === actual_index);
@@ -142,9 +142,9 @@ const DISNEY = () => {
             // console.log(current_date,"date")
             async function freshFetch(){
                 // Fetch data from the API if not found in the cache
-                //8 is for disney
+                //16 is for anime key = 210024
                 const response = await fetch(
-                    `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}&with_watch_providers=337&watch_region=US`
+                    `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=16&with_keywords=210024&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}&watch_region=US`
                 );
                 const data = await response.json();
 
@@ -274,8 +274,8 @@ const DISNEY = () => {
     useEffect(() => {
         intitializeMovies(
             {runContent:[
-            "discover disney movie",
-            "discover disney tv"],
+            "anime movie",
+            "anime tv"],
             adjustable:true
         })
 
@@ -285,7 +285,7 @@ const DISNEY = () => {
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]">
+                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" >
                     <NAVBAR/>
                 </div>
                 :
@@ -341,4 +341,4 @@ const DISNEY = () => {
     )
 }
 
-export default DISNEY
+export default ANIME

@@ -137,10 +137,10 @@ const EMPIRE = () => {
                             </div>
 
                             {/* Article Section */}
-                            <div className={windowWidth > 800 ? `w-[60%] ${index === 2 ? "bg-[#000] text-[#fff]" : ""}` : `w-[100%] ${index === 2 ? "bg-[#000] text-[#fff]" : ""} mt-[0.5%]`}>
+                            <div className={windowWidth > 800 ? `w-[60%] ${index === 2 ? "bg-[#000] text-[#fff]" : ""}` : `w-[80%] ml-[10%] ${index === 2 ? "bg-[#000] text-[#fff]" : ""} mt-[0.5%]`}>
                                 <h2 className="text-[30px]">{title}</h2>
                                 <article
-                                    className={`border-l-[4px] border-[#2E2E3A] w-[60%] pl-[10px] pr-[10px] text-20px]`}
+                                    className={windowWidth > 800 ? `border-l-[4px] border-[#2E2E3A] w-[60%] pl-[10px] pr-[10px] text-20px]`:`w-[100%] text-20px]`}
                                 >
                                     {article}
                                 </article>

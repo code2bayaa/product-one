@@ -120,7 +120,7 @@ const PLAY = () => {
         let newSorted = sorted.filter(({seeders}) => {
             const limit = (Number(seeders)/Number(maxRate)) * 10
 
-            return limit > 9.5
+            return limit > 9.8
         })
         const smallest = newSorted.filter(({size}) => size.match(/mib/i))
         // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
@@ -131,32 +131,32 @@ const PLAY = () => {
         else
             newSorted = [...largest]
 
-        let minimum = newSorted[0].size.match(/[\d.]+/)[0];
+        // let minimum = newSorted[0].size.match(/[\d.]+/)[0];
         let best = newSorted[0]
-        console.log(best)
-        newSorted.forEach((data,index) => {
-            if(index > 0){
-                const no = data.size.match(/[\d.]+/)[0];
-                console.log(no,"no")
-                if((Number(no) < Number(minimum))){
-                    minimum = no
-                    if(data.quality && /CAM/i.test(data.quality)){
-                        return
-                    }
-                    console.log("here...")
-                    best = data
+        // console.log(best)
+        // newSorted.forEach((data,index) => {
+        //     if(index > 0){
+        //         const no = data.size.match(/[\d.]+/)[0];
+        //         console.log(no,"no")
+        //         if((Number(no) < Number(minimum))){
+        //             minimum = no
+        //             if(data.quality && /CAM/i.test(data.quality)){
+        //                 return
+        //             }
+        //             console.log("here...")
+        //             best = data
                         
-                }
-            }
+        //         }
+        //     }
                 
-        })
+        // })
         setBests(() => ({...best}))
-        if (sorted.length > 0) {
+        if (newSorted.length > 0) {
             setMaxRate(maxRate);
         }
 
 
-        return sorted;
+        return newSorted;
     }
 
     const fetchToken = useCallback(async() => {
@@ -188,7 +188,7 @@ const PLAY = () => {
                             showConfirmButton: false,
                             timer: 1500
                         })
-                        setPlay("no movies found")
+                        setPlay(["no movies found"])
                         return null
                     }
                     if(status){
@@ -353,6 +353,11 @@ const PLAY = () => {
                 }
                 
            {
+                play && play.length > 0 && play[0] === "no movies found" ?
+                    <>
+                        <h2 className="text-[#ffd800]">Not Found</h2>
+                    </>
+                :            
                 play && play.length > 0 ? 
                     <div className="w-[100%] h-[auto] flex flex-wrap flex-row justify-center items-center">
                         {
@@ -362,11 +367,6 @@ const PLAY = () => {
                         }
                     </div>
                 :
-                    play && play === "no movies found" ?
-                        <>
-                            <h2 className="text-[#ffd800]">Not Found</h2>
-                        </>
-                    :
                     <LOAD/>
             }
             </div>       

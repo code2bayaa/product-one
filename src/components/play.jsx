@@ -135,11 +135,12 @@ const PLAY = () => {
 
         while(newSorted.length < 5){
             target = target - 0.3
-            newSorted = sorted.filter(({seeders}) => {
-                const limit = (Number(seeders)/Number(maxRate)) * 10
+            const filterBySeeders = ({ seeders }) => {
+                const limit = (Number(seeders) / Number(maxRate)) * 10;
+                return limit > target;
+            };
+            newSorted = sorted.filter(filterBySeeders);
 
-                return limit > target
-            })
 
             const smallest = newSorted.filter(({size}) => size.match(/mib/i))
             // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))

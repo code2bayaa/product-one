@@ -117,10 +117,11 @@ const PLAY = () => {
         //     })
         // }
         const maxRate = sorted[0].seeders
+        let target = 9.8
         let newSorted = sorted.filter(({seeders}) => {
             const limit = (Number(seeders)/Number(maxRate)) * 10
 
-            return limit > 9.8
+            return limit > target
         })
 
         const smallest = newSorted.filter(({size}) => size.match(/mib/i))
@@ -133,7 +134,7 @@ const PLAY = () => {
             newSorted = [...largest]
 
         while(newSorted.length < 5){
-            let target = target ? target - 0.5 : 9.5
+            target -= 0.3
             newSorted = sorted.filter(({seeders}) => {
                 const limit = (Number(seeders)/Number(maxRate)) * 10
 

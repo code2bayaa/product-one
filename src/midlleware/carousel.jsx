@@ -7,7 +7,7 @@ import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { Flip, Draggable, MotionPathPlugin } from "gsap/all";
 import PICTURE from "./picture"
-import { faStar } from "@fortawesome/free-solid-svg-icons"
+import { faEye, faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import "swiper/css"
 import "swiper/css/bundle"
@@ -95,17 +95,24 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
           {
             images.map(({vote_count,poster_path,id,title,name,original_name,original_title,overview,vote_average,popularity},index) => (
               <SwiperSlide key={index} virtual={index}>
-                <NavLink key={index} to={type === "movies" ? `/movies/${id}`: `/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[400px] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[200px] hover:contrast-150"}>
-                    <div className="w-[100%] h-[100%]">
-                        <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
-                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                            <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
-                            <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
-                            <article className="text-[15px]">{overview}</article>
-                        </div>
-                    </div>
-                </NavLink>
                 
+                <div 
+                  className={windowWidth > 800 ? "w-[40%] h-[100%] hover:skew-4 hover:contrast-150":"w-[100%] hover:skew-4 h-[90%] hover:contrast-150"}
+                  style={{
+                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
+                      overflow: "hidden",
+                  }}
+                >
+                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
+                    <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[90%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
+                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
+                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
+                        {/* <article className="text-[15px]">{overview}</article> */}
+                        <NavLink key={index} className={`h-[60px]`} to={type === "movies" ? `/movies/${id}`: `/series/${id}`}>
+                          <FontAwesomeIcon icon={faEye} /> watch
+                        </NavLink>
+                    </div>
+                </div>                
               </SwiperSlide>
             ))
           }

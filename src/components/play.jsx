@@ -122,6 +122,7 @@ const PLAY = () => {
 
             return limit > 9.8
         })
+
         const smallest = newSorted.filter(({size}) => size.match(/mib/i))
         // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
         const largest = newSorted.filter(({size}) => size.match(/gib/i))
@@ -130,6 +131,24 @@ const PLAY = () => {
             newSorted = [...smallest,...largest]
         else
             newSorted = [...largest]
+
+        while(newSorted.length < 5){
+            let target = target ? target - 0.5 : 9.5
+            newSorted = sorted.filter(({seeders}) => {
+                const limit = (Number(seeders)/Number(maxRate)) * 10
+
+                return limit > target
+            })
+
+            const smallest = newSorted.filter(({size}) => size.match(/mib/i))
+            // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
+            const largest = newSorted.filter(({size}) => size.match(/gib/i))  
+
+            if(smallest.length > 0)
+                newSorted = [...smallest,...largest]
+            else
+                newSorted = [...largest]
+        }
 
         // let minimum = newSorted[0].size.match(/[\d.]+/)[0];
         let best = newSorted[0]

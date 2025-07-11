@@ -34,6 +34,7 @@ const PICTURE = ({picture,classes}) => {
                 loading="lazy"
                 onLoad={(e) => editImg(e)}
                 className={`w-[100%] ${classes} ${ isLoaded ? "blur-0" : "blur-md scale-105"}`}
+                
             />
 
         // </>

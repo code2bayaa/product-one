@@ -818,8 +818,17 @@ const SERIE = () => {
             credits && serie && images ? 
                     <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] h-[auto] flex flex-col flex-wrap"}>
-                            <div className={windowWidth > 800 ? "w-[37%] backdrop-blur-md h-[100%]":"w-[100%] backdrop-blur-md h-[auto]"}>
-                                <PICTURE picture={serie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[100%] shadow-blue-500/50":"shadow-lg h-[200px] shadow-blue-500/50  object-contain"} />
+                            <div 
+                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
+                                style={{
+                                    backgroundImage:"url(" + process.env.REACT_APP_img_poster + serie?.poster_path + ")",
+                                    boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
+                                }}
+                            >
+                                {
+                                    windowWidth < 800 && <PICTURE picture={serie?.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
+
+                                }
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-[auto]"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>

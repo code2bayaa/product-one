@@ -905,10 +905,24 @@ const MOVIE = () => {
             credits && movie && images ? 
                     <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] flex flex-col overflow-y-auto movie-scene":"w-[98%] mx-[1%] h-[100%] flex flex-col overflow-y-auto movie-scene"}>
                         <div className={windowWidth > 800 ? "w-[100%] h-[67%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
-                            <div className={windowWidth > 800 ? "w-[37%] min-h-[100%]":"w-[100%] h-[auto]"}>
-                                <PICTURE picture={movie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
+                            <div 
+                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
+                                style={{
+                                    backgroundImage:"url(" + process.env.REACT_APP_img_poster + movie.poster_path + ")",
+                                    boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
+                                }}
+                            >
+                                {
+                                    windowWidth < 800 && <PICTURE picture={movie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
+
+                                }
                             </div>
-                            <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-[auto]"}>
+                            <div 
+                                style={{
+                                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
+                                    //   overflow: "hidden",
+                                }}
+                                className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center shadow":"w-[100%] h-[auto]"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{movie.original_title || movie.title}</h1>
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{movie.tagline}"</p>
                                 <div className={windowWidth > 800 ? "" : "w-[100%] gap-2 flex flex-row flex-wrap"}>

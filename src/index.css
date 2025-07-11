@@ -94,6 +94,7 @@ html,body{
 .swiper{
   transition:3s ease-in infinite;
   width:100% !important;
+  height: 100% !important;
 }
 
 .swiper-button-prev::after{
@@ -297,6 +298,12 @@ video, iframe{
   width:5% !important;
 }
 
+.background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+}
 @media(max-width:800px){
   .swiper-button-prev::after{
     font-size: 120% !important;

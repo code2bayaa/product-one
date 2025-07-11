@@ -197,7 +197,7 @@ const MOBILE = () => {
                                 <div className="w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" key={node}>
                                     <h1 className="my-t-[5%]">{index}</h1>
                                     <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
-                                    <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages}/>
+                                    <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages || 0}/>
                                     <div className="w-[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
                                         {
                                             results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 

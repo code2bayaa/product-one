@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
-import { faArrowAltCircleDown, faArrowAltCircleUp, faStar } from "@fortawesome/free-solid-svg-icons"
+import { faArrowAltCircleDown, faArrowAltCircleUp, faStar, faEye } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import CONTROLLERS from "../midlleware/controllers"
 import Carousel from "../midlleware/carousel";
@@ -669,55 +669,56 @@ const SERIES = () => {
                     {
                         windowWidth > 800 ? 
                                 
-                            <div className="w-[100%]">
-                                <Slider {...settings}>
-                                {
-                                    themes && themes.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={`/series/${id}`} className="w-[25%] h-[100%] hover:skew-4 contrast-150">
-                                            <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || backdrop_path} />
-                                                {/* <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center"> */}
-                                                    {/* <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title ? title : original_title ? original_title : title}</h2> */}
-                                                    {/* <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p> */}
-                                                    {/* <article className="text-[15px]">{overview}</article>
-                                                    <p className="text-[15px]">Release Date: {release_date}</p>
-                                                    <p className="text-[15px]">Vote Average: {vote_average}</p>
-                                                    <p className="text-[15px]">Vote Count: {vote_count}</p> */}
-                                                {/* </div> */}
-                                            </div>
-                                        </NavLink>
-                                    )
-                                }
-                                </Slider>                    
-                            </div>
-                        :
-                        <div className="w-[100%]">
+                        <div className="w-[100%] h-[80%] shadow" style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}}>
+                            <Slider {...settings}>
                             {
-                                themes.length > 0 && <Carousel type="tv" mode="init" images={[...themes].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                                themes && themes.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,overview,popularity,poster_path,release_date,name,video,vote_average,vote_count},movie_key) => 
+                                    
+                                    <div className="w-[25%] h-[100%] hover:skew-4 contrast-150">
+                                        <PICTURE key={id} classes={"object-cover float-left h-[100%]"} picture={poster_path || backdrop_path} />
+                                        <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[60px] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
+                                            <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{name || original_name}</h2>
+                                            <NavLink key={movie_key} to={`/series/${id}`} >
+                                                <FontAwesomeIcon icon={faEye} /> watch
+                                            </NavLink>                                        
+                                        </div>
+
+                                    </div>
+                                )
                             }
-                        </div>                 
-                    }
-                    <div className="w-[100%]">
-                        <button
-                            type="button"
-                            onClick={() => setReveal(!reveal)}
-                            className={windowWidth > 800 ? "w-[40%] border-[#ffd800] border-[2px] m-[1%] rounded-xl" : "w-[100%] border-[#ffd800] border-[2px] m-[1%] rounded-xl"}
-                        >
-                            UKO: 
-                            {country} 
-                            {
-                                reveal ? 
-                                    <FontAwesomeIcon icon={faArrowAltCircleUp}/>
-                                :
-                                <FontAwesomeIcon icon={faArrowAltCircleDown}/>
-                            }
-                        </button>
-                        <NavLink
-                            to="/discover/tv"
-                            className={windowWidth > 800 ? "w-[60%] h-[60px] text-red-200 underline m-[1%] rounded-md" : "w-[100%] h-[60px] text-red-200 underline m-[1%] rounded-md"}
-                        >
-                            discover more tv shows
-                        </NavLink>
+                            </Slider>                    
+                        </div>
+                    :
+                    <div className="w-[100%] h-[80%] shadow" style={{
+                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
+                    //   overflow: "hidden",
+                  }}>
+                        {
+                            themes.length > 0 && <Carousel type="movies" mode="init" images={[...themes].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                        }
+                    </div>                 
+                }
+                <div className="w-[100%] mt-[1%]">
+                    <button
+                        type="button"
+                        onClick={() => setReveal(!reveal)}
+                        className={windowWidth > 800 ? "w-[40%] border-[#ffd800] border-[2px] m-[1%] rounded-xl" : "w-[100%] border-[#ffd800] border-[2px] rounded-xl"}
+                    >
+                        UKO: 
+                        {country} 
+                        {
+                            reveal ? 
+                                <FontAwesomeIcon icon={faArrowAltCircleUp}/>
+                            :
+                            <FontAwesomeIcon icon={faArrowAltCircleDown}/>
+                        }
+                    </button>
+                    <NavLink
+                        to="/discover/tv"
+                        className={windowWidth > 800 ? "w-[60%] h-[60px] text-red-200 underline m-[1%] rounded-md" : "w-[100%] h-[60px] text-red-200 underline rounded-md"}
+                    >
+                        discover more tv shows
+                    </NavLink>
                         <div className={`w-[100%] ${reveal ? "flex" : "hidden"} movie-scene h-[60px] overflow-x-auto text-white flex-col flex-wrap`}>
                             {
                                 countries && countries.map(({english_name,iso_3166_1},index) => 
@@ -740,10 +741,10 @@ const SERIES = () => {
                                 <h1 className="my-t-[5%]">{index}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                 <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : `${index === "popular" || index === "airing" ? "h-[100px]" : "h-[200px]"}`} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                            <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] m-[0.5%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                            <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":`${index === "popular" || index === "airing" ? "w-[50%]" :"w-[45%]"} hover:skew-4 h-[100%] hover:contrast-150`}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

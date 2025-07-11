@@ -76,11 +76,31 @@ const EMPIRE = () => {
             });
     },[windowWidth])
     useEffect(() => {
+
+        const bigScreen = () => {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { // Firefox
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { // Chrome, Safari & Opera
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { // IE/Edge
+                elem.msRequestFullscreen();
+            }
+        };
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
+
+                // On mobile, request fullscreen on load
+        if (window.innerWidth <= 800) {
+            setTimeout(() => {
+                bigScreen();
+            }, 500); // slight delay to allow DOM to settle
+        }
 
     }, [windowWidth]);
     

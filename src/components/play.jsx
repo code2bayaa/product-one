@@ -13,6 +13,7 @@ const PLAY = () => {
     const [windowWidth, setWindowWidth] = useState(0)
     const [maxRate, setMaxRate] = useState(0)
     const [bests, setBests] = useState(null)
+    const [target,setTarget] = useState(9.8)
 
     useEffect(() => {
         const handleResize = () => {
@@ -97,92 +98,96 @@ const PLAY = () => {
         },
     });
 
-    const cleanTokens = (tokens) => {
-        if(!tokens || tokens.length === 0) return []
 
-        const sorted = [...tokens].sort((a, b) => b.seeders - a.seeders);
-
-        // const all = [...smallest,...largest];
-        // Sort tokens by seeders descending, but do NOT try to set state inside sort!
-        // let best = sorted[smallest];
-        // if(largestIndex < smallest){
-        //     let minimum = 20
-        //     largest.forEach((data) => {
-        //         const no = data.size.match(/[\d.]+/);
-        //         if(no < minimum){
-        //             minimum = no
-        //             best = data
-        //         }
-                    
-        //     })
-        // }
-        const maxRate = sorted[0].seeders
-        let target = 9.8
-        let newSorted = sorted.filter(({seeders}) => {
-            const limit = (Number(seeders)/Number(maxRate)) * 10
-
-            return limit > target
-        })
-
-        const smallest = newSorted.filter(({size}) => size.match(/mib/i))
-        // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
-        const largest = newSorted.filter(({size}) => size.match(/gib/i))
-
-        if(smallest.length > 0)
-            newSorted = [...smallest,...largest]
-        else
-            newSorted = [...largest]
-
-        while(newSorted.length < 5){
-            target = target - 0.3
-            const filterBySeeders = ({ seeders }) => {
-                const limit = (Number(seeders) / Number(maxRate)) * 10;
-                return limit > target;
-            };
-            newSorted = sorted.filter(filterBySeeders);
-
-
-            const smallest = newSorted.filter(({size}) => size.match(/mib/i))
-            // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
-            const largest = newSorted.filter(({size}) => size.match(/gib/i))  
-
-            if(smallest.length > 0)
-                newSorted = [...smallest,...largest]
-            else
-                newSorted = [...largest]
-        }
-
-        // let minimum = newSorted[0].size.match(/[\d.]+/)[0];
-        let best = newSorted[0]
-        // console.log(best)
-        // newSorted.forEach((data,index) => {
-        //     if(index > 0){
-        //         const no = data.size.match(/[\d.]+/)[0];
-        //         console.log(no,"no")
-        //         if((Number(no) < Number(minimum))){
-        //             minimum = no
-        //             if(data.quality && /CAM/i.test(data.quality)){
-        //                 return
-        //             }
-        //             console.log("here...")
-        //             best = data
-                        
-        //         }
-        //     }
-                
-        // })
-        setBests(() => ({...best}))
-        if (newSorted.length > 0) {
-            setMaxRate(maxRate);
-        }
-
-
-        return newSorted;
-    }
 
     const fetchToken = useCallback(async() => {
 
         try{
+
+            const cleanTokens = (tokens) => {
+                if(!tokens || tokens.length === 0) return []
+
+                const sorted = [...tokens].sort((a, b) => b.seeders - a.seeders);
+
+                // const all = [...smallest,...largest];
+                // Sort tokens by seeders descending, but do NOT try to set state inside sort!
+                // let best = sorted[smallest];
+                // if(largestIndex < smallest){
+                //     let minimum = 20
+                //     largest.forEach((data) => {
+                //         const no = data.size.match(/[\d.]+/);
+                //         if(no < minimum){
+                //             minimum = no
+                //             best = data
+                //         }
+                            
+                //     })
+                // }
+                const maxRate = sorted[0].seeders
+                // let target = 9.8
+                let newSorted = sorted.filter(({seeders}) => {
+                    const limit = (Number(seeders)/Number(maxRate)) * 10
+
+                    return limit > target
+                })
+
+                const smallest = newSorted.filter(({size}) => size.match(/mib/i))
+                // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
+                const largest = newSorted.filter(({size}) => size.match(/gib/i))
+
+                if(smallest.length > 0)
+                    newSorted = [...smallest,...largest]
+                else
+                    newSorted = [...largest]
+
+                while(newSorted.length < 5){
+                    // let newtarget = target - 0.3
+                    setTarget((prevTarget) => prevTarget - 0.3)
+                    const filterBySeeders = ({ seeders }) => {
+                        const limit = (Number(seeders) / Number(maxRate)) * 10;
+                        return limit > target;
+                    };
+                    newSorted = sorted.filter(filterBySeeders);
+
+
+                    const smallest = newSorted.filter(({size}) => size.match(/mib/i))
+                    // const largestIndex = newSorted.findIndex(({size}) => size.match(/gib/i))
+                    const largest = newSorted.filter(({size}) => size.match(/gib/i))  
+
+                    if(smallest.length > 0)
+                        newSorted = [...smallest,...largest]
+                    else
+                        newSorted = [...largest]
+                    // target = newtarget
+                }
+
+                // let minimum = newSorted[0].size.match(/[\d.]+/)[0];
+                let best = newSorted[0]
+                // console.log(best)
+                // newSorted.forEach((data,index) => {
+                //     if(index > 0){
+                //         const no = data.size.match(/[\d.]+/)[0];
+                //         console.log(no,"no")
+                //         if((Number(no) < Number(minimum))){
+                //             minimum = no
+                //             if(data.quality && /CAM/i.test(data.quality)){
+                //                 return
+                //             }
+                //             console.log("here...")
+                //             best = data
+                                
+                //         }
+                //     }
+                        
+                // })
+                setBests(() => ({...best}))
+                if (newSorted.length > 0) {
+                    setMaxRate(maxRate);
+                }
+
+
+                return newSorted;
+            }           
                 const fetchFresh = async() => {
 
                     const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_stream : process.env.REACT_APP_stream_live}`,{
@@ -333,7 +338,7 @@ const PLAY = () => {
             // }
         }
         
-    },[mutateUpdatePlay,fetchPlaying,stream,id,season,episode,year,name,imdbId,play,date])
+    },[mutateUpdatePlay,fetchPlaying,stream,id,season,episode,year,name,imdbId,play,date,target])
 
     useEffect(() => {
         //fetch token -- db > token

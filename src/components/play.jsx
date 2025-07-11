@@ -134,7 +134,7 @@ const PLAY = () => {
             newSorted = [...largest]
 
         while(newSorted.length < 5){
-            target -= 0.3
+            target = target - 0.3
             newSorted = sorted.filter(({seeders}) => {
                 const limit = (Number(seeders)/Number(maxRate)) * 10
 

@@ -694,7 +694,7 @@ const SERIES = () => {
                     //   overflow: "hidden",
                   }}>
                         {
-                            themes.length > 0 && <Carousel type="movies" mode="init" images={[...themes].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                            themes.length > 0 && <Carousel type="series" mode="init" images={[...themes].sort((a,b) => b.vote_average > a.vote_average)}/>                       
                         }
                     </div>                 
                 }

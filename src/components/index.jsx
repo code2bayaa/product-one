@@ -9,6 +9,8 @@ const EMPIRE = () => {
         
     const divRefs = useRef([]);
     const [windowWidth, setWindowWidth] = useState(0);
+    const [showFullscreenBtn, setShowFullscreenBtn] = useState(false);
+
     // const [layouts, setLayouts] = useState(false);
 
     // useEffect(() => {
@@ -39,7 +41,7 @@ const EMPIRE = () => {
                         scrollTrigger: {
                             trigger: divRef,
                             scroller:".home",
-                            start: windowWidth > 800 ? "top 30%" : "5% 80%",
+                            start: windowWidth > 800 ? "top 30%" : "5% 90%",
                             toggleActions: "play none none none",
                             markers:false
                         },
@@ -77,33 +79,49 @@ const EMPIRE = () => {
     },[windowWidth])
     useEffect(() => {
 
-        const bigScreen = () => {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.mozRequestFullScreen) { // Firefox
-                elem.mozRequestFullScreen();
-            } else if (elem.webkitRequestFullscreen) { // Chrome, Safari & Opera
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { // IE/Edge
-                elem.msRequestFullscreen();
-            }
-        };
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
 
-                // On mobile, request fullscreen on load
-        if (window.innerWidth <= 800) {
-            setTimeout(() => {
-                bigScreen();
-            }, 500); // slight delay to allow DOM to settle
-        }
+        // Show fullscreen button on mobile
+        // if (window.innerWidth <= 800) {
+        //     setShowFullscreenBtn(true);
+        // } else {
+        //     setShowFullscreenBtn(false);
+        // }
 
     }, [windowWidth]);
-    
+
+    const bigScreen = () => {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari & Opera
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+            elem.msRequestFullscreen();
+        }
+        setShowFullscreenBtn(true);
+
+    };
+
+    const exitScreen = () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+            document.msExitFullscreen();
+        }
+        setShowFullscreenBtn(false);
+    };
+
     return (
         <div className={windowWidth > 800 ? "w-[100%] h-[100%] overflow-hidden flex flex-row flex-wrap":"w-[100%] h-[100%] text-white flex flex-row flex-wrap"} style={{background:"url(/image/grey.jpg)"}}>
             {
@@ -116,6 +134,27 @@ const EMPIRE = () => {
             }
             <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[85%] overflow-y-auto movie-scene" }`}>
                 <div className={`${windowWidth > 800 ? "w-[90%] home text-[#000] h-[90%] mx-[5%] overflow-y-auto movie-scene":"w-[100%] text-[#000] home h-[auto]"}`}>
+                    { windowWidth < 800 && (
+                        <button
+                            onClick={ showFullscreenBtn ? () => exitScreen(): () => bigScreen()}
+                            style={{
+                                position: "fixed",
+                                top: 10,
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                zIndex: 1000,
+                                background: "#000",
+                                color: "#ffd800",
+                                padding: "10px 24px",
+                                borderRadius: "12px",
+                                border: "2px solid #ffd800"
+                            }}
+                        >
+                            {
+                                showFullscreenBtn ? "Exit Fullscreen" : "Go Fullscreen"
+                            }
+                        </button>
+                    )}                    
                     {
                         home.map(({title, article, image}, index) => 
                         <div

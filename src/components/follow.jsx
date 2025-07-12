@@ -150,7 +150,7 @@ const FOLLOW = () => {
     },[intitializePeople])
 
     return (
-        <div className="w-[100%] duration-250 min-h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
+        <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -159,7 +159,7 @@ const FOLLOW = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] min-h-[100%] ml-[20%] flex flex-col":"w-[100%] min-h-[100%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
                 {
                     people && people.data.length > 0 ?
                         <>

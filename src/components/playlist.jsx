@@ -187,16 +187,16 @@ const PLAYLIST = () => {
     }, [intitializeMovies]);
         
     return (
-        <div className="w-[100%] duration-250 h-[auto] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
+        <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]">
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] h-[auto] ml-[20%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
                 <div className="w-[100%] h-[auto] flex flex-col items-center justify-center">
                     <h1 className="text-[2rem] font-bold mt-[20px]">Playlist</h1>
                     <p className="text-[1.2rem] text-gray-300 mt-[10px]">Your favorite movies and series in one place.</p>
@@ -232,7 +232,7 @@ const PLAYLIST = () => {
                                     <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                         {
                                             value.data.map(({season_number,episode_number,poster_path,still_path,backdrop_path,vote_average,popularity,vote_count,name,original_name,title,original_title,id},movie_key) => 
-                                                <NavLink key={movie_key} to={key === "tv" ? `/series/${id}` : key === "movie" ? `/movies/${id}` : key === "season" ? `/series/${value.tags[movie_key].tag}/${id}/${season_number}/null${poster_path}` : `/series/${value.tags[movie_key].tag}/${id}/${season_number}/${episode_number}/null${still_path}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                                <NavLink key={movie_key} to={key === "tv" ? `/playlist/series/${id}` : key === "movie" ? `/playlist/movies/${id}` : key === "season" ? `/playlist/series/${value.tags[movie_key].tag}/${id}/${season_number}/null${poster_path}` : `/playlist/series/${value.tags[movie_key].tag}/${id}/${season_number}/${episode_number}/null${still_path}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                                     <div className="w-[100%] h-[100%]">
                                                         <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || backdrop_path || still_path} />
                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

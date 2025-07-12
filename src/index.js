@@ -56,6 +56,26 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
+    path : "/anime/movies/:id",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/disney/movies/:id",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/netflix/movies/:id",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/playlist/movies/:id",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
     path : "/movies/similar/:stream/:id/:background",
     element : <SIMILAR/>,
     errorElement : <ERROR/>
@@ -101,6 +121,26 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
+    path : "/anime/series/:id",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/disney/series/:id",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/netflix/series/:id",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/playlist/series/:id",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
     path : "/series/video/:stream/:id/:background",
     element : <TRAILER/>,
     errorElement : <ERROR/>
@@ -126,7 +166,17 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
+    path : "/playlist/series/:id/:seasonID/:season/:name/:background",
+    element : <SEASON/>,
+    errorElement : <ERROR/>
+  },
+  {
     path : "/series/:id/:episodeID/:season/:episode/:name/:background",
+    element : <EPISODE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/playlist/series/:id/:episodeID/:season/:episode/:name/:background",
     element : <EPISODE/>,
     errorElement : <ERROR/>
   },

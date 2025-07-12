@@ -1,6 +1,8 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo
+
+ } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar } from "@fortawesome/free-solid-svg-icons";
@@ -715,7 +717,7 @@ const SERIE = () => {
     }, [fetchCredits]);
 
 
-    const getBackground = () => {
+    const getBackground = useMemo(() => {
         if(fetchedImageBackgrounds)
             return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
         if(!images)
@@ -751,7 +753,7 @@ const SERIE = () => {
         }
         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
         return process.env.REACT_APP_img_poster + path
-    }
+    },[images, fetchedImageBackgrounds]);
 
     const addToPlayList = async() => {
 
@@ -805,7 +807,7 @@ const SERIE = () => {
     return (
         
 
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>

@@ -97,7 +97,7 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
               <SwiperSlide key={index} virtual={index}>
                 
                 <div 
-                  className={windowWidth > 800 ? "w-[40%] h-[100%] hover:skew-4 hover:contrast-150":"w-[100%] hover:skew-4 h-[90%] hover:contrast-150"}
+                  className={windowWidth > 800 ? "w-[100%] h-[100%] hover:skew-4 hover:contrast-150":"w-[100%] hover:skew-4 h-[90%] hover:contrast-150"}
                   style={{
                     boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
                       overflow: "hidden",

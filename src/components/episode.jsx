@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
 import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlayCircle, faStar, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 const EPISODE = () => {
     const { id, season, episodeID, episode, name, background } = useParams();
     const [layouts,setLayouts] = useState(false)
+    const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
     useEffect(() => {
 
         const sendForm = async({url,options}) => {
@@ -138,7 +139,7 @@ const EPISODE = () => {
             }
         }
     `
-    const [fetchImage,fetchImageData] = useLazyQuery(FETCH_IMAGE_QUERY,{
+    const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
         notifyOnNetworkStatusChange: true,
     })
 
@@ -218,15 +219,15 @@ const EPISODE = () => {
         onCompleted: (data) => {
             if (data && data.addImage.success) {
                 // Refetch the query to get updated data
-                fetchImageData.refetch().then((refetched) => {
-                    console.log(refetched)
-                    if(refetched.data.image.success){
-                        const ref = refetched?.data?.image?.data
-                        const typeGetImageData = {...ref}
-                        setImages(() => typeGetImageData)
-                    }
+                // fetchImageData.refetch().then((refetched) => {
+                //     console.log(refetched)
+                //     if(refetched.data.image.success){
+                //         const ref = refetched?.data?.image?.data
+                //         const typeGetImageData = {...ref}
+                //         setImages(() => typeGetImageData)
+                //     }
 
-                })
+                // })
 
             }
         },
@@ -257,10 +258,11 @@ const EPISODE = () => {
                     still_path
                     vote_average
                     vote_count
+                    success
             }
         }
     `
-    const [fetchEpisode,fetchedMovieData] = useLazyQuery(FETCH_MOVIE_QUERY,{
+    const [fetchEpisode] = useLazyQuery(FETCH_MOVIE_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
         // variables,
@@ -287,8 +289,8 @@ const EPISODE = () => {
                 if(data.addEpisode.message === "already inserted")
                     console.log("episode inserting already started...")
                 console.log("Movie successfully inserted into MySQL:", data.addEpisode.message);
-                fetchedMovieData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMovieData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addEpisode.message, data.addEpisode.error);
             }
@@ -366,7 +368,7 @@ const EPISODE = () => {
             }
         }
     `
-    const [fetchCreditsData,fetchedCredits] = useLazyQuery(FETCH_CREDITS_QUERY,{
+    const [fetchCreditsData] = useLazyQuery(FETCH_CREDITS_QUERY,{
     // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
     });
@@ -396,15 +398,15 @@ const EPISODE = () => {
         onCompleted: (data) => {
             if (data && data.addCredits.success) {
                 // Refetch the query to get updated data
-                fetchedCredits.refetch().then((refetched) => {
-                    console.log(refetched)
-                    if(refetched.data.credits.success){
-                        const ref = refetched?.data?.credits
-                        const typeGetImageData = {...ref}
-                        setCredit(() => ({...typeGetImageData}))
-                    }
+                // fetchedCredits.refetch().then((refetched) => {
+                //     console.log(refetched)
+                //     if(refetched.data.credits.success){
+                //         const ref = refetched?.data?.credits
+                //         const typeGetImageData = {...ref}
+                //         setCredit(() => ({...typeGetImageData}))
+                //     }
 
-                })
+                // })
 
             } else {
                 console.error("Failed to insert credits into MySQL:", data.addCredits.message, data.addCredits.error);
@@ -430,7 +432,7 @@ const EPISODE = () => {
             }
         }
     `
-    const [fetchIMDBData,fetchedIMDB] = useLazyQuery(FETCH_IMDB_QUERY,{
+    const [fetchIMDBData] = useLazyQuery(FETCH_IMDB_QUERY,{
     // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
     });
@@ -454,15 +456,15 @@ const EPISODE = () => {
         onCompleted: (data) => {
             if (data && data.updateIMDB.success) {
                 // Refetch the query to get updated data
-                fetchedIMDB.refetch().then((refetched) => {
-                    console.log(refetched)
-                    if(refetched.data.imdb.success){
-                        const ref = refetched?.data?.imdb
-                        const typeGetImageData = {...ref}
-                        setCredit(() => ({...typeGetImageData}))
-                    }
+                // fetchedIMDB.refetch().then((refetched) => {
+                //     console.log(refetched)
+                //     if(refetched.data.imdb.success){
+                //         const ref = refetched?.data?.imdb
+                //         const typeGetImageData = {...ref}
+                //         setCredit(() => ({...typeGetImageData}))
+                //     }
 
-                })
+                // })
 
             } else {
                 console.error("Failed to insert credits into MySQL:", data.updateIMDB.message, data.updateIMDB.error);
@@ -480,8 +482,6 @@ const EPISODE = () => {
             async function freshFetch(){
                 const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`);
                 const getImageData = await response.json();
-                console.log(getImageData)
-
                 function chunkArray(array, size) {
                     const result = [];
                     for (let i = 0; i < array.length; i += size) {
@@ -513,7 +513,8 @@ const EPISODE = () => {
                                         chunking:false,
                         chunking_index:0 } });
                 }
-                let logos_all_results = [...getImageData?.logos]
+                let logoData = getImageData?.logos || []
+                let logos_all_results = [...logoData]
                 if(logos_all_results.length > 100){
                     const chunks = chunkArray(logos_all_results, 100);
                     for (let i = 0; i < chunks.length; i++) {
@@ -537,7 +538,8 @@ const EPISODE = () => {
                                         chunking:false,
                         chunking_index:0 } });
                 }
-                let posters_all_results = [...getImageData?.posters]
+                let posterData = getImageData?.posters || []
+                let posters_all_results = [...posterData]
                 if(posters_all_results.length > 100){
                     const chunks = chunkArray(posters_all_results, 100);
                     for (let i = 0; i < chunks.length; i++) {
@@ -836,6 +838,116 @@ const EPISODE = () => {
 
     }
 
+    // useEffect(() => {
+    //             if(!images)
+    //         return null
+    //     let value = 0
+    //     // console.log(images)
+    //     const {backdrops, posters, logos, stills} = images
+    //     let path = ''
+    //     if(backdrops && backdrops.length > 0){
+    //         const heights = backdrops.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
+    //         let key = backdrops.findIndex(({height}) => height === value)
+    //         if(key > -1){
+    //             path = backdrops[key].file_path
+    //         }
+    //     } 
+    //     if(posters && posters.length > 0){
+    //         const heights = posters.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         let posters_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
+    //         if(posters_value > value){
+    //             let key = posters.findIndex(({height}) => height === posters_value)
+    //             if(key > -1){
+    //                 path = posters[key].file_path
+    //             }
+    //             value = posters_value
+    //         }
+    //     }
+    //     if(stills && stills.length > 0){
+    //         const heights = stills.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         let stills_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
+    //         if(stills_value > value){
+    //             let key = stills.findIndex(({height}) => height === stills_value)
+    //             if(key > -1){
+    //                 path = stills[key].file_path
+    //             }
+    //             value = stills_value
+    //         }
+    //     }        
+    //     if(logos && logos.length > 0){
+    //         const heights = logos.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         let logos_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] : uniqueHeights[0];
+    //         if(logos_value > value){
+    //             let key = logos.findIndex(({height}) => height === logos_value)
+    //             if(key > -1){
+    //                 path = logos[key].file_path
+    //             }
+    //         }
+    //     }
+    //     setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
+    // },[images,episode])
+
+    const getBackground = useMemo(() => {
+
+        if(fetchedImageBackgrounds)
+            return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
+        if(!images)
+            return null
+        let value = 0
+        const {backdrops, posters, logos, stills} = images
+        let path = ''
+        if(backdrops && backdrops.length > 0){
+            const heights = backdrops.map(({ height }) => height);
+            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+            value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
+            let key = backdrops.findIndex(({height}) => height === value)
+            if(key > -1){
+                path = backdrops[key].file_path
+            }
+        } 
+        if(posters && posters.length > 0){
+            const heights = posters.map(({ height }) => height);
+            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+            let posters_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
+            if(posters_value > value){
+                let key = posters.findIndex(({height}) => height === posters_value)
+                if(key > -1){
+                    path = posters[key].file_path
+                }
+                value = posters_value
+            }
+        }
+        if(stills && stills.length > 0){
+            const heights = stills.map(({ height }) => height);
+            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+            let stills_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
+            if(stills_value > value){
+                let key = stills.findIndex(({height}) => height === stills_value)
+                if(key > -1){
+                    path = stills[key].file_path
+                }
+                value = stills_value
+            }
+        }        
+        if(logos && logos.length > 0){
+            const heights = logos.map(({ height }) => height);
+            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+            let logos_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] : uniqueHeights[0];
+            if(logos_value > value){
+                let key = logos.findIndex(({height}) => height === logos_value)
+                if(key > -1){
+                    path = logos[key].file_path
+                }
+            }
+        }
+        setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
+        return process.env.REACT_APP_img_poster + path
+    },[fetchedImageBackgrounds,episode,images]);
     return (
 
         <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
@@ -855,12 +967,12 @@ const EPISODE = () => {
                             <div 
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
                                 style={{
-                                    backgroundImage:"url(" + process.env.REACT_APP_img_poster + serie?.still_path + ")",
+                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("still_path") && serie.still_path ? process.env.REACT_APP_img_poster + serie.still_path : fetchedImageBackgrounds ? getBackground : background) + ")",
                                     boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
                                 }}
                             >
                                 {
-                                    windowWidth < 800 && <PICTURE picture={serie?.still_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
+                                    windowWidth < 800 && <PICTURE picture={`${serie && serie.hasOwnProperty("still_path") && serie.still_path ? serie.still_path : `/${fetchedImageBackgrounds}.jpg`}`} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
 
                                 }
                             </div>

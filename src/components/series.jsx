@@ -679,7 +679,7 @@ const SERIES = () => {
                                         <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[60px] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{name || original_name}</h2>
                                             <NavLink key={movie_key} to={`/series/${id}`} >
-                                                <FontAwesomeIcon icon={faEye} /> watch
+                                                <FontAwesomeIcon icon={faEye} /> read
                                             </NavLink>                                        
                                         </div>
 

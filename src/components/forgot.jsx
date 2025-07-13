@@ -59,7 +59,9 @@ const FORGOT = () => {
                   <h1>Welcome To Late Developers product UKO</h1>
                   <p>Use the link to change your password</p>
                   <p><a style="text-decoration:underline;" href="${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_app : process.env.REACT_APP_app_live}/forgot/code?code=${code}">click me</a></p>
+                  <p>Have an idea, contact us to implement it, it's not too late - web - mobile - tv - tablet</p>
                   <p>For more information contact info@late-developers.com © 2025</p>
+                  <a href="https://late-developers.com" style="text-decoration:none;color:#000;font-weight:bold;">Visit our website</a>
               </div>
           </div>`
       }), // Convert the data object to JSON

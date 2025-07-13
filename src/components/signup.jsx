@@ -77,7 +77,9 @@ const SIGNUP = () => {
                   <div style='width:80%;margin-left:10%;'>
                       <h1>Welcome To Late Developers product UKO</h1>
                       <p>Use the following code to verify ${randomCode}</p>
+                      <p>Have an idea, contact us to implement it, it's not too late - web - mobile - tv - tablet</p>
                       <p>For more information contact info@late-developers.com © 2025</p>
+                      <a href="https://late-developers.com" style="text-decoration:none;color:#000;font-weight:bold;">Visit our website</a>
                   </div>
               </div>`
           }), // Convert the data object to JSON

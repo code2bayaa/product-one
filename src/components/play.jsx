@@ -140,7 +140,7 @@ const PLAY = () => {
                 else
                     newSorted = [...largest]
 
-                while(newSorted.length < 5){
+                if(newSorted.length < 5){
                     // let newtarget = target - 0.3
                     setTarget((prevTarget) => prevTarget - 0.3)
                     const filterBySeeders = ({ seeders }) => {

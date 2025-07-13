@@ -642,7 +642,7 @@ const MOVIE = () => {
     },[fetchSingleMovie,id,mutateInsertMovie])
 
     const checkFeedback = (id) => {
-        console.log(id,"id")
+        // console.log(id,"id")
         //authentication
         fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         .then(async res => {
@@ -668,10 +668,10 @@ const MOVIE = () => {
     const setGenreIDS = useCallback(async(genre = []) => {
         const {data} = await fetchGenre()
         if(data && data.genre && data.genre.success){
-            console.log(genre)
-            console.log(data.genre?.data)
+            // console.log(genre)
+            // console.log(data.genre?.data)
             const genreData = data.genre?.data.filter(({id,mode}) => genre && genre.includes(Number(id)) && mode === "movie")
-            console.log(genreData)
+            // console.log(genreData)
             setGenerateGenre(() => [...genreData])
         }else{
             setGenerateGenre(() => [])

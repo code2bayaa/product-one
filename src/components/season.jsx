@@ -544,7 +544,7 @@ const SEASON = () => {
         const fetched = await fetchSeason({
             variables : { id:seasonID }})
         console.log(fetched,seasonID,"id")
-        if (fetched.data && fetched.data.season.air_date === null) {
+        if (fetched.data && fetched.data.season && !fetched.data.season.episodes) {
             console.log("first time...")
             const tv = await freshFetch()
             setSerie(() => ({...tv}));

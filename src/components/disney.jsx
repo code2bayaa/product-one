@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react"
 import NAVBAR from "./nav"
-import PICTURE from "../midlleware/picture"
+// import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import CONTROLLERS from "../midlleware/controllers"
@@ -291,7 +291,7 @@ const DISNEY = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 {/* <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
                 </div> */}
@@ -304,15 +304,28 @@ const DISNEY = () => {
                             <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,original_name,name,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={name || original_name ? `/disney/series/${id}` : `/disney/movies/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] hover:contrast-150"}>
-                                            <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
-                                                <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{title || original_title || name || original_name}</h2>
+                                        <NavLink 
+                                            key={movie_key} 
+                                            to={name || original_name ? `/disney/series/${id}` : `/disney/movies/${id}`} 
+                                            className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":`${index === "popular" || index === "airing" ? "w-[50%]" :"w-[45%]"} h-[100%] hover:contrast-150`}
+                                        >
+                                            <div 
+                                                className="w-[100%] h-[100%] background"
+                                                style={{
+                                                    boxShadow:windowWidth > 800 ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
+
+                                                    backgroundImage: `
+                                                        linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%),
+                                                        url(${process.env.REACT_APP_img_poster + poster_path})
+                                                    `
+                                                }}
+                                            >
+                                                <div className="relative top-[50%] left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
+                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name }</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                 </div>
                                             </div>
-                                        </NavLink>
+                                        </NavLink> 
                                     )
                                 }
                             </div>

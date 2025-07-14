@@ -191,7 +191,7 @@ const MOBILE = () => {
         <>
             {
                 search && search_content && search_content.length > 0 &&
-                    <div style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}} className="w-[100%] h-[85%] flex flex-row flex-wrap z-[51] overflow-y-auto absolute">
+                    <div style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}} className="w-[100%] h-[92%] flex flex-row flex-wrap z-[51] overflow-y-auto absolute">
                         {
                             search_content.map(({index,results,page,total_pages,api},node) =>
                                 <div className="w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" key={node}>
@@ -229,11 +229,11 @@ const MOBILE = () => {
             }
             {
                 open &&
-                    <div className="w-[100%] h-[85%] z-[50] overflow-y-auto absolute" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                    <div className="w-[100%] h-[92%] z-[50] overflow-y-auto absolute" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                         <NAVBAR/>
                     </div>
             }
-            <div className="w-[100%] h-[15%] flex flex-row flex-wrap z-[50] fixed bottom-[0px]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+            <div className="w-[100%] h-[8%] flex flex-row flex-wrap z-[50] fixed bottom-[0px]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                 <div className="w-[80%] h-[100%] grid justify-items-center">
                     <form
                         className="w-[100%] h-[100%]"

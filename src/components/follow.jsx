@@ -159,7 +159,7 @@ const FOLLOW = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
                 {
                     people && people.data.length > 0 ?
                         <>

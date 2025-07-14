@@ -1,7 +1,7 @@
 import NAVBAR from "./nav"
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
-import Plyr from "plyr-react";
+import { useState, useEffect, useCallback, useLayoutEffect } from "react";
+// import Plyr from "plyr-react";
 import { useQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
@@ -27,11 +27,11 @@ const TRAILER = () => {
         };
     },[])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setVideo(true)
 
         return () => {
-            setVideo(false)
+            setVideo(null)
         }
     },[videos])
     const fetchVideo = useQuery(gql`
@@ -210,45 +210,20 @@ const TRAILER = () => {
             }
         {
             trailor ? 
-                <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene flex flex-col"}>
+                <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] mx-[1%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
                     <div className="w-[100%] h-[500px]">
                         {
-                            process.env.REACT_APP_environment === "development" ?
-                                videos && <Plyr
-                                    source={{
-                                        type:"video",
-                                        sources: [
-                                            {
-                                                src: trailor.hasOwnProperty("results") && trailor.results && trailor.results.length > 0 && trailor.results[0].key, // YouTube video ID
-                                                provider: "youtube",
-                                            },
-                                        ],
 
-                                    }}
-                                    options= {{
-                                        autoplay: false,
-                                        muted: true,
-                                        controls: ["play", "volume", "fullscreen"],
-                                    }}
-                                />
-                                :
-                                    <Plyr
-                                        source={{
-                                            type:"video",
-                                            sources: [
-                                                {
-                                                    src: trailor.hasOwnProperty("results") && trailor.results && trailor.results.length > 0 && trailor.results[0].key, // YouTube video ID
-                                                    provider: "youtube",
-                                                },
-                                            ],
-
-                                        }}
-                                        options= {{
-                                            autoplay: false,
-                                            muted: true,
-                                            controls: ["play", "volume", "fullscreen"],
-                                        }}
-                                    />  
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                src={`https://www.youtube.com/embed/${trailor.hasOwnProperty("results") && trailor.results && trailor.results.length > 0 && trailor.results[0].key}?autoplay=0&mute=1&controls=1`}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                allowFullScreen
+                                style={{ borderRadius: "12px", background: "#000" }}
+                            />
                             
                         }     
                     </div>
@@ -261,45 +236,16 @@ const TRAILER = () => {
                             {
                                 trailor.results.length > 0 && trailor.results.map(({iso_639_1,iso_3166_1,name,key,site,size,integer,type,officialpublished_at,id},movie_key) => 
                                     <div className={windowWidth > 800 ? "w-[23%] h-[100%] m-[0.5%]":"w-[49%] h-[100%] m-[0.5%]"} key={movie_key}>
-                                        {
-                                            
-                                            process.env.REACT_APP_environment === "development" ?
-                                                videos && <Plyr
-                                                    source={{
-                                                        type:"video",
-                                                        sources: [
-                                                        {
-                                                            src:key, // YouTube video ID
-                                                            provider: "youtube",
-                                                        },
-                                                        ],
-
-                                                    }}
-                                                    options= {{
-                                                        autoplay: false,
-                                                        muted: true,
-                                                        controls: ["play", "volume", "fullscreen"],
-                                                    }}
-                                                />
-                                            :
-                                                <Plyr
-                                                    source={{
-                                                        type:"video",
-                                                        sources: [
-                                                        {
-                                                            src: key, // YouTube video ID
-                                                            provider: "youtube",
-                                                        },
-                                                        ],
-
-                                                    }}
-                                                    options= {{
-                                                        autoplay: false,
-                                                        muted: true,
-                                                        controls: ["play", "volume", "fullscreen"],
-                                                    }}
-                                                />                                            
-                                        }
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            src={`https://www.youtube.com/embed/${key}?autoplay=0&mute=1&controls=1`}
+                                            title="YouTube video player"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                            allowFullScreen
+                                            style={{ borderRadius: "12px", background: "#000" }}
+                                        />
                                     </div>
                                 )
                             }

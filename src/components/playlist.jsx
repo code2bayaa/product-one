@@ -196,7 +196,7 @@ const PLAYLIST = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
                 <div className="w-[100%] h-[auto] flex flex-col items-center justify-center">
                     <h1 className="text-[2rem] font-bold mt-[20px]">Playlist</h1>
                     <p className="text-[1.2rem] text-gray-300 mt-[10px]">Your favorite movies and series in one place.</p>

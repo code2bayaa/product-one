@@ -818,17 +818,17 @@ const SERIE = () => {
             }
             {
             credits && serie && images ? 
-                    <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[85%] overflow-y-auto movie-scene flex flex-col"}>
-                        <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] h-[auto] flex flex-col flex-wrap"}>
+                    <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+                        <div className={windowWidth > 800 ? "w-[100%] min-h-[70%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
                             <div 
-                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
+                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[40%] m-[0.5%] h-[auto] float-left"} 
                                 style={{
                                     backgroundImage:"url(" + process.env.REACT_APP_img_poster + serie?.poster_path + ")",
-                                    boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
+                                    boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
                                 {
-                                    windowWidth < 800 && <PICTURE picture={serie?.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
+                                    windowWidth < 800 && <PICTURE picture={serie?.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] w-[50%] m-[0.5%] shadow-blue-500/50 object-contain"} />
 
                                 }
                             </div>
@@ -854,19 +854,19 @@ const SERIE = () => {
                                 <div className="w-[100%] flex flex-row flex-wrap">
                                     <NavLink
                                         to={`/series/video/series/${serie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
+                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[30%] ml-[1%] h-[40px] text-center underline mt-[1%] hover:contrast-150"}
                                     >
                                         trailors
                                     </NavLink>
                                     <NavLink
                                         to={`/series/similar/series/${serie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
+                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[30%] ml-[1%] h-[40px] text-center underline mt-[1%] hover:contrast-150"}
                                     >
                                         similar series
                                     </NavLink>
                                     <NavLink
                                         to={`/series/recommendations/series/${serie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[80%] ml-[10%] h-[40px] text-center rounded-md border-[2px] mt-[1%] hover:contrast-150"}
+                                        className={windowWidth > 800 ? "w-[24%] rounded-md h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"w-[30%] ml-[1%] h-[40px] text-center underline mt-[1%] hover:contrast-150"}
                                     >
                                         recommended series
                                     </NavLink>

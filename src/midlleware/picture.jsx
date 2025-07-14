@@ -13,7 +13,7 @@ const PICTURE = ({picture,classes}) => {
 
             setImg(process.env.REACT_APP_img_poster + picture)
         } else {
-            setImg("/image/alt.webp")
+            setImg("/image/logo3.png")
         }
     },[picture])
 

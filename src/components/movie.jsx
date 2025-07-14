@@ -7,6 +7,7 @@ import { faPlayCircle, faStar, faBasketShopping, faCirclePlus, } from "@fortawes
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
+// import { Rating } from 'react-simple-star-rating'
 import Swal from "sweetalert2";
 
 const MOVIE = () => {
@@ -906,10 +907,10 @@ const MOVIE = () => {
                     <div className={windowWidth > 800 ? "w-[80%] h-[100%] ml-[20%] flex flex-col overflow-y-auto movie-scene":"w-[98%] mx-[1%] h-[100%] flex flex-col overflow-y-auto movie-scene"}>
                         <div className={windowWidth > 800 ? "w-[100%] h-[67%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
                             <div 
-                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
+                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[40%] h-[auto] float-left m-[0.5%] shadow-lg"} 
                                 style={{
                                     backgroundImage:"url(" + process.env.REACT_APP_img_poster + movie.poster_path + ")",
-                                    boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
+                                    boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
                                 {
@@ -925,7 +926,7 @@ const MOVIE = () => {
                                 className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center shadow":"w-[100%] h-[auto]"}>
                                 <h1 className="text-[30px] text-[#ffd800]">{movie.original_title || movie.title}</h1>
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{movie.tagline}"</p>
-                                <div className={windowWidth > 800 ? "" : "w-[100%] gap-2 flex flex-row flex-wrap"}>
+                                <div className={windowWidth > 800 ? "" : "w-[50%] gap-2 flex flex-row flex-wrap"}>
                                     <h3>{movie.release_date}</h3>
                                     <h3>{movie.revenue}</h3>
                                     <p style={{fontStyle:"italic"}}>{movie.status}</p>
@@ -942,7 +943,7 @@ const MOVIE = () => {
                                 <div className="w-[100%] flex flex-row flex-wrap">
                                     <NavLink
                                         to={`/movies/video/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] bg-[#000] underline"}
                                     >
                                         trailors
                                     </NavLink>
@@ -951,7 +952,7 @@ const MOVIE = () => {
                                         (
                                             <NavLink
                                                 to={`/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}/${fetchedImageBackgrounds}`}
-                                                className={windowWidth > 800 ? "text-[#ffd800] w-[23%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                                className={windowWidth > 800 ? "text-[#ffd800] w-[23%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"text-[#ffd800] w-[48%] mt-[1%] ml-[1%] text-center justify-center h-[40px] rounded-full bg-[#000] border-[2px] "}
                                             >
                                                 play <FontAwesomeIcon icon={faPlayCircle} />
                                             </NavLink>                                            
@@ -960,13 +961,13 @@ const MOVIE = () => {
 
                                     <NavLink
                                         to={`/movies/similar/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] bg-[#000] underline"}
                                     >
                                         similar movies
                                     </NavLink>
                                     <NavLink
                                         to={`/movies/recommendations/movies/${movie.id}/${fetchedImageBackgrounds}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[80%] rounded-md mt-[1%] ml-[10%] text-center min-h-[40px] bg-[#000] border-[2px]"}
+                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] rounded-md m-[1%] bg-[#000] border-[2px]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] bg-[#000] underline"}
                                     >
                                         recommended movies
                                     </NavLink>
@@ -1009,7 +1010,7 @@ const MOVIE = () => {
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE picture={profile_path} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"font-bold"}>{name ? name : original_name ? original_name : name}</h2>
+                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px] font-bold"}>{name ? name : original_name ? original_name : name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
                                                         <h3 style={{fontStyle:"italic"}}>{character}</h3>
                                                     </div>

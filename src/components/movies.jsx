@@ -605,6 +605,7 @@ const MOVIES = () => {
                     },
                     hashedKey
                 }})
+                console.log(fetched)
 
                 if (fetched.data) {
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
@@ -739,7 +740,7 @@ const MOVIES = () => {
         page: 1,
         data : {
             genre: '',
-            year: '',
+            year: 0,
             region: '',
             language: '',  
             index: setIndex,
@@ -931,17 +932,31 @@ const loadComponent = () => {
                 </div>
                 {
                     movies && movies.map(({index,results,page,total_pages},node) =>
-                        <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" : "w-[100%] h-[auto] flex flex-wrap flex-col my-t-[5%]"} key={node}>
+                        <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]" : "w-[100%] h-[auto] flex flex-wrap flex-col mt-[10%]"} key={node}>
                             <h1 className="my-t-[5%]">{index}</h1>
                             <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
                             <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : `${index === "upcoming" || index === "trending" ? "h-[100px]" : "h-[200px]"}`} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":`${index === "upcoming" || index === "trending" ? "w-[50%]" :"w-[45%]"} hover:skew-4 h-[100%] hover:contrast-150`}>
-                                            <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
-                                                <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                        <NavLink 
+                                            key={movie_key} 
+                                            to={`/movies/${id}`} 
+                                            className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":`${index === "upcoming" || index === "trending" ? "w-[50%]" :"w-[45%]"} h-[100%] hover:contrast-150`}
+                                        >
+                                            <div 
+                                                className="w-[100%] h-[100%] background"
+                                                style={{
+                                                    boxShadow:windowWidth > 800 ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
+
+                                                    backgroundImage: `
+                                                        linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%),
+                                                        url(${process.env.REACT_APP_img_poster + poster_path})
+                                                    `
+                                                }}
+                                            >
+                                                {/* <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} /> */}
+                                                <div className="relative top-[50%] left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
                                                     <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title ? title : original_title ? original_title : title}</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                     {/* <article className="text-[15px]">{overview}</article>
@@ -983,7 +998,7 @@ const loadComponent = () => {
             {/* <div className="w-[100%]">
                 {console.log(recommend)}
             </div> */}
-            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-x-hidden overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-x-hidden overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 {/* <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
                 </div> */}

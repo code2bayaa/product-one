@@ -300,7 +300,7 @@ video, iframe{
 
 .background {
   background-size: cover;
-  background-position: center;
+  background-position: center top 20%;
   background-repeat: no-repeat;
   
 }

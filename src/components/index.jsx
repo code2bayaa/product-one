@@ -132,7 +132,7 @@ const EMPIRE = () => {
                 :
                 <MOBILE/>
             }
-            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[85%] overflow-y-auto movie-scene" }`}>
+            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%] overflow-y-auto movie-scene" }`}>
                 <div className={`${windowWidth > 800 ? "w-[90%] home text-[#000] h-[90%] mx-[5%] overflow-y-auto movie-scene":"w-[100%] text-[#000] home h-[auto]"}`}>
                     { windowWidth < 800 && (
                         <button

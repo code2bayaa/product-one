@@ -109,7 +109,7 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                         {/* <article className="text-[15px]">{overview}</article> */}
                         <NavLink key={index} className={`h-[60px]`} to={type === "movies" ? `/movies/${id}`: `/series/${id}`}>
-                          <FontAwesomeIcon icon={faEye} /> watch
+                          <FontAwesomeIcon icon={faEye} /> { mode === "init" ? "read" : "watch" }
                         </NavLink>
                     </div>
                 </div>                

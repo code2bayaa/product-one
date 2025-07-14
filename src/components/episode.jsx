@@ -959,7 +959,7 @@ const EPISODE = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%]  h-[85%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene h-[100%] ml-[20%] flex flex-col":"w-[98%] mx-[1%]  h-[92%] overflow-y-auto movie-scene flex flex-col"}>
                 {
                     credits && serie && images && imdb ? 
                         <>
@@ -968,7 +968,7 @@ const EPISODE = () => {
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
                                 style={{
                                     backgroundImage:"url(" + (serie && serie.hasOwnProperty("still_path") && serie.still_path ? process.env.REACT_APP_img_poster + serie.still_path : fetchedImageBackgrounds ? getBackground : background) + ")",
-                                    boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
+                                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
                                 }}
                             >
                                 {

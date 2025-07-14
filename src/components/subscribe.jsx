@@ -220,7 +220,7 @@ const SUBSCRIBE = () => {
                 :
                     <MOBILE/>
             }
-            <div className={`flex text-center justify-center items-center ${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[auto]" }`}>
+            <div className={`flex text-center justify-center items-center ${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%]" }`}>
                 <div className="bg-[#18181c] rounded-lg shadow-lg p-8 max-w-md w-full flex flex-col items-center">
                     <h2 className="text-2xl font-bold mb-4 text-[#ffd800]">Subscribe 30 days Credits</h2>
                     <p className="mb-4 text-center">1 USD = <span className="font-bold">1000 credits</span></p>

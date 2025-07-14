@@ -296,7 +296,7 @@ const DISCOVER = () => {
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[85%] flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={mode}/>
                 </div>
@@ -309,7 +309,7 @@ const DISCOVER = () => {
                             <div className={`w-[100%] h-auto flex flex-row flex-wrap`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[33%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
+                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path || backdrop_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

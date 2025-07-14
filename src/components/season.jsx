@@ -821,13 +821,13 @@ const SEASON = () => {
             }
         {
             credits && serie && images ? 
-                    <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene duration-100 h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 overflow-y-auto movie-scene mx-[1%] h-[85%] flex flex-col"}>
+                    <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene duration-100 h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 overflow-y-auto movie-scene mx-[1%] h-[92%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
                             <div 
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
                                 style={{
                                     backgroundImage:"url(" + (serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? process.env.REACT_APP_img_poster + serie.poster_path : fetchedImageBackgrounds ? getBackground : background) + ")",
-                                    boxShadow:"rgba(0, 0, 0, 0.9) -180px -200px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px"
+                                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
                                 }}
                             >
                                 {

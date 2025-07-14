@@ -104,7 +104,7 @@ const CREDITS = () => {
                 :
                     <MOBILE/>
             }
-            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[auto]" }`}>
+            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%]" }`}>
                 <div style={{overflow:"hidden",margin:"5px"}}>
                     Google Ad Block
                     <ins

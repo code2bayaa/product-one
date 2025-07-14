@@ -229,7 +229,7 @@ const SIGNUP = () => {
                 :
                 <MOBILE/>
             }
-            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[80%] ml-[20%] overflow-y-auto movie-scene" : "w-[100%]"} justify-center min-h-screen`}>
+            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[80%] ml-[20%] overflow-y-auto movie-scene" : "w-[100%] h-[92%]"} justify-center min-h-screen`}>
               <div className="w-[100%] h-[auto] text-[#000] flex justify-center bg-[linear-gradient(#fdfcfb,#e2d1c3,#e2d1c3)]">
                 <h1 style={{textAlign:"center",fontSize:"200%"}}>Create an Account</h1>
                 <div className={windowWidth > 800 ? "w-[100%] h-[60%] flex flex-row" : "w-[100%] h-[auto] flex flex-col-reverse" }>

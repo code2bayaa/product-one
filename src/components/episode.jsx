@@ -47,7 +47,7 @@ const EPISODE = () => {
                     "https://ipinfo.io/json",
                     // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
                     "https://ipapi.co/json/",
-                    "https://api.ipgeolocation.io/ipgeo?apiKey=02be68312fd5432fa07048f4b27b6542"
+                    "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_geo
                 ]
 
                 const locations = await Promise.all(urls.map(async(url) => {

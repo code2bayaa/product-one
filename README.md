@@ -1,70 +1,62 @@
-# Getting Started with Create React App
+# UKOapp 🎬  
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+UKOapp is a modern movie and TV streaming platform designed to deliver high-quality content with an engaging user experience, advanced monetization options, and scalable streaming technologies.  
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🚀 Frontend  
+The frontend is built with **React** for performance, SEO, and scalability.  
 
-### `npm start`
+- **UI/UX**: Minimal, responsive, and optimized for mobile & desktop.  
+- **Styling**: TailwindCSS with reusable components.  
+- **Player**: Integrated with **Plyr.js** for adaptive streaming and captions.  
+- **Progressive Web App (PWA)**: Supports offline caching and "watch later" features.  
+- **Live Reactions**: Users can interact while streaming (emoji reactions, comments, video reactions).  
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 💰 Monetization  
+UKOapp supports multiple monetization strategies:  
 
-### `npm test`
+1. **Subscription (SVOD)** – Monthly or annual plans with tiered access.  
+2. **Advertising (AVOD)** – Pre-roll, mid-roll, and banner ads via integrated ad servers.  
+3. **Transactional (TVOD/Pay-Per-View)** – One-time rentals for exclusive movies or events.  
+4. **Affiliate/Partnerships** – Revenue sharing with content creators and distributors.  
+5. **In-App Purchases** – Add-ons like premium themes, ad-free experience, or bonus content.  
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## 📌 Features  
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- 🎥 **On-Demand Streaming** – Movies, TV shows, and documentaries.  
+- 🔴 **Live Streaming** – Events, sports, or special shows.  
+- 🗂️ **Smart Library** – Categorization by genre, trending, recommendations.  
+- 🔍 **Advanced Search & Filters** – By actors, quality, language, or release year.  
+- ❤️ **User Profiles** – Favorites, watch history, parental controls.  
+- 🌍 **Multi-Language Support** – Subtitles & audio tracks.  
+- ⭐ **AI Recommendations** – Personalized suggestions based on user behavior.  
+- 📱 **Cross-Platform** – Web, Android, iOS, Smart TVs.  
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🎥 Streaming Architecture  
 
-### `npm run eject`
+UKOapp uses modern streaming protocols and peer-to-peer enhancements:  
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- **HLS (HTTP Live Streaming)** – For adaptive bitrate video delivery.  
+- **WebTorrent Integration** – Streams magnet/torrent files directly in the app.  
+- **P2P Engine (@swarmcloud/hlsjs-p2p-engine)** – Reduces server costs by enabling peer-assisted streaming.  
+- **FFmpeg** – On-the-fly video conversion (MKV/MOV → MP4/HLS).  
+- **Node.js Backend** – Handles authentication, video tokenization, and CDN distribution.  
+- **DRM Support** – Protects premium content from piracy.  
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🏗️ Roadmap  
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- Add **AI-powered thumbnail previews**.  
+- Enable **offline downloads with IndexedDB**.  
+- Expand **multi-screen sync play** (watch together mode).  
+- Integrate **micro-transactions** for creators.  
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---

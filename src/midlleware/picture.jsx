@@ -2,20 +2,22 @@ import { useState, useEffect } from "react";
 
 
 
-const PICTURE = ({picture,classes}) => {
+const PICTURE = ({picture,classes,url}) => {
 
     const [img, setImg] = useState(null)
     const [isLoaded, setLoad] = useState(false)
 
     // console.log(picture,"picture")
     useEffect(() => {
-        if (picture) {
-
+        if (url) {
+            console.log(picture,"picture")
+            setImg(picture) 
+        }else if(picture){
             setImg(process.env.REACT_APP_img_poster + picture)
         } else {
             setImg("/image/logo3.png")
         }
-    },[picture])
+    },[picture,url])
 
     const editImg = (e) => {
         setLoad(true)

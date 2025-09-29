@@ -376,6 +376,7 @@ const SUBSCRIBE = () => {
                                         const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_paypal_capture : process.env.REACT_APP_init_paypal_capture_live,
                                             {
                                                 method: "POST",
+                                                credentials: "include",
                                                 headers: {
                                                     "Content-Type": "application/json",
                                                 },

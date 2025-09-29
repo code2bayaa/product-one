@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
-import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faAngleDoubleRight, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
@@ -11,13 +11,17 @@ import Swal from "sweetalert2";
 import CryptoJS from "crypto-js";
 const PERSON = () => {
 
-    const { id } = useParams();
+    // const { id } = useParams();
+    const hasFetched= useRef({images:false,tv:false,movies:false,person:false,feedback:false})
     const [person, setPerson] = useState(null)
     const [movies, setMovies] = useState(null)
     const [series, setSeries] = useState(null)
     const [images, setImages] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     const [following,setFollowing] = useState(null)
+    const { state } = useLocation();
+    const navigate = useNavigate();
+    const id = state.id
 
     useEffect(() => {
         const handleResize = () => {
@@ -45,51 +49,7 @@ const PERSON = () => {
             ) {
                 data {
                     id
-                    posters {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    backdrops {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    profiles {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    logos {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    stills {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
+                    path
                 }
                 meta_data {
                     type
@@ -101,7 +61,7 @@ const PERSON = () => {
             }
         }
     `
-    const [fetchImage,fetchImageData] = useLazyQuery(FETCH_IMAGE_QUERY,{
+    const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
         notifyOnNetworkStatusChange: true,
     })
 
@@ -116,51 +76,7 @@ const PERSON = () => {
             ){
                 data {
                     id
-                    posters {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    backdrops {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    profiles {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    logos {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    stills {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
+                    path
                 }
                 meta_data {
                     id
@@ -177,13 +93,13 @@ const PERSON = () => {
         onCompleted: (data) => {
             if (data && data.addImage.success) {
                 // Refetch the query to get updated data
-                fetchImageData.refetch().then((refetched) => {
-                    if(refetched.data.image.success){
-                        const ref = refetched?.data?.image?.data
-                        const typeGetImageData = {...ref}
-                        setImages(() => typeGetImageData)
-                    }
-                })
+                // fetchImageData.refetch().then((refetched) => {
+                //     if(refetched.data.image.success){
+                //         const ref = refetched?.data?.image?.data
+                //         const typeGetImageData = {...ref}
+                //         setImages(() => typeGetImageData)
+                //     }
+                // })
             }
         },
         onError: (error) => {
@@ -192,47 +108,59 @@ const PERSON = () => {
     });
 
     const graphImages = useCallback(async() => {
-        try{
-            async function freshFetch(){
-                const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
-                const getImageData = await response.json();
-                // console.log(getImageData)
-                mutateInsertImage({ variables: { meta_data : {
-                    type:"person",
-                    season:-1,
-                    episode:-1,
-                    id:id?parseInt(id):-1
-                }, data:{...getImageData} } });
-                return {...getImageData}
-            } 
-            if(!images){
 
-                const fetched = await fetchImage({
-                    variables : {
-                    type:"person",
-                    episode:-1,
-                    season:-1,
-                    id:id?parseInt(id):-1
-                }})
-                if (fetched.data && fetched.data.image.success) {
-                    // console.log("image cached data:", fetched.data);
-                    setImages(() => ({...fetched.data.image.data}))
-
-                }else {
-                    const getImageData = await freshFetch()
-                    setImages(() => ({...getImageData}))
+        async function freshFetch(){
+            const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
+            const getImageData = await response.json();
+            console.log(getImageData,"images")
+            let value = 0
+            const {profiles} = getImageData
+            let path = ''
+            if(profiles && profiles.length > 0){
+                value = Math.max(...profiles.map(({height}) => height))
+                let key = profiles.findIndex(({height}) => height === value)
+                if(key > -1){
+                    path = profiles[key].file_path
                 }
+            } 
+
+            mutateInsertImage({ variables: { meta_data : {
+                    type:"person",
+                    season:-1,
+                    episode:-1,
+                    id:id?parseInt(id):-1
+                }, data:{id:getImageData.id,path}                  
+            } });
+            console.log(path,"path" )
+            return path
+        }         
+        try{
+            const fetched = await fetchImage({
+                variables : {
+                type:"person",
+                episode:-1,
+                season:-1,
+                id:id?parseInt(id):-1
+            }})
+            console.log(fetched)
+            if (fetched.data && fetched.data.image.success) {
+                console.log("image cached data:", fetched.data);
+                setImages(() => (fetched.data.image.data.path))
+
+            }else {
+                const path = await freshFetch()
+                setImages(path)
             }
+        
+            
         }catch(error){
             console.log(error)
-            if(!images){
-                fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-                .then(data => data.json())
-                .then(data => setImages(() => ({...data})))
-            }
+            const path = await freshFetch()
+            setImages(path)            
+        
 
         }
-    },[fetchImage, id, mutateInsertImage, images])
+    },[fetchImage,id, mutateInsertImage])
 
     const FETCH_PERSON_QUERY = gql`
         query Person (
@@ -261,7 +189,7 @@ const PERSON = () => {
             }
         }
     `
-    const [fetchPersonData,fetchedPersonData] = useLazyQuery(FETCH_PERSON_QUERY,{
+    const [fetchPersonData] = useLazyQuery(FETCH_PERSON_QUERY,{
         notifyOnNetworkStatusChange: true,
     });
 
@@ -285,8 +213,17 @@ const PERSON = () => {
                 if(data.addPersonID.message === "already inserted")
                     console.log("person inserting already started...")
                 console.log("person successfully inserted into MySQL:", data.addPersonID.message);
-                fetchedPersonData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedPersonData.refetch()
+                // .then(status => console.log(status,"status"))
+                // fetchedPersonData.refetch().then((refetched) => {
+                //     console.log(refetched)
+                //     if(refetched.data.person.success){
+                //         const ref = refetched?.data?.person
+                //         const typeGetImageData = {...ref}
+                //         setPerson(() => ({...typeGetImageData}))
+                //     }
+
+                // })                  
             } else {
                 console.error("Failed to insert person into MySQL:", data.addPersonID.message, data.addPersonID.error);
             }
@@ -312,7 +249,7 @@ const PERSON = () => {
 
         const fetched = await fetchPersonData({
             variables : { id }})
-        // console.log(fetched)
+        console.log(fetched)
         if(fetched.data && fetched.data.person && !fetched.data.person.biography){
             //first check person
             console.log("first time")
@@ -332,6 +269,10 @@ const PERSON = () => {
     },[fetchPersonData, id, mutateInsertPerson])
 
     useEffect(() => {
+        if(hasFetched.current.feedback){
+            return
+        }
+        hasFetched.current.feedback = true        
         const checkFeedback = (id) => {
             fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
             .then(async res => {
@@ -413,7 +354,7 @@ const PERSON = () => {
             }
         }
     `
-    const [fetchMovie,fetchedMovieData] = useLazyQuery(FETCH_MOVIE_QUERY,{
+    const [fetchMovie] = useLazyQuery(FETCH_MOVIE_QUERY,{
         notifyOnNetworkStatusChange: true,
     });
 
@@ -443,8 +384,8 @@ const PERSON = () => {
                 if(data.addPlayed.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movie successfully inserted into MySQL:", data.addPlayed.message);
-                fetchedMovieData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMovieData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addPlayed.message, data.addPlayed.error);
             }
@@ -481,8 +422,8 @@ const PERSON = () => {
                 if(data.addPlayedTV.message === "already inserted")
                     console.log("movie inserting already started...")
                 console.log("Movie successfully inserted into MySQL:", data.addPlayedTV.message);
-                fetchedMovieData.refetch()
-                .then(status => console.log(status,"status"))
+                // fetchedMovieData.refetch()
+                // .then(status => console.log(status,"status"))
             } else {
                 console.error("Failed to insert movies into MySQL:", data.addPlayedTV.message, data.addPlayedTV.error);
             }
@@ -583,34 +524,50 @@ const PERSON = () => {
     },[mutateInsertTV, id, fetchMovie])
 
     useEffect(() => {
+        // if(hasFetched.current.images){
+        //     return
+        // }
+        // hasFetched.current.images = true
         graphImages()
     },[graphImages])
 
     useEffect(() => {
+        if(hasFetched.current.person){
+            return
+        }
+        hasFetched.current.person = true
         fetchPerson();
     }, [fetchPerson]);
 
     useEffect(() => {
+        if(hasFetched.current.movies){
+            return
+        }
+        hasFetched.current.movies = true
         fetchMovies();
     }, [fetchMovies]);
 
     useEffect(() => {
+        if(hasFetched.current.tv){
+            return
+        }
+        hasFetched.current.tv = true
         fetchTV();
     }, [fetchTV]);
 
-    const getBackground = () => {
-        if(!images)
-            return null
-        const {profiles} = images
-        if(!profiles)
-            return null
-        let value = Math.max(...profiles.map(({height}) => height))
-        let key = profiles.findIndex(({height}) => height === value)
-        let path = (key > -1) ? profiles[key].file_path : ""
+    // const getBackground = () => {
+    //     if(!images)
+    //         return null
+    //     const {profiles} = images
+    //     if(!profiles)
+    //         return null
+    //     let value = Math.max(...profiles.map(({height}) => height))
+    //     let key = profiles.findIndex(({height}) => height === value)
+    //     let path = (key > -1) ? profiles[key].file_path : ""
             
 
-        return process.env.REACT_APP_img_poster + path
-    }
+    //     return process.env.REACT_APP_img_poster + path
+    // }
 
     const addToFollowers = async() => {
 
@@ -658,9 +615,17 @@ const PERSON = () => {
         }
 
     }
+    const navMovie = (id,url) => {
+        navigate(url,{
+            state : {
+                id
+            }
+        })
+    } 
     return (
-
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${getBackground()})`,backgroundPosition:"0% 40%"}}>
+        
+        series && movies && person ?
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? process.env.REACT_APP_img_poster + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
@@ -670,13 +635,13 @@ const PERSON = () => {
                 <MOBILE/>
             }
             <div className={windowWidth > 800 ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
-            {
-                series && movies && person && images ?
+            
+                
                 <>
                     {/* <div className="w-[100%] h-[60%]"> */}
                         <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "h-[60%]" : "h-[auto]"} text-justify justify-center items-center`}>
                             <div className={windowWidth > 800 ? "w-[40%] h-[auto] m-[1%] float-left backdrop-blur-md":"w-[98%] h-[auto] m-[1%] backdrop-blur-md"}>
-                                <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-blue-500/50"} />
+                                <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-[#ffd800]"} />
                             </div>
 
                             <h1 className="text-[30px]">{person.name}</h1>
@@ -723,7 +688,10 @@ const PERSON = () => {
                                                         <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             series.cast && series.cast.map(({character,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                <div key={movie_key} 
+                                                                    // to={`/series/${id}`} 
+                                                                    onClick={() => navMovie(id,`/people/serie`)}
+                                                                    className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -732,7 +700,7 @@ const PERSON = () => {
                                                                             <h2 style={{fontStyle:"italic"}}>{character}</h2>
                                                                         </div>
                                                                     </div>
-                                                                </NavLink>
+                                                                </div>
                                                             )
                                                         }
                                                         </div>
@@ -746,7 +714,11 @@ const PERSON = () => {
                                                         <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                             {
                                                                 series.crew && series.crew.map(({job,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                    <NavLink key={movie_key} to={`/series/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                    <div 
+                                                                        key={movie_key} 
+                                                                        // to={`/series/${id}`}
+                                                                        onClick={() => navMovie(id,`/people/serie`)} 
+                                                                        className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                         <div className="w-[100%] h-[100%]">
                                                                             <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                             <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -755,7 +727,7 @@ const PERSON = () => {
                                                                                 <h2 style={{fontStyle:"italic"}}>{job}</h2>
                                                                             </div>
                                                                         </div>
-                                                                    </NavLink>
+                                                                    </div>
                                                                 )
                                                             }
                                                         </div>
@@ -776,7 +748,11 @@ const PERSON = () => {
                                                     <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             movies.cast && movies.cast.map(({character,adult,backdrop_path,genre_ids,name,id,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                <div 
+                                                                    key={movie_key} 
+                                                                    // to={`/movies/${id}`}
+                                                                    onClick={() => navMovie(id,`/people/movie`)} 
+                                                                    className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -785,7 +761,7 @@ const PERSON = () => {
                                                                             <h2 style={{fontStyle:"italic"}}>{character}</h2>
                                                                         </div>
                                                                     </div>
-                                                                </NavLink>
+                                                                </div>
                                                             )
                                                         }
                                                     </div>
@@ -798,7 +774,11 @@ const PERSON = () => {
                                                     <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                                         {
                                                             movies.crew && movies.crew.map(({job,adult,backdrop_path,genre_ids,id,original_language,name,original_name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                                                <NavLink key={movie_key} to={`/movies/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                <div 
+                                                                    key={movie_key} 
+                                                                    // to={`/movies/${id}`} 
+                                                                    onClick={() => navMovie(id,`/people/movie`)}
+                                                                    className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -807,7 +787,7 @@ const PERSON = () => {
                                                                             <h2 style={{fontStyle:"italic"}}>{job}</h2>
                                                                         </div>
                                                                     </div>
-                                                                </NavLink>
+                                                                </div>
                                                             )
                                                         }
                                                     </div>
@@ -819,11 +799,12 @@ const PERSON = () => {
                                 </div>
                             {/* </div> */}
                             </>
-                        :
-                <LOAD/>
-            }
+
+            
         </div>
     </div>
+                            :
+                <LOAD/>
     )
 }
 

@@ -1,94 +1,101 @@
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
 
-const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
+const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
 
     const [loading, setLoading] = useState(false);
     // const [open,setOpen] = useState(false);
     // const [URLS,setURLS] = useState(null);
     const [rate,setRate] = useState(0);
+    const navigate = useNavigate();
+    // const [type] = useState(stream)
     // const containerRef = useRef(null);
+    
 
     useEffect(() => {
         // Check if the rate is a number and set it
-            const index = (Number(seeders)/Number(maxRate)) * 10
-            setRate(index);
-    }, [maxRate,seeders]);
+        const index = (Number(seeders)/Number(maxRate)) * 10
+        setRate(index);
+        localStorage.setItem("type",stream)
+    }, [maxRate,seeders,stream]);
 
-    useEffect(() => {
-        const destroySession = async() => {
-            console.log("destroying...")
+    // useEffect(() => {
+    //     const destroySession = async() => {
+    //         console.log("destroying...")
 
-            const sessionDestroy = ({status, error, message, newToken}) => {
+    //         const sessionDestroy = ({status, error, message, newToken}) => {
                 
-                console.log(newToken,"newToken")
-                console.log(error,message)
-                if(error || !status){
-                    // Swal.fire({
-                    //     icon: 'error',
-                    //     title: 'Could not destroy session ' + error + message,
-                    //     text: error || message,
-                    //     showConfirmButton: false,
-                    //     timer: 2500
-                    // })
-                    return null
-                }
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Session destroyed',
-                    text: "success" + message,
-                    showConfirmButton: false,
-                    timer: 2500
-                })
-                return true                
-            }
+    //             console.log(newToken,"newToken")
+    //             console.log(error,message)
+    //             if(error || !status){
+    //                 // Swal.fire({
+    //                 //     icon: 'error',
+    //                 //     title: 'Could not destroy session ' + error + message,
+    //                 //     text: error || message,
+    //                 //     showConfirmButton: false,
+    //                 //     timer: 2500
+    //                 // })
+    //                 return null
+    //             }
+    //             Swal.fire({
+    //                 icon: 'success',
+    //                 title: 'Session destroyed',
+    //                 text: "success" + message,
+    //                 showConfirmButton: false,
+    //                 timer: 2500
+    //             })
+    //             return true                
+    //         }
 
-            async function authentication(){
-                const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
-                const {status,message,user} = await res.json()
-                console.log(message)
-                return ({status,user})
-            }
-            const isLoggedIn = await authentication()
+    //         async function authentication(){
+    //             const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+    //             const {status,message,user} = await res.json()
+    //             console.log(message)
+    //             return ({status,user})
+    //         }
+    //         const isLoggedIn = await authentication()
 
-            if(isLoggedIn.status){
-                const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
-                    method: "POST",
-                    body:JSON.stringify({
-                        id,
-                        index,
-                        user:isLoggedIn.user
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json', // Indicates the body is JSON
-                    },
-                });
-                const {status, error, message, newToken} = await response.json()
-                return sessionDestroy({status, error, message, newToken})
-            }else{
-                let user = localStorage.getItem("session")
-                const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
-                    method: "POST",
-                    body:JSON.stringify({
-                        id,
-                        index,
-                        user
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json', // Indicates the body is JSON
-                    },
-                });
-                const {status, error, message, newToken} = await response.json()
-                return sessionDestroy({status, error, message, newToken})
-            }
+    //         if(isLoggedIn.status){
+    //             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
+    //                 method: "POST",
+    //                 body:JSON.stringify({
+    //                     id,
+    //                     index,
+    //                     user:isLoggedIn.user
+    //                 }),
+    //                 headers: {
+    //                     'Content-Type': 'application/json', // Indicates the body is JSON
+    //                 },
+    //             });
+    //             const {status, error, message, newToken} = await response.json()
+    //             return sessionDestroy({status, error, message, newToken})
+    //         }else{
+    //             let user = localStorage.getItem("session")
+    //             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
+    //                 method: "POST",
+    //                 body:JSON.stringify({
+    //                     id,
+    //                     index,
+    //                     user
+    //                 }),
+    //                 headers: {
+    //                     'Content-Type': 'application/json', // Indicates the body is JSON
+    //                 },
+    //             });
+    //             const {status, error, message, newToken} = await response.json()
+    //             return sessionDestroy({status, error, message, newToken})
+    //         }
 
-        }
-        destroySession()
-    },[id,index])
+    //     }
+    //     destroySession()
+    // },[id,index])
 
-    const runStream = async(e,token) => { 
+    const runStream = async({token}) => { 
+        const stream = localStorage.getItem("type")
+        // console.log("inside",stream)
         //check for credits
         async function authentication(){
             const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
@@ -116,10 +123,25 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             })
 
             const response_data = await response.json()
-            console.log(response_data.message)
+            // console.log(response_data.message)
 
             if(response_data.status){
                 hasPaid = true
+                Swal.fire({
+                    icon: 'success',
+                    title: 'rent paid',
+                    text: response_data.message,
+                    showConfirmButton: false,
+                    timer: 2500
+                })
+            }else if(response_data.message === "day for movie credits ended"){
+                Swal.fire({
+                    icon: 'error',
+                    title: 'rent elapsed',
+                    text: response_data.message,
+                    showConfirmButton: false,
+                    timer: 1500
+                })
             }
 
             const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_user_credits : process.env.REACT_APP_check_user_credits_live,{credentials: "include"})
@@ -144,7 +166,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             })
 
             const res_data = await res.json()
-            console.log(res_data.message)
+            // console.log(res_data.message)
             if(res_data.status){
                 hasPaid = true
                 Swal.fire({
@@ -198,68 +220,97 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             // const HTMLMARK = e.target.innerText
             // e.target.innerText = "loading..."
             
-            console.log("clicked play...")
+            // console.log(season,"season")
             //
+            console.log(stream,"stream",id,"id",size,"size")
+            index = index.toString()
+            .replace("0","a")
+            .replace("1","b")
+            .replace("2","c")
+            .replace("3","d")
+            .replace("4","e")
+            .replace("5","f")
+            .replace("6","g")
+            .replace("7","h")
+            .replace("8","i")
+            .replace("9","j")
+
             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_play : process.env.REACT_APP_play_live}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
                     "Accept":"application/json"
                 },
+                
                 body:JSON.stringify({
                     token,
                     id,
                     index,
-                    user
+                    user,
+                    quality,
+                    stream,
+                    size,
                 })
             })
             const {status, error, message, url, files} = await response.json()
             console.log(message || error)
             if(status){
                 const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
+                console.log(files,"video")
                 if(video){
                     const type = video && video.hasOwnProperty("name") && video.name.split(".").pop()
                     // e.target.innerText = HTMLMARK
                     // setPlay(null)
                     setLoading(false)
-                    if(type === "mp4"){
-                        // setPlaying(`${url}/${video.index}`)
-                        // router(`/play/${url}/${video.index}/${type}/${background}`)
-                        // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
-                        window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
-                        // setFetchedPlay(() => true)
+                    navigate(`/play`,{
+                        state:{
+                            id,
+                            url,
+                            index,
+                            type,
+                            background
+                        }
+                    })
+                    // if(type === "mp4"){
+                    //     // setPlaying(`${url}/${video.index}`)
+                    //     // router(`/play/${url}/${video.index}/${type}/${background}`)
+                    //     // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
+                    //     window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
+                    //     // setFetchedPlay(() => true)
                         
                         
-                        return null
-                    }else{
-                        //unless VLC situation changes, we will not use this
-                        // setURLS(`/play/${id}/${url}/${video.index}/${type}/${background}`)
-                        // //for mkv files open disclaimer
-                        // if(open){
-                        //     // $(containerRef.current).slideUp(500)
-                        //     // $(containerRef.current).addClass("hidden")
-                        //     setOpen(false)
+                    //     return null
+                    // }else{
+                    //     //unless VLC situation changes, we will not use this
+                    //     // setURLS(`/play/${id}/${url}/${video.index}/${type}/${background}`)
+                    //     // //for mkv files open disclaimer
+                    //     // if(open){
+                    //     //     // $(containerRef.current).slideUp(500)
+                    //     //     // $(containerRef.current).addClass("hidden")
+                    //     //     setOpen(false)
                             
-                        // }else{
-                        //     // $(containerRef.current).removeClass("hidden")
-                        //     // $(containerRef.current).slideDown(500)
-                        //     setOpen(true)
-                        // }
+                    //     // }else{
+                    //     //     // $(containerRef.current).removeClass("hidden")
+                    //     //     // $(containerRef.current).slideDown(500)
+                    //     //     setOpen(true)
+                    //     // }
 
-                        // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
-                        window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
-                        return null
+                    //     // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
+                    //     window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
+                    //     return null
                         
-                    }
+                    // }
+                }else{
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'media not found',
+                        text: error,
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
                 }
 
-                Swal.fire({
-                    icon: 'error',
-                    title: 'media not ready',
-                    text: error,
-                    showConfirmButton: false,
-                    timer: 1500
-                })
+
                         // mutateUpdatePlay({ variables: {
                         //     type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
                         //     season:season ? parseInt(season) : -1,
@@ -270,6 +321,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
             }else{
                 // e.target.innerText = HTMLMARK
                 setLoading(false)
+                console.log(index,"index")
                 Swal.fire({
                     icon: 'error',
                     title: 'choose next collection',
@@ -277,25 +329,33 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                     showConfirmButton: false,
                     timer: 1500
                 })
+                // const how_many = collect(index)
+                // if(how_many){
+                //     Swal.fire({
+                //         icon: 'error',
+                //         title: 'reloading',
+                //         text: "a minute",
+                //         showConfirmButton: false,
+                //         timer: 1500
+                //     })
+                // }else{
+                //     Swal.fire({
+                //         icon: 'error',
+                //         title: 'choose next collection',
+                //         text: "was not worth your time",
+                //         showConfirmButton: false,
+                //         timer: 1500
+                //     })
+                // }
+
             }
                         //in case no video file found -- destroy token
             // setPlay(null)
             setLoading(false)
             // e.target.innerText = HTMLMARK
-            const responseDestroy = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`,{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    "Accept":"application/json"
-                },
-                body:JSON.stringify({
-                    id,
-                    index
-                })
-            })
-            const responseDestroyData = await responseDestroy.json()
-            console.log(responseDestroyData.message,"destruction")
-            console.log(responseDestroyData.newToken,"new token")
+
+            // console.log(responseDestroyData.message,"destruction")
+            // console.log(responseDestroyData.newToken,"new token")
         }
     }
 
@@ -331,7 +391,7 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
         <>
             <button
                 disabled={loading}
-                onClick={(e) => runStream(e,token)}
+                onClick={() => runStream({token})}
                 type="button"
                 key={index}
                 className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth > 800 ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
@@ -343,11 +403,11 @@ const COLLECTIONS = ({index,title,token,quality,id,background,maxRate,seeders,si
                         {quality}
                         {rate > 0 && (
                             <span className="text-[#ffd800] ml-2">
-                                <FontAwesomeIcon icon={faStar}/> {rate.toFixed(1)}
+                                <FontAwesomeIcon icon={faStar}/> {rate && rate.toFixed(1)}
                             </span>
                         )}
                         <span className="text-[italic] ml-2">
-                            {`${size.replace("i","").toLowerCase()}`}
+                            {`${size && size.replace("i","").toLowerCase()}`}
                         </span>                    
                     </>
                 }        

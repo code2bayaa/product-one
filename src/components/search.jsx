@@ -1,33 +1,20 @@
 import NAVBAR from "./nav";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, useEffect } from "react";
-// import { useSearchMovies } from "../hooks/useSearchMovies";
-// import { useSearchPerson } from "../hooks/useSearchPerson";
-import PICTURE from "../midlleware/picture";
 import { faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
-// import Swal from "sweetalert2";
-import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages";
 import LOAD from "../midlleware/load";
 import Swal from "sweetalert2";
 import CryptoJS from "crypto-js";
-// import { GRAPHMOVIES } from "../models/movies";
-// import { GRAPHPEOPLE } from "../models/people";
 
 const SEARCH = () => {
 
     const [search_content, setSearchContent] = useState([]);
     const [search, setSearch] = useState()
-    // const {fetchMovies, mutateInsertMovies, intitializeMovies } = useSearchMovies();
-    // const {fetchPerson, mutateInsertPerson } = useSearchPerson();
     const [windowWidth, setWindowWidth] = useState(0);
+    const navigate = useNavigate();
 
-    // useEffect(() => {
-    //     console.log("changing search...")
-    //     if(search){
-
-    //     }
-    // },[search,fetchMovies,mutateInsertMovies,intitializeMovies])
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -50,8 +37,8 @@ const SEARCH = () => {
 
             // Usage:
             const currentWeek = getCurrentWeek();
-            console.log(currentWeek,typeof currentWeek);
-            console.log("searching for...",search)
+            // console.log(currentWeek,typeof currentWeek);
+            // console.log("searching for...",search)
             runContent.forEach(async({index, api, page, type, select, insert}) => {
                 console.log("running")
                 const hashed = page + search + type
@@ -213,7 +200,13 @@ const SEARCH = () => {
                 {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_person : process.env.REACT_APP_search_person_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert_person : process.env.REACT_APP_search_insert_person_live,"type":"person"}
         ],search:searchValue})
     }
-
+  const navRoute = ({state,url}) => {
+        navigate(url,{
+            state : {
+                ...state
+            }
+        })
+    } 
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
             <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
@@ -252,23 +245,33 @@ const SEARCH = () => {
                                 <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                     {
                                         results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
-                                            <NavLink key={search_key} to={`/${index}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150": "w-[50%] h-[100%] hover:skew-4 hover:contrast-150"}>
+                                            <div 
+                                                key={search_key} 
+                                                onClick={() => navRoute({
+                                                    url:`/${index}/id`,
+                                                    state:{
+                                                        id
+                                                    }
+                                                })}
+                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150" : "cursor-pointer w-[45%] h-[100%] hover:contrast-150"}
+                                            >
+                                                <div 
+                                                    className="w-[100%] h-[100%] background"
+                                                    style={{
+                                                        boxShadow:windowWidth > 800 ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
 
-                                                <div key={search_key} className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={poster_path || backdrop_path || profile_path} classes={`object-cover h-[100%]`} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className="text-[15px] font-bold">{name || original_name || title || original_title}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { 
-                                                        vote_average ? 
-                                                            parseFloat(vote_average).toFixed(1)
-                                                            :
-                                                            popularity ? parseFloat(popularity).toFixed(0) 
-                                                            :
-                                                            vote_count ? vote_count : "0"
-                                                        }</p>
+                                                        backgroundImage: `
+                                                            linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%),
+                                                            url(${process.env.REACT_APP_img_poster + poster_path || process.env.REACT_APP_img_poster + backdrop_path || process.env.REACT_APP_img_poster + profile_path})
+                                                        `
+                                                    }}
+                                                >
+                                                    <div className="relative top-[50%] left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
+                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
+                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                     </div>
                                                 </div>
-                                            </NavLink>
+                                            </div>
                                         )
                                     }
                                 </div>

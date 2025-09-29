@@ -54,6 +54,7 @@ const SIGNIN = () => {
           callback: handleCredentialResponse,
           auto_select: true, // Enables auto-signin
         });
+        console.log("google render....")
         google.accounts.id.renderButton(
           document.getElementById("google-signin-btn"), // The container ID
           { theme: "outline", size: "large" } // customization
@@ -136,7 +137,7 @@ const SIGNIN = () => {
                 :
                 <MOBILE/>
             }
-            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[80%] ml-[20%]" : "h-[92%] w-[100%]"} justify-center min-h-screen`}>
+            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[100%]" : "h-[92%] w-[100%]"} justify-center min-h-screen`}>
                 <div className={`bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 flex flex-col items-center  ${windowWidth > 800 ? "w-[60%]" : "w-[100%]"}`}>
                     <img src="/image/footer3.png" alt="late developers https://late-developers.com" className="w-1/2 mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-center text-[#18181c] mb-6">Sign in to your account</h2>
@@ -189,10 +190,11 @@ const SIGNIN = () => {
                                 </a> */}
                                 <NavLink
                                 to="/forgot"
-                                className="text-[#ffd800] hover:underline text-sm"
+                                className="text-[#ffd800] underline"
                                 >
                                   forgot password
                                 </NavLink>
+                                <NavLink to="/signup" className="text-[#ffd800] w-[48%] m-[1%] underline">Create an Account</NavLink>
                             </div>
                             <button
                                 type="submit"

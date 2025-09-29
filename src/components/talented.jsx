@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import CONTROLLERS from "../midlleware/controllers"
-import { NavLink, useParams } from "react-router-dom"
+import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load"
@@ -14,7 +14,11 @@ import Swal from "sweetalert2"
 
 const TALENT = () => {
 
-    let { mode, extra } = useParams();
+    // let { mode, extra } = useParams();
+    const hasFetched = useRef(false)
+        const {state} = useLocation()
+        let { mode, extra } = state;
+        const navigate = useNavigate();
     const [people, setPeople] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
 
@@ -341,6 +345,10 @@ const TALENT = () => {
     },[fetchPerson,mutateInsertPerson,mode,extra]);
 
     useEffect(() => {
+        if(hasFetched.current){
+            return
+        }
+        hasFetched.current = true
         intitializeMovies(
             {
             adjustable:true
@@ -428,7 +436,13 @@ const TALENT = () => {
         }
 
     }
-
+    const navRoute = ({url,state}) => {
+        navigate(url,{
+            state : {
+                ...state
+            }
+        })
+    }
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
@@ -452,7 +466,15 @@ const TALENT = () => {
                             <div id={box && box.index} className={`w-[100%] h-auto flex flex-row flex-wrap`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,name,original_title,overview,popularity,profile_path,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[33%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
+                                        <div 
+                                            key={movie_key} 
+                                            onClick={() => navRoute({
+                                                url:name || original_name ? `/series/id` : `/movies/id`,
+                                                state:{
+                                                    id
+                                                }
+                                            })}
+                                            className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[33%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path || backdrop_path || profile_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -460,7 +482,7 @@ const TALENT = () => {
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(popularity).toFixed(2)}</p>
                                                 </div>
                                             </div>
-                                        </NavLink>
+                                        </div>
                                     )
                                 }
                             </div>

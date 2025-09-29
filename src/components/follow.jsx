@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import MOBILE from "./mobileBar";
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { gql, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2";
 import SWEETPAGE from "../midlleware/pages";
-import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 // import LOAD from "../midlleware/load";
 
 const FOLLOW = () => {
@@ -20,7 +20,9 @@ const FOLLOW = () => {
         tags: []
     })
     const [page, setPage] = useState(1)
+    const hasFetched = useRef(false)
     const [total_pages, setTotalPages] = useState(0)
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleResize = () => {
@@ -132,6 +134,10 @@ const FOLLOW = () => {
     },[fetchFollowers])
 
     useEffect(() => {
+        if(hasFetched.current){
+            return
+        }
+        hasFetched.current = true        
         fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         .then(res => {
             if (!res.ok) {
@@ -148,7 +154,13 @@ const FOLLOW = () => {
             }
         })
     },[intitializePeople])
-
+  const navMovie = (id,url) => {
+        navigate(url,{
+            state : {
+                id
+            }
+        })
+    } 
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
@@ -168,7 +180,11 @@ const FOLLOW = () => {
                             <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     people.data.map(({profile_path,popularity,original_name,name,known_for_department,id},people_key) => 
-                                        <NavLink key={people_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                        <div 
+                                            key={people_key} 
+                                            // to={`/people/`}
+                                            onClick={() => navMovie(id,`/follow/people`)} 
+                                            className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -176,7 +192,7 @@ const FOLLOW = () => {
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
                                                 </div>
                                             </div>
-                                        </NavLink>
+                                        </div>
                                     )
                                 }
                             </div>                        

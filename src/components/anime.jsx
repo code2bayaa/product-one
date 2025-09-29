@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import NAVBAR from "./nav"
 // import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import CONTROLLERS from "../midlleware/controllers"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load"
@@ -16,7 +16,8 @@ const ANIME = () => {
     // const [people, setPeople] = useState(null)
     const [movies, setMovies] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
-
+    const hasFetched = useRef(false)
+    const navigate = useNavigate();
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -148,7 +149,7 @@ const ANIME = () => {
                 );
                 const data = await response.json();
 
-                // console.log(data)
+                console.log(data)
                 if (data.results.length > 0) {
                     temp_movies[key].results = [
                         ...temp_movies[key].results,
@@ -223,13 +224,13 @@ const ANIME = () => {
                 if (fetched.data) {
                     // console.log("Using cached data:", fetched.data);
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
-                        // console.log("less items")
+                        console.log("less items")
                         return await freshFetch()
                     }else if(fetched.data.movie.error === "insert movies" || fetched.data.movie.error === "no records found"){
-                        // console.log("no records found")
+                        console.log("no records found")
                         return await freshFetch()
                     }else{
-                        // console.log("finally using cached data")
+                        console.log("finally using cached data")
                         setMovies((prevMovies) => {
                             prevMovies = prevMovies || [];
                             const updatedMovies = [...prevMovies]
@@ -272,6 +273,10 @@ const ANIME = () => {
     },[fetchMovies,mutateInsertMovies]);
 
     useEffect(() => {
+        if(hasFetched.current){
+            return
+        }
+        hasFetched.current = true
         intitializeMovies(
             {runContent:[
             "anime movie",
@@ -280,6 +285,13 @@ const ANIME = () => {
         })
 
     },[intitializeMovies])
+  const navMovie = (id,url) => {
+        navigate(url,{
+            state : {
+                id
+            }
+        })
+    } 
 
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
@@ -304,10 +316,10 @@ const ANIME = () => {
                             <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,original_name,name,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink 
+                                        <div 
                                             key={movie_key} 
-                                            to={name || original_name ? `/anime/series/${id}` : `/anime/movies/${id}`} 
-                                            className={windowWidth > 800 ? "w-[25%] h-[100%] hover:contrast-150":`${index === "popular" || index === "airing" ? "w-[50%]" :"w-[45%]"} h-[100%] hover:contrast-150`}
+                                            onClick={() => navMovie(id,name || original_name ? `/anime/serie` : `/anime/movie`)} 
+                                            className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150":`${index === "popular" || index === "airing" ? "w-[50%]" :"cursor-pointer w-[45%]"} h-[100%] hover:contrast-150`}
                                         >
                                             <div 
                                                 className="w-[100%] h-[100%] background"
@@ -325,7 +337,7 @@ const ANIME = () => {
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                 </div>
                                             </div>
-                                        </NavLink> 
+                                        </div> 
                                     )
                                 }
                             </div>

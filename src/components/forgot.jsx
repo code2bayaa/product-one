@@ -1,4 +1,4 @@
-import NAVBAR from "./nav";
+// import NAVBAR from "./nav";
 import {useState,useEffect} from "react"
 import { NavLink  } from "react-router-dom"
 import MOBILE from "./mobileBar";
@@ -81,14 +81,16 @@ const FORGOT = () => {
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {
-                windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
-                    <NAVBAR/>
-                </div>
+                windowWidth > 800 ?
+                <>
+                </> 
+                // <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                //     <NAVBAR/>
+                // </div>
                 :
                 <MOBILE/>
             }
-            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[80%] ml-[20%] overflow-y-auto movie-scene" : "w-[100%]"} justify-center min-h-screen`}>
+            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[100%] overflow-y-auto movie-scene" : "w-[100%]"} justify-center min-h-screen`}>
                 <div className="w-[100%] text-[#000] flex justify-center h-[auto] bg-[linear-gradient(#fdfcfb,#e2d1c3,#e2d1c3)]">
                 <h1 style={{textAlign:"center",fontSize:"200%"}}>Forgot Password</h1>
                 <div className={windowWidth > 800 ? "w-[100%] h-[60%] flex flex-row" : "w-[100%] h-[auto] flex flex-col-reverse" }>

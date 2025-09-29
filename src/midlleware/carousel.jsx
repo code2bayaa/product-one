@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { NavLink } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react"
 import {Navigation, Pagination, Autoplay, EffectCoverflow, EffectCards, Scrollbar, Thumbs, Controller, A11y } from "swiper/modules"
 import gsap from "gsap";
@@ -9,29 +8,29 @@ import { Flip, Draggable, MotionPathPlugin } from "gsap/all";
 import PICTURE from "./picture"
 import { faEye, faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useNavigate } from "react-router-dom"
 import "swiper/css"
 import "swiper/css/bundle"
 import "swiper/css/effect-coverflow"
 import "swiper/css/pagination"
 import "swiper/css/navigation"
 import "swiper/css/effect-cards"
-// import $ from "jquery"
 
 const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
 
-  // const readRef = useRef(null)
   const swiperRef = useRef(null); // Reference to the Swiper instance
   const [windowWidth, setWindowWidth] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
-      const handleResize = () => {
-          setWindowWidth(window.innerWidth);
-      };
-      window.addEventListener("resize", handleResize);
-      handleResize(); // Call it once to set the initial value
-      return () => {
-          window.removeEventListener("resize", handleResize);
-      };
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Call it once to set the initial value
+    return () => {
+        window.removeEventListener("resize", handleResize);
+    };
   },[])
 
   useEffect(() => {
@@ -54,6 +53,13 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
   // const [firstSwiper, setFirstSwiper] = useState(null);
   // const [secondSwiper, setSecondSwiper] = useState(null);
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
+  const navRoute = ({state,url}) => {
+      navigate(url,{
+          state : {
+              ...state
+          }
+      })
+  }
   return (
          <Swiper
           ref={swiperRef}
@@ -108,9 +114,19 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
                         <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                         {/* <article className="text-[15px]">{overview}</article> */}
-                        <NavLink key={index} className={`h-[60px]`} to={type === "movies" ? `/movies/${id}`: `/series/${id}`}>
+                        {/* <NavLink key={index} className={`h-[60px]`} to={type === "movies" ? `/movies/${id}`: `/series/${id}`}>
                           <FontAwesomeIcon icon={faEye} /> { mode === "init" ? "read" : "watch" }
-                        </NavLink>
+                        </NavLink> */}
+                        <button key={index}
+                         className={`h-[60px]`}
+                         onClick={() => navRoute({
+                            url:mode === "tv" ? '/series/id' : '/movies/id',
+                            state:{
+                                id
+                            }
+                        })} >
+                            <FontAwesomeIcon icon={faEye} /> { mode === "init" ? "read" : "watch" }
+                        </button>  
                     </div>
                 </div>                
               </SwiperSlide>

@@ -1,19 +1,25 @@
 import NAVBAR from "./nav"
-import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Carousel from "../midlleware/carousel";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faStar } from "@fortawesome/free-solid-svg-icons";
 import SWEETPAGE from "../midlleware/pages";
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 
 const SIMILAR = () => {
-    const { id, stream, background } = useParams();
+    // const { id, stream, background } = useParams();
+    const hasFetched = useRef(false)
     const [similar, setSimilar] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const {state} = useLocation()
+    const navigate = useNavigate()
+    const id = state.id
+    const stream = state.stream
+    const background = state.background
 
     useEffect(() => {
         const handleResize = () => {
@@ -111,9 +117,10 @@ const SIMILAR = () => {
     });
 
     const fetchMain = useCallback(async(page,adjustable = false) => {
+        const type = stream === "movies" ? "movie" : "tv"
         try{
 
-            const type = stream === "movies" ? "movie" : "tv"
+            
             
             const api = `${process.env.REACT_APP_movie_db}${type}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
             async function freshFetch(){
@@ -122,7 +129,7 @@ const SIMILAR = () => {
                 setSimilar(() => ({...similar_data})); 
                 mutateInsertMovie({ variables: {
                     ...similar_data,
-                    type,
+                    stream:type,
                     page,
                     id:id?parseInt(id):-1
                 }} );
@@ -150,7 +157,7 @@ const SIMILAR = () => {
         }catch(error){
             console.log(error,"error")
             if(!similar){
-                const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
+                const api = `${process.env.REACT_APP_movie_db}${type}/${id}/similar?api_key=${process.env.REACT_APP_api_key}&page=${page}`
                 fetch(`${api}`)
                 .then(data => data.json())
                 .then(data => setSimilar(() => ({...data})))
@@ -160,6 +167,10 @@ const SIMILAR = () => {
     },[fetchMovie, id, mutateInsertMovie, stream, similar])
 
     useEffect(() => {
+        if(hasFetched.current){
+            return
+        }
+        hasFetched.current = true
         fetchMain(1)
     },[fetchMain])
 
@@ -180,10 +191,16 @@ const SIMILAR = () => {
 
         return received
     }
-
+    const navRoute = ({url,state}) => {
+        navigate(url,{
+            state : {
+                ...state
+            }
+        })
+    }
     return (
         
-        <div className={`w-[100%] ${windowWidth > 800 ? "h-[100%]" : "h-[92%]"}  bg-cover bg-no-repeat bg-center text-white`} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+        <div className={`w-[100%] ${windowWidth > 800 ? "h-[100%]" : "h-[92%]"}  bg-cover bg-no-repeat bg-center text-white`} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg" || "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
                 {
                     windowWidth > 800 ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
@@ -198,35 +215,84 @@ const SIMILAR = () => {
                     <div className={windowWidth > 800 ? "w-[100%] z-2 h-[auto] flex flex-wrap flex-row":"w-[100%] h-[auto] gap-1"} style={{boxShadow:"0px 4px 10px #fff"}}>
                         <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[25%]"}>
                             {
-                                similar.results.length > 2  &&<Carousel type={stream} images={[...similar.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
+                                similar && similar.results && similar.results.length > 2  &&<Carousel type={stream} images={[...similar.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
                             }
                         </div>
                         <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[auto]"}>
-                            <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 1].id}`} className="w-[100%] h-[100%] hover:contrast-150">
+                            <div 
+                                onClick={() => navRoute({
+                                    url:`/${stream}/id`,
+                                    state:{
+                                        id:similar && similar.results.length > 0 && similar.results[similar.results.length - 1].id,
+                                    }})} 
+                                className="w-[100%] h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(1)} classes={"h-[400px]"} />
-                            </NavLink>
+                            </div>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[100%] h-[auto]"}>
-                            <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 2].id}`} className="w-[100%] h-[100%] hover:contrast-150">
-                                <PICTURE picture={getPoster(2)} classes={"h-[400px]"} />
-                            </NavLink>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + process.env.REACT_APP_img_poster + getPoster(2) + ")"}}>                            
+                            <div
+                                className="w-[40%] backdrop-blur-md h-[100%] hover:contrast-150">
+                                <PICTURE picture={getPoster(2)} classes={"h-[65%] mt-[10%] w-[100%] object-contain"} />
+                            </div>
+                            <div
+                                className="w-[59%] h-[100%] bg-gradient-to-b from-[rgba(0,0,0,0.75)] via-[rgba(0,0,0,0.65)] to-[rgba(0,0,0,0.80)]"
+                            >
+                                <article className="m-[1%]">
+                                    {similar.results.length > 0 && similar.results[similar.results.length - 2].overview.substr(0,200)}...
+                                </article>
+                                <h2 className="m-[1%] text-[30px] text-[#ffd800]">{(similar.results.length > 0 && similar.results[similar.results.length - 2].name) || (similar.results.length > 0 && similar.results[similar.results.length - 2].title)}</h2>
+                                <button
+                                    onClick={() => navRoute({
+                                        url:`/${stream}/id`,
+                                        state:{
+                                            id:similar.results.length > 0 && similar.results[similar.results.length - 2].id,
+                                        }})} 
+                                >
+                                    <FontAwesomeIcon icon={faEye} /> watch
+                                </button>
+                            </div>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%]": "w-[100%] h-[auto]"}>
-                            <NavLink to={`/${stream}/${similar.results.length > 0 && similar.results[similar.results.length - 3].id}`} className="w-[100%] h-[100%] hover:contrast-150">
-                                <PICTURE picture={getPoster(3)} classes={"h-[400px]"} />
-                            </NavLink>
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + process.env.REACT_APP_img_poster + getPoster(3) + ")"}}>                            
+                            <div
+                                className="w-[40%] backdrop-blur-md h-[100%] hover:contrast-150">
+                                <PICTURE picture={getPoster(3)} classes={"h-[65%] mt-[10%] w-[100%] object-contain"} />
+                            </div>
+                            <div
+                                className="w-[59%] h-[100%] bg-gradient-to-b from-[rgba(0,0,0,0.75)] via-[rgba(0,0,0,0.65)] to-[rgba(0,0,0,0.80)]"
+                            >
+                                <article className="m-[1%]">
+                                    {similar.results.length > 0 && similar.results[similar.results.length - 3].overview.substr(0,200)}...
+                                </article>
+                                <h2 className="m-[1%] text-[30px] text-[#ffd800]">{(similar.results.length > 0 && similar.results[similar.results.length - 3].name) || (similar.results.length > 0 && similar.results[similar.results.length - 3].title)}</h2>
+                                <button
+                                    onClick={() => navRoute({
+                                        url:`/${stream}/id`,
+                                        state:{
+                                            id:similar.results.length > 0 && similar.results[similar.results.length - 3].id,
+                                        }})} 
+                                >
+                                    <FontAwesomeIcon icon={faEye} /> watch
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div className={windowWidth > 800 ? "w-[90%] duration-50 movie-scene h-[50%] mx-[5%] my-[2%]" : "w-[100%] duration-50 movie-scene h-[auto] my-[2%]"}>
+                    <div className={windowWidth > 800 ? "w-[90%] movie-scene min-h-[320px] mx-[5%] my-[2%]":"w-[100%] movie-scene min-h-[250px] my-[9%]"}>
 
-                        <h1 style={{textAlign:"center",textDecoration:"underline"}}>SIMILAR {stream === "movies" ? "MOVIES" : "TV"}</h1>
+                        <h1 style={{textAlign:"center",textDecoration:"underline"}}>SIMILAR {stream.toUpperCase()}</h1>
                         <SWEETPAGE intitializeMovies={intitializeMovies} page={similar?.page} index={""} total_pages={similar?.total_pages}/>
 
                         <div className={`w-[100%] movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                             
                             {
                                 similar.results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                    <NavLink key={movie_key} to={`/${stream}/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                    <div 
+                                        key={movie_key} 
+                                        onClick={() => navRoute({
+                                            url:`/${stream}/id`,
+                                            state:{
+                                                id
+                                            }})} 
+                                        className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[48%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                         <div className="w-[100%] h-[100%]">
                                             <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
                                             <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -234,7 +300,7 @@ const SIMILAR = () => {
                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                             </div>
                                         </div>
-                                    </NavLink>
+                                    </div>
                                 )
                             }
                         </div>

@@ -9,7 +9,7 @@ const EMPIRE = () => {
         
     const divRefs = useRef([]);
     const [windowWidth, setWindowWidth] = useState(0);
-    const [showFullscreenBtn, setShowFullscreenBtn] = useState(false);
+    
 
     // const [layouts, setLayouts] = useState(false);
 
@@ -94,33 +94,6 @@ const EMPIRE = () => {
 
     }, [windowWidth]);
 
-    const bigScreen = () => {
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.mozRequestFullScreen) { // Firefox
-            elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari & Opera
-            elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) { // IE/Edge
-            elem.msRequestFullscreen();
-        }
-        setShowFullscreenBtn(true);
-
-    };
-
-    const exitScreen = () => {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) { // Firefox
-            document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { // IE/Edge
-            document.msExitFullscreen();
-        }
-        setShowFullscreenBtn(false);
-    };
 
     return (
         <div className={windowWidth > 800 ? "w-[100%] h-[100%] overflow-hidden flex flex-row flex-wrap":"w-[100%] h-[100%] text-white flex flex-row flex-wrap"} style={{background:"url(/image/grey.jpg)"}}>
@@ -133,28 +106,33 @@ const EMPIRE = () => {
                 <MOBILE/>
             }
             <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%] overflow-y-auto movie-scene" }`}>
-                <div className={`${windowWidth > 800 ? "w-[90%] home text-[#000] h-[90%] mx-[5%] overflow-y-auto movie-scene":"w-[100%] text-[#000] home h-[auto]"}`}>
-                    { windowWidth < 800 && (
-                        <button
-                            onClick={ showFullscreenBtn ? () => exitScreen(): () => bigScreen()}
-                            style={{
-                                position: "fixed",
-                                top: 10,
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                zIndex: 1000,
-                                background: "#000",
-                                color: "#ffd800",
-                                padding: "10px 24px",
-                                borderRadius: "12px",
-                                border: "2px solid #ffd800"
-                            }}
+                <div className={`${windowWidth > 800 ? "w-[90%] home text-[#000] h-[99%] mx-[5%] overflow-y-auto movie-scene":"w-[100%] text-[#000] home h-[auto]"}`}>                 
+                    <div className="w-[100%] h-[8%] text-[#2E073F] text-center flex flex-row bg-[#FFF5F2]">
+                        <NavLink
+                            to="/privacy"
+                            className={"w-[25%] m-[1%] border-[1.5px] border-[#2E073F] rounded-[2px]"}
                         >
-                            {
-                                showFullscreenBtn ? "Exit Fullscreen" : "Go Fullscreen"
-                            }
-                        </button>
-                    )}                    
+                            Privacy
+                        </NavLink>
+                        <NavLink
+                            to="/terms"
+                            className={"w-[25%] m-[1%] border-[1.5px] border-[#2E073F] rounded-[2px]"}
+                        >
+                            Terms
+                        </NavLink>
+                        <NavLink
+                            to="/blogs"
+                            className={"w-[25%] m-[1%] border-[1.5px] border-[#2E073F] rounded-[2px]"}
+                        >
+                            Blog
+                        </NavLink>
+                        <NavLink
+                            to="/about"
+                            className={"w-[25%] m-[1%] border-[1.5px] border-[#2E073F] rounded-[2px]"}
+                        >
+                            About
+                        </NavLink>
+                    </div>                    
                     {
                         home.map(({title, article, image}, index) => 
                         <div
@@ -166,8 +144,8 @@ const EMPIRE = () => {
                                 windowWidth > 800
                                     ? `w-[100%] min-h-[70%] flex ${
                                         index % 2 ? "flex-row" : "flex-row-reverse"
-                                    } flex-wrap mt-[3%]`
-                                    : "w-[100%] min-h-[70%] flex flex-col flex-wrap mt-[0.5%]"
+                                    }${index === 2 ? " bg-[#000] text-[#fff]" : ""} flex-wrap mt-[3%]`
+                                    : `w-[100%] min-h-[70%] flex flex-col flex-wrap mt-[0.5%] ${index === 2 ? " bg-[#000] text-[#fff]" : ""}`
                             }`}
                         >
                             {/* Images Section */}
@@ -195,7 +173,7 @@ const EMPIRE = () => {
                             </div>
 
                             {/* Article Section */}
-                            <div className={windowWidth > 800 ? `w-[60%] ${index === 2 ? "bg-[#000] text-[#fff]" : ""}` : `w-[80%] ml-[10%] ${index === 2 ? "bg-[#000] text-[#fff]" : ""} mt-[0.5%]`}>
+                            <div className={windowWidth > 800 ? `w-[60%] ` : `w-[80%] ml-[10%] mt-[0.5%]`}>
                                 <h2 className="text-[30px]">{title}</h2>
                                 <article
                                     className={windowWidth > 800 ? `border-l-[4px] border-[#2E2E3A] w-[60%] pl-[10px] pr-[10px] text-20px]`:`w-[100%] text-20px]`}
@@ -206,20 +184,6 @@ const EMPIRE = () => {
                         </div>
                         )
                     }
-                </div>
-                <div className="w-[100%] h-[8%] text-[#ffff] flex flex-row bg-[#000]">
-                    <NavLink
-                     to="/privacy"
-                     className={"w-[25% m-[1%]"}
-                    >
-                        Privacy
-                    </NavLink>
-                    <NavLink
-                     to="/terms"
-                     className={"w-[25% m-[1%]"}
-                    >
-                        Terms
-                    </NavLink>
                 </div>
             </div>
         </div>

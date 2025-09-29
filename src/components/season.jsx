@@ -1,6 +1,6 @@
 import NAVBAR from "./nav"
-import { NavLink, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
@@ -10,15 +10,24 @@ import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
 
 const SEASON = () => {
-    const { seasonID, id, season, name, background } = useParams();
+    // const { seasonID, id, season, name, background } = useParams();
+    const hasFetched = useRef({tv:false,images:false,credits:false})
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     const [playlist,setPlaylist] = useState(null)
-    const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
+    // const [fromAnime,setAnime] = useState(null)
+    const { state } = useLocation();
+    const navigate = useNavigate();
+    const id = state.id
+    // const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
 
-    const serie_name = name
+    const serie_name = state.name
+    const seasonID = state.seasonID
+    const season = state.season
+    const background = state.background
+    const anime = state.anime
 
     useEffect(() => {
         const handleResize = () => {
@@ -46,51 +55,7 @@ const SEASON = () => {
             ) {
                 data {
                     id
-                    posters {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    backdrops {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    profiles {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    logos {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    stills {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
+                    path
                 }
                 meta_data {
                     type
@@ -109,63 +74,15 @@ const SEASON = () => {
     const [mutateInsertImage] = useMutation(gql`
         mutation AddImage(
             $meta_data: META_DATA_INPUT!
-            $data: DATA_INPUT!
-            $chunking:Boolean!
-            $chunking_index:Int!            
+            $data: DATA_INPUT!          
         ) {
             addImage(
                 meta_data: $meta_data
-                data: $data
-                chunking:$chunking
-                chunking_index:$chunking_index                
+                data: $data              
             ){
                 data {
                     id
-                    posters {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    backdrops {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    profiles {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    logos {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
-                    stills {
-                        aspect_ratio
-                        height
-                        iso_639_1
-                        file_path
-                        vote_average
-                        vote_count
-                        width 
-                    }
+                    path
                 }
                 meta_data {
                     id
@@ -180,6 +97,7 @@ const SEASON = () => {
     `,
     {
         onCompleted: (data) => {
+            console.log(data)
             if (data && data.addImage.success) {
                 // Refetch the query to get updated data
                 // fetchImageData.refetch().then((refetched) => {
@@ -385,94 +303,51 @@ const SEASON = () => {
     });
 
     const graphImages = useCallback(async() => {
-        try{
 
         async function freshFetch(){
             const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/images?api_key=${process.env.REACT_APP_api_key}`);
             const getImageData = await response.json();
+            console.log(getImageData,"images")
+            let value = 0
+            const {backdrops, posters, logos} = getImageData
+            let path = ''
+            if(backdrops && backdrops.length > 0){
+                value = Math.max(...backdrops.map(({height}) => height))
+                let key = backdrops.findIndex(({height}) => height === value)
+                if(key > -1){
+                    path = backdrops[key].file_path
+                }
+            } 
+            if(posters && posters.length > 0){
+                let posters_value = Math.max(...posters.map(({height}) => height))
+                if(posters_value > value){
+                    let key = posters.findIndex(({height}) => height === posters_value)
+                    if(key > -1){
+                        path = posters[key].file_path
+                    }
+                    value = posters_value
+                }
+            }
+            if(logos && logos.length > 0){
+                let logos_value = Math.max(...logos.map(({height}) => height))
+                if(logos_value > value){
+                    let key = logos.findIndex(({height}) => height === logos_value)
+                    if(key > -1){
+                        path = logos[key].file_path
+                    }
+                }
+            }
 
-            function chunkArray(array, size) {
-                const result = [];
-                for (let i = 0; i < array.length; i += size) {
-                    result.push(array.slice(i, i + size));
-                }
-                return result;
-            }
-            let backdrops_all_results = [...getImageData.backdrops]
-            if(backdrops_all_results.length > 100){
-                const chunks = chunkArray(backdrops_all_results, 100);
-                for (let i = 0; i < chunks.length; i++) {
-                    mutateInsertImage({ variables: { meta_data : {
-                        type:"tv",
-                        season:season?parseInt(season):-1,
-                        episode:-1,
-                        id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,backdrops:chunks[i]},
-                        chunking:true,
-                        chunking_index:i
-                    } });
-                }
-            }else{
-                mutateInsertImage({ variables: { meta_data : {
+            mutateInsertImage({ variables: { meta_data : {
                     type:"tv",
                     season:season?parseInt(season):-1,
                     episode:-1,
                     id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,backdrops:getImageData.backdrops},
-                                chunking:false,
-                    chunking_index:0 } });
-            }
-            let logos_all_results = [...getImageData.logos]
-            if(logos_all_results.length > 100){
-                const chunks = chunkArray(logos_all_results, 100);
-                for (let i = 0; i < chunks.length; i++) {
-                    mutateInsertImage({ variables: { meta_data : {
-                        type:"tv",
-                        season:season?parseInt(season):-1,
-                        episode:-1,
-                        id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,logos:chunks[i]},
-                    chunking:true,
-                    chunking_index:i                    
-                } });
-                }
-            }else{
-                mutateInsertImage({ variables: { meta_data : {
-                    type:"tv",
-                    season:season?parseInt(season):-1,
-                    episode:-1,
-                    id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,logos:getImageData.logos},
-                                chunking:false,
-                    chunking_index:0  } });
-            }
-            let posters_all_results = [...getImageData.posters]
-            if(posters_all_results.length > 100){
-                const chunks = chunkArray(posters_all_results, 100);
-                for (let i = 0; i < chunks.length; i++) {
-                    mutateInsertImage({ variables: { meta_data : {
-                        type:"tv",
-                        season:season?parseInt(season):-1,
-                        episode:-1,
-                        id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,posters:chunks[i]},
-                        chunking:true,
-                        chunking_index:i                    
-                } });
-                }
-            }else{
-                mutateInsertImage({ variables: { meta_data : {
-                    type:"tv",
-                    season:season?parseInt(season):-1,
-                    episode:-1,
-                    id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,posters:getImageData.posters},
-                        chunking:false,
-                        chunking_index:0  } });
-            }
-            return {...getImageData}
-        } 
-
+                }, data:{id:getImageData.id,path}                  
+            } });
+            return path
+        }         
+        try{
             const fetched = await fetchImage({
                 variables : {
                 type:"tv",
@@ -480,26 +355,29 @@ const SEASON = () => {
                 season:season?parseInt(season):-1,
                 id:id?parseInt(id):-1
             }})
-            // console.log(fetched)
+            console.log(fetched)
             if (fetched.data && fetched.data.image.success) {
                 console.log("image cached data:", fetched.data);
-                setImages(() => ({...fetched.data.image.data}))
+                setImages(() => (fetched.data.image.data.path))
 
             }else {
-                const getImageData = await freshFetch()
-                setImages(() => ({...getImageData}))
+                const path = await freshFetch()
+                setImages(path)
+                // setImages(() => ({...getImageData}))
             }
         
-
-    }catch(error){
-        // console.log(error)
-            fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/images?api_key=${process.env.REACT_APP_api_key}`)
-            .then(data => data.json())
-            .then(data => setImages(() => ({...data})))
+            
+        }catch(error){
+            console.log(error)
+            // fetch(`${process.env.REACT_APP_movie_db}tv/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
+            // .then(data => data.json())
+            // .then(data => setImages(() => ({...data})))
+            const path = await freshFetch()
+            setImages(path)            
         
 
-    }
-    },[fetchImage, id, season, mutateInsertImage]);
+        }
+    },[fetchImage,id, season, mutateInsertImage])
 
     const fetchTV = useCallback(async() => {
 
@@ -509,7 +387,7 @@ const SEASON = () => {
             const newData = {...data }
             newData.episodes = newData?.episodes.map(({crew,guest_stars,cast, ...rest}) => rest) || []
 
-            // console.log(newData,"new data")
+            console.log(newData,"new data")
             mutateInsertTV({
                 variables: {
                     single : {...newData}
@@ -560,7 +438,47 @@ const SEASON = () => {
         }
 
 
-    },[fetchSeason, mutateInsertTV, id, season, seasonID]);
+    },[fetchSeason, id, season, seasonID, mutateInsertTV]);
+
+    // useEffect(() => {
+    //     if(serie && anime){
+    //         const {season_number, id} = serie
+    //         console.log(season_number,serie_name)
+
+        
+    //         console.log("genre")
+    //         async function runAnime(){
+    //             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_stream : process.env.REACT_APP_stream_live}`,{
+    //                 method:"POST",
+    //                 headers:{
+    //                     "Content-Type":"application/json",
+    //                     "Accept":"application/json"
+    //                 },
+    //                 body:JSON.stringify({
+    //                     name:serie_name,
+    //                     anime:true,
+    //                     // year,
+    //                     season:season_number,
+    //                     // episode,
+    //                     id,
+    //                     stream:"episode",
+    //                     // address,
+    //                     // day:dayStr,
+    //                     // month:monthStr
+    //                 })
+    //             })
+    //             const {status, count, movies, portal} = await response.json()
+
+    //             console.log(status,movies,count)
+    //             setAnime({status,count})
+    //         }
+    //         runAnime()
+
+            
+    //     }
+
+    // },[serie,serie_name,anime])
+
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
@@ -638,14 +556,26 @@ const SEASON = () => {
     },[fetchCreditsData, id, season, mutateInsertCredits]);
 
     useEffect(() => {
+        // if(hasFetched.current.images){
+        //     return
+        // }
+        // hasFetched.current.images = true
         graphImages()
     },[graphImages])
 
     useEffect(() => {
+        if(hasFetched.current.tv){
+            return
+        }
+        hasFetched.current.tv = true
         fetchTV();
     }, [fetchTV]);
 
     useEffect(() => {
+        if(hasFetched.current.credits){
+            return
+        }
+        hasFetched.current.credits = true
         fetchCredits();
     }, [fetchCredits]);
     const addToPlayList = async() => {
@@ -750,67 +680,76 @@ const SEASON = () => {
     //     setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))        
     // },[images, season]);
 
-    const getBackground = useMemo(() => {
+    // const getBackground = useMemo(() => {
 
-        if(fetchedImageBackgrounds)
-            return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
-        if(!images)
-            return null
-        let value = 0
-        // console.log(images)
-        const {backdrops, posters, logos, stills} = images
-        let path = ''
-        if(backdrops && backdrops.length > 0){
-            const heights = backdrops.map(({ height }) => height);
-            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-            value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
-            let key = backdrops.findIndex(({height}) => height === value)
-            if(key > -1){
-                path = backdrops[key].file_path
+    //     if(fetchedImageBackgrounds)
+    //         return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
+    //     if(!images)
+    //         return null
+    //     let value = 0
+    //     // console.log(images)
+    //     const {backdrops, posters, logos, stills} = images
+    //     let path = ''
+    //     if(backdrops && backdrops.length > 0){
+    //         const heights = backdrops.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
+    //         let key = backdrops.findIndex(({height}) => height === value)
+    //         if(key > -1){
+    //             path = backdrops[key].file_path
+    //         }
+    //     } 
+    //     if(posters && posters.length > 0){
+    //         const heights = posters.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         let posters_value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
+    //         if(posters_value > value){
+    //             let key = posters.findIndex(({height}) => height === posters_value)
+    //             if(key > -1){
+    //                 path = posters[key].file_path
+    //             }
+    //             value = posters_value
+    //         }
+    //     }
+    //     if(stills && stills.length > 0){
+    //         const heights = stills.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         let stills_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
+    //         if(stills_value > value){
+    //             let key = stills.findIndex(({height}) => height === stills_value)
+    //             if(key > -1){
+    //                 path = stills[key].file_path
+    //             }
+    //             value = stills_value
+    //         }
+    //     }        
+    //     if(logos && logos.length > 0){
+    //         const heights = logos.map(({ height }) => height);
+    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
+    //         let logos_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
+    //         if(logos_value > value){
+    //             let key = logos.findIndex(({height}) => height === logos_value)
+    //             if(key > -1){
+    //                 path = logos[key].file_path
+    //             }
+    //         }
+    //     }
+    //     if(path)
+    //         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
+    //     else
+    //         setFetchedImageBackgrounds("null")
+    //     return process.env.REACT_APP_img_poster + path
+    // },[images, fetchedImageBackgrounds, season]);
+    const navRoute = ({url,state}) => {
+        navigate(url,{
+            state : {
+                ...state
             }
-        } 
-        if(posters && posters.length > 0){
-            const heights = posters.map(({ height }) => height);
-            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-            let posters_value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
-            if(posters_value > value){
-                let key = posters.findIndex(({height}) => height === posters_value)
-                if(key > -1){
-                    path = posters[key].file_path
-                }
-                value = posters_value
-            }
-        }
-        if(stills && stills.length > 0){
-            const heights = stills.map(({ height }) => height);
-            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-            let stills_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
-            if(stills_value > value){
-                let key = stills.findIndex(({height}) => height === stills_value)
-                if(key > -1){
-                    path = stills[key].file_path
-                }
-                value = stills_value
-            }
-        }        
-        if(logos && logos.length > 0){
-            const heights = logos.map(({ height }) => height);
-            const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-            let logos_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
-            if(logos_value > value){
-                let key = logos.findIndex(({height}) => height === logos_value)
-                if(key > -1){
-                    path = logos[key].file_path
-                }
-            }
-        }
-        setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
-        return process.env.REACT_APP_img_poster + path
-    },[images, fetchedImageBackgrounds, season]);
-
+        })
+    }
     return (
-        
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg"})`,backgroundPosition:"0% 40%"}}>
+        credits && serie ? 
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? process.env.REACT_APP_img_poster + images : background ? process.env.REACT_APP_img_poster + background : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
                 <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
@@ -819,19 +758,18 @@ const SEASON = () => {
                 :
                 <MOBILE/>
             }
-        {
-            credits && serie && images ? 
+    
                     <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene duration-100 h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 overflow-y-auto movie-scene mx-[1%] h-[92%] flex flex-col"}>
-                        <div className={windowWidth > 800 ? "w-[100%] h-[70%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
+                        <div className={windowWidth > 800 ? "w-[100%] min-h-[70%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
                             <div 
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
                                 style={{
-                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? process.env.REACT_APP_img_poster + serie.poster_path : fetchedImageBackgrounds ? getBackground : background) + ")",
-                                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
+                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? process.env.REACT_APP_img_poster + serie.poster_path : images ? images : background) + ")",
+                                    boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
                                 {
-                                    windowWidth < 800 && <PICTURE picture={`${serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? serie.poster_path : `/${fetchedImageBackgrounds}.jpg`}`} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
+                                    windowWidth < 800 && <PICTURE picture={`${serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? serie.poster_path : images}`} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] shadow-blue-500/50 object-contain"} />
                                 }
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
@@ -849,38 +787,75 @@ const SEASON = () => {
                                 <article>
                                     {serie.overview}
                                 </article>
-                                <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
-                                    <NavLink
-                                        to={`/series/video/series/${id}/${serie.season_number}/${background}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] ml-[10%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap border-b-[#fff] border-b-[2px]":"w-[100%] flex flex-col flex-wrap border-b-[#fff] border-b-[2px]"}>
+                                    <button
+                                        onClick={() => navRoute({
+                                            url:`/series/season/trailer`,
+                                            state:{
+                                                stream:"series",
+                                                id:id,
+                                                season:serie.season_number,
+                                                background:images
+                                            }})}                                        
+                                        className={windowWidth > 800 ? "w-[23%] flex flex-row flex-nowrap text-center underline h-[80px] ":" shadow-md shadow-[#ffd800] w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
                                     >
-                                        trailors
-                                    </NavLink>
-                                    <NavLink
-                                        to={`/series/similar/series/${id}/${background}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] ml-[10%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/>
+                                        <h2>trailors</h2>
+                                    </button>
+                                    <button
+                                        onClick={() => navRoute({
+                                            url:`/series/similar`,
+                                            state:{
+                                                stream:"series",
+                                                id,
+                                                background:images
+                                            }})}                                        
+                                        className={windowWidth > 800 ? "w-[23%] flex flex-row text-center underline  min-h-[40px] m-[1%]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
                                     >
-                                        similar series
-                                    </NavLink>
-                                    <NavLink
-                                        to={`/series/recommendations/series/${id}/${background}`}
-                                        className={windowWidth > 800 ? "w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]":"w-[80%] ml-[10%] rounded-md text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
+                                        <img src="/image/2798007.png" alt="UKOapp" className="w-[50%]"/>
+                                        <h2>similar tv</h2>
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => navRoute({
+                                            url:`/series/recommendations`,
+                                            state:{
+                                                stream:"series",
+                                                id,
+                                                background:images
+                                            }})}                                        
+                                        className={windowWidth > 800 ? "w-[23%] flex flex-row text-center min-h-[40px] underline m-[1%]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
                                     >
-                                        recommended series
-                                    </NavLink>
+                                        <img src="/image/11327060.png" alt="UKOapp" className="w-[50%]"/>
+                                        <h2>recommended movies</h2>
+                                    </button>                                    
                                 </div>
                                 <div className="w-[100%] h-[100px] movie-scene duration-50 overflow-x-auto flex flex-col flex-wrap">
                                     {
                                         serie?.episodes && serie?.episodes.map((episode,node) => 
-                                            <NavLink
-                                                to={`/series/${id}/${episode.id}/${episode.season_number}/${episode.episode_number}/${serie_name}/${background}`}
+                                            <button
+                                                // to={`/series/${id}/${episode.id}/${episode.season_number}/${episode.episode_number}/${serie_name}${images}}`}
+                                                onClick={() => navRoute({
+                                                    url:`/series/episode`,
+                                                    state:{
+                                                        stream:"series",
+                                                        id,
+                                                        episodeID:episode.id,
+                                                        season:episode.season_number,
+                                                        episode:episode.episode_number,
+                                                        name:serie_name,
+                                                        background:images,
+                                                        anime
+                                                        // direct:fromAnime?serie?.id:false,
+                                                        // index:fromAnime?fromAnime.count:false
+                                                    }})}                                                 
                                                 key={node}
                                                 className={windowWidth > 800 ? "min-w-[24%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]":"min-w-[48%] h-[100%] m-[0.5%] hover:contrast-150 border-[2px]"}
                                             >
                                                 <p>{episode.name}</p>
                                                 <p>episode {episode.episode_number}</p>
                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {(parseFloat(episode.vote_average)).toFixed(1)}</p>
-                                            </NavLink>
+                                            </button>
                                         )
                                     }
                                 </div>
@@ -915,7 +890,15 @@ const SEASON = () => {
                                     
                                     {
                                         credits.cast.map(({roles,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                            <div 
+                                                key={serie_key} 
+                                                // to={`/people/${id}`} 
+                                                onClick={() => navRoute({
+                                                    url:`/series/person`,
+                                                    state:{
+                                                        id
+                                                    }})}                                                
+                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"cursor-pointer w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -931,7 +914,7 @@ const SEASON = () => {
                                                         }
                                                     </div>
                                                 </div>
-                                            </NavLink>
+                                            </div>
                                         )
                                     }
                                 </div>
@@ -946,7 +929,14 @@ const SEASON = () => {
                                     
                                     {
                                         credits.crew.map(({profile_path,popularity,jobs,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
-                                            <NavLink key={serie_key} to={`/people/${id}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <div 
+                                                key={serie_key} 
+                                                onClick={() => navRoute({
+                                                    url:`/series/person`,
+                                                    state:{
+                                                        id
+                                                    }})} 
+                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"cursor-pointer w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -962,13 +952,13 @@ const SEASON = () => {
                                                         }
                                                     </div>
                                                 </div>
-                                            </NavLink>
+                                            </div>
                                         )
                                     }
                                 </div>
                             </div>
                         }
-                        <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
+                        {/* <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
                             {
                                 Object.entries(images).map(([key,value],node) => 
                                     value && typeof(value) === "object" && value.map(({file_path},index) => 
@@ -979,15 +969,14 @@ const SEASON = () => {
                                 )
                             }
 
-                        </div>
+                        </div> */}
                         
 
                     </div>
+
+                </div>
                     :
                     <LOAD/>
-                }
-                </div>
-
     )
 }
 

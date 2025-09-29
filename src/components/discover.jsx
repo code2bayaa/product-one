@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import CONTROLLERS from "../midlleware/controllers"
-import { NavLink, useParams } from "react-router-dom"
+import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load"
@@ -14,9 +14,12 @@ import CryptoJS from "crypto-js";
 
 const DISCOVER = () => {
 
-    let { mode, } = useParams();
+    const {state} = useLocation()
+    let { mode, } = state;
+    const navigate = useNavigate();
     const [movies, setMovies] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const hasFetched = useRef(false)
 
     useEffect(() => {
         const handleResize = () => {
@@ -278,6 +281,10 @@ const DISCOVER = () => {
     },[fetchMovies,mutateInsertMovies]);
 
     useEffect(() => {
+        if(hasFetched.current){
+            return
+        }
+        hasFetched.current = true        
         intitializeMovies(
             {
             adjustable:true,
@@ -285,7 +292,13 @@ const DISCOVER = () => {
         })
 
     },[intitializeMovies,mode])
-
+    const navRoute = ({url,state}) => {
+        navigate(url,{
+            state : {
+                ...state
+            }
+        })
+    }
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
@@ -309,7 +322,15 @@ const DISCOVER = () => {
                             <div className={`w-[100%] h-auto flex flex-row flex-wrap`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
-                                        <NavLink key={movie_key} to={name || original_name ? `/series/${id}` : `/movies/${id}`} className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
+                                        <div 
+                                            key={movie_key} 
+                                            onClick={() => navRoute({
+                                                url:name || original_name ? `/series/id` : `/movies/id`,
+                                                state:{
+                                                    id
+                                                }
+                                            })}
+                                            className={windowWidth > 800 ? "cursor-pointer w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"cursor-pointer w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path || backdrop_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -317,7 +338,7 @@ const DISCOVER = () => {
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                 </div>
                                             </div>
-                                        </NavLink>
+                                        </div>
                                     )
                                 }
                             </div>                        

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import MOBILE from "./mobileBar";
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
@@ -7,10 +7,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { gql, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2";
 import SWEETPAGE from "../midlleware/pages";
-import { NavLink } from "react-router-dom";
+import { useNavigation } from "react-router-dom";
 // import LOAD from "../midlleware/load";
 
 const PLAYLIST = () => {
+    const hasFetched = useRef({id:false,movies:false})
     const [windowWidth, setWindowWidth] = useState(0);
     const [playlist, setPlaylist] = useState({
         movie: { count: 0, data: [], page:1, tags:[] },
@@ -19,6 +20,7 @@ const PLAYLIST = () => {
         episode: { count: 0, data: [], page:1, tags:[] }
     });
     const [userID, setUserID] = useState(null)
+    const navigate = useNavigation()
 
     useEffect(() => {
         const handleResize = () => {
@@ -157,6 +159,10 @@ const PLAYLIST = () => {
     },[fetchPlaylist, userID])
 
     useEffect(() => {
+         if(hasFetched.current.id){
+            return
+        }
+        hasFetched.current.id = true       
         fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
         .then(res => {
             if (!res.ok) {
@@ -172,20 +178,30 @@ const PLAYLIST = () => {
     },[])
 
     useEffect(() => {
-
-        [
+        // if(hasFetched.current.movies){
+        //     return
+        // }
+        // hasFetched.current.movies = true
+        const cont = [
             "movie",
             "tv",
             "season",
             "episode"
-        ].forEach(type => {
+        ]
+        cont.forEach(type => {
             intitializeMovies({
                 page:1,
                 type
             })
         })
     }, [intitializeMovies]);
-        
+    const navRoute = ({state,url}) => {
+        navigate(url,{
+            state : {
+                ...state
+            }
+        })
+    } 
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
@@ -232,7 +248,20 @@ const PLAYLIST = () => {
                                     <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                                         {
                                             value.data.map(({season_number,episode_number,poster_path,still_path,backdrop_path,vote_average,popularity,vote_count,name,original_name,title,original_title,id},movie_key) => 
-                                                <NavLink key={movie_key} to={key === "tv" ? `/playlist/series/${id}` : key === "movie" ? `/playlist/movies/${id}` : key === "season" ? `/playlist/series/${value.tags[movie_key].tag}/${id}/${season_number}/null${poster_path}` : `/playlist/series/${value.tags[movie_key].tag}/${id}/${season_number}/${episode_number}/null${still_path}`} className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                                <div 
+                                                    key={movie_key} 
+                                                    onClick={() => navRoute({
+                                                        url:key === "tv" ? `/playlist/series` : key === "movie" ? `/playlist/movie` : key === "season" ? `/playlist/season` : `/playlist/episode`,
+                                                        state:{
+                                                            id,
+                                                            episodeID:value.tags[movie_key].tag,
+                                                            seasonID:value.tags[movie_key].tag,
+                                                            season: season_number,
+                                                            episode:episode_number,
+                                                            background:key === "season" ? poster_path : still_path
+                                                        }
+                                                    })}
+                                                    className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                                     <div className="w-[100%] h-[100%]">
                                                         <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || backdrop_path || still_path} />
                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -240,7 +269,7 @@ const PLAYLIST = () => {
                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                         </div>
                                                     </div>
-                                                </NavLink>
+                                                </div>
                                             )
                                         }
                                     </div>

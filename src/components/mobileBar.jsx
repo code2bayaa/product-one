@@ -2,19 +2,20 @@ import { faBars, faBarsStaggered } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState, useEffect } from "react"
 import NAVBAR from "./nav"
-// import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import { NavLink } from "react-router-dom";
 import SWEETPAGE from "../midlleware/pages";
 import PICTURE from "../midlleware/picture";
 import CryptoJS from "crypto-js";
+import { useNavigate } from "react-router-dom"
 
 const MOBILE = () => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
     const [search_content, setSearchContent] = useState([]);
     const [windowWidth, setWindowWidth] = useState(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleResize = () => {
@@ -186,7 +187,13 @@ const MOBILE = () => {
             {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_person : process.env.REACT_APP_search_person_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert_person : process.env.REACT_APP_search_insert_person_live,"type":"person"}
         ],search:searchValue})
     }
-
+  const navRoute = ({state,url}) => {
+        navigate(url,{
+            state : {
+                ...state
+            }
+        })
+    } 
     return (
         <>
             {
@@ -198,11 +205,20 @@ const MOBILE = () => {
                                     <h1 className="my-t-[5%]">{index}</h1>
                                     <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                     <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages || 0}/>
-                                    <div className="w-[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
+                                    <div className="w -[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
                                         {
                                             results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
-                                                <NavLink key={search_key} to={`/${index}/${id}`} className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
-
+                                                <NavLink  to={`/${index}/${id}`} >
+                                                <div 
+                                                    key={search_key}
+                                                    onClick={() => navRoute({
+                                                        url:`/${index}/id`,
+                                                        state:{
+                                                            id
+                                                        }
+                                                    })}
+                                                    className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}
+                                                >
                                                     <div key={search_key} className="w-[100%] h-[100%]">
                                                         <PICTURE classes={'object-cover h-[100%]'} picture={poster_path || backdrop_path || profile_path} />
                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -217,6 +233,7 @@ const MOBILE = () => {
                                                             }</p>
                                                         </div>
                                                     </div>
+                                                </div>
                                                 </NavLink>
                                             )
                                         }

@@ -1,10 +1,11 @@
+// import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import {RouterProvider, createBrowserRouter} from "react-router-dom"
 
 import './index.css';
 // import App from './App';
-import EMPIRE from './components/index.jsx';
+// import EMPIRE from './components/index.jsx';
 import MOVIES from './components/movies.jsx';
 import './tailwind-output.css'
 import ERROR from './components/error.jsx';
@@ -36,13 +37,33 @@ import FORGOT from './components/forgot.jsx';
 import CHANGEPAGE from './components/code.jsx';
 import DISCOVER from './components/discover.jsx';
 import TALENT from './components/talented.jsx';
+import SPEED from './components/speed.jsx';
+import DOWNLOAD from './components/download.jsx';
+import OFFLINE from './components/offline.jsx';
+import LIBRARY from './components/library.jsx';
+import TERMS from './components/terms.jsx';
+import PRIVACY from './components/privacy.jsx';
+import BLOGS from './components/blogs.jsx';
+import ABOUT from './components/about.jsx';
+import HOME from './components/home.jsx';
 // import reportWebVitals from './reportWebVitals';
 // import MUX from './components/mux.jsx';
+// serviceWorkerRegistration.register(); // ✅ not unregister()
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.register('./service-worker.js')
+//     .then(reg => console.log('✅ Custom Service Worker registered:', reg.scope))
+//     .catch(err => console.error('❌ SW registration failed:', err));
+// }
 
-const router = createBrowserRouter([
+const routers = [
   {
-    path : "/",
-    element : <EMPIRE/>,
+    path : "/about",
+    element : <ABOUT/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/blogs",
+    element : <BLOGS/>,
     errorElement : <ERROR/>
   },
   {
@@ -51,48 +72,58 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/movies/:id",
+    path : "/movies/id",
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/anime/movies/:id",
+    path : "/anime/movie",
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/disney/movies/:id",
+    path : "/disney/movie",
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/netflix/movies/:id",
+    path : "/netflix/movie",
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/playlist/movies/:id",
+    path : "/playlist/movie",
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/movies/similar/:stream/:id/:background",
+    path : "/movies/similar",
     element : <SIMILAR/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/movies/recommendations/:stream/:id/:background",
+    path : "/movies/recommendations",
     element : <RECOMMENDATIONS/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/movies/video/:stream/:id/:background",
+    path : "/movies/trailer",
     element : <TRAILER/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/video/:stream/:id/:name/:year/:date/:imdbId/:background",
+    path : "/movies/person",
+    element : <PERSON/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/video/movie",
     element : <PLAY/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/speed",
+    element : <SPEED/>,
     errorElement : <ERROR/>
   },
   {
@@ -116,72 +147,82 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/series/:id",
+    path : "/series/id",
     element : <SERIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/anime/series/:id",
+    path : "/anime/serie",
     element : <SERIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/disney/series/:id",
+    path : "/disney/serie",
     element : <SERIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/netflix/series/:id",
+    path : "/netflix/serie",
     element : <SERIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/playlist/series/:id",
+    path : "/playlist/series",
     element : <SERIE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/video/:stream/:id/:background",
+    path : "/series/trailer",
     element : <TRAILER/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/video/:stream/:id/:season/:episode/:background",
+    path : "/series/person",
+    element : <PERSON/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/series/season/trailer",
     element : <TRAILER/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/similar/:stream/:id/:background",
+    path : "/series/episode/trailer",
+    element : <TRAILER/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/series/similar",
     element : <SIMILAR/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/recommendations/:stream/:id/:background",
+    path : "/series/recommendations",
     element : <RECOMMENDATIONS/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/:id/:seasonID/:season/:name/:background",
+    path : "/series/season",
     element : <SEASON/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/playlist/series/:id/:seasonID/:season/:name/:background",
+    path : "/playlist/season",
     element : <SEASON/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/series/:id/:episodeID/:season/:episode/:name/:background",
+    path : "/series/episode",
     element : <EPISODE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/playlist/series/:id/:episodeID/:season/:episode/:name/:background",
+    path : "/playlist/episode",
     element : <EPISODE/>,
     errorElement : <ERROR/>
   },
   {
-    path : "/video/:stream/:id/:name/:season/:episode/:date/:imdbId/:background",
+    path : "/video/episode",
     element : <PLAY/>,
     errorElement : <ERROR/>
   },
@@ -191,19 +232,24 @@ const router = createBrowserRouter([
     errorElement : <ERROR/>
   },
   {
-    path : "/people/:id",
+    path : "/people/id",
     element : <PERSON/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/people/movie",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/people/serie",
+    element : <SERIE/>,
     errorElement : <ERROR/>
   },
   {
     path : "/search",
     element : <SEARCH/>,
     errorElement : <ERROR/>
-  },
-  {
-    path:"/play/:id/:host/:index/:type/:background",
-    element:<PLAYER/>,
-    elementError:<ERROR/>
   },
   {
     path:"/play",
@@ -236,6 +282,11 @@ const router = createBrowserRouter([
     elementError:<ERROR/>
   },
   {
+    path:"/follow/people",
+    element:<PEOPLE/>,
+    elementError:<ERROR/>
+  },
+  {
     path:"/test",
     element:<TESTSOCKETS/>,
     elementError:<ERROR/>
@@ -261,16 +312,58 @@ const router = createBrowserRouter([
     elementError:<ERROR/>
   },
   {
-    path:"/discover/:mode/:extra",
+    path:"/talent",
     element:<TALENT/>,
     elementError:<ERROR/>
   },
   {
-    path:"/discover/:mode",
+    path:"/discover",
     element:<DISCOVER/>,
     elementError:<ERROR/>
-  }
-])
+  },
+  {
+    path:"/library",
+    element:<LIBRARY/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/privacy",
+    element:<PRIVACY/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/terms",
+    element:<TERMS/>,
+    elementError:<ERROR/>
+  }]
+
+if(!navigator.onLine){
+  console.log("offline")
+  routers.push({
+    path : "/",
+    element : <DOWNLOAD/>,
+    errorElement : <ERROR/>
+  })
+  routers.push({
+    path:"/offline",
+    element:<OFFLINE/>,
+    errorElement:<ERROR/>
+  })
+}else{
+  console.log("online")
+  // routers.push({
+  //   path : "/",
+  //   element : <EMPIRE/>,
+  //   errorElement : <ERROR/>
+  // })
+  routers.push({
+    path : "/",
+    element : <HOME/>,
+    errorElement : <ERROR/>
+  })
+}
+
+const router = createBrowserRouter(routers)
 const client = new ApolloClient({
 
   uri: process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_graphql : process.env.REACT_APP_graphql_live,

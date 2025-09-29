@@ -11,6 +11,7 @@ const NAVBAR = () => {
     const [loggedIn, setLoggedIn] = useState(false)
     // const [count,setCount] = useState(0)
     const [coins,setCoins] = useState(0.0)
+    const [showFullscreenBtn, setShowFullscreenBtn] = useState(false);
     const router = useNavigate()
     const api_url = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live
     // const linkUrl = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_live
@@ -93,7 +94,7 @@ const NAVBAR = () => {
         
             const {status,message} = await response.json()
 
-            console.log(status,"status")
+            // console.log(status,"status")
             if(status){
                 setLoggedIn(false)
                 router("/")
@@ -108,9 +109,58 @@ const NAVBAR = () => {
         }
     }
 
+    const bigScreen = () => {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari & Opera
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+            elem.msRequestFullscreen();
+        }
+        setShowFullscreenBtn(true);
+
+    };
+
+    const exitScreen = () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+            document.msExitFullscreen();
+        }
+        setShowFullscreenBtn(false);
+    };
+
     return (
         <div className="w-[100%] movie-scene h-[100%] overflow-auto">
             <img src="/image/logo.png" alt="logo late-developers.com" className="w-[100%] h-[200px]" />
+            { windowWidth < 800 && (
+                <button
+                    onClick={ showFullscreenBtn ? () => exitScreen(): () => bigScreen()}
+                    style={{
+                        position: "fixed",
+                        top: 10,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        zIndex: 1000,
+                        background: "#000",
+                        color: "#ffd800",
+                        padding: "10px 24px",
+                        borderRadius: "12px",
+                        border: "2px solid #ffd800"
+                    }}
+                >
+                    {
+                        showFullscreenBtn ? "Exit Fullscreen" : "Go Fullscreen"
+                    }
+                </button>
+            )}   
             <div className="w-[100%] h-[auto] text-white">
                 <div className="w-[100%] h-[60px] text-[#ffd800] text-[30px]">
                     <FontAwesomeIcon icon={faCoins} />{coins} <span className="text-[20px]">credits</span>
@@ -210,14 +260,23 @@ const NAVBAR = () => {
                 {
                     !loggedIn ? 
                     <>
-                        <a
+                        <NavLink
+                            to="/signin"
+                            className={({ isActive, isPending }) =>
+                                isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                            }
+                        >
+                            sign in
+                        </NavLink>
+                        {/* <a
                             href="/signin"                    
                             className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                             rel="noreferrer"
+                            target="blank"
                         >
                             sign in
-                        </a>
-                        <a
+                        </a> */}
+                        {/* <a
                             // href={`${linkUrl}`}
                             href="/signup"
                             // target="_blank"
@@ -236,7 +295,7 @@ const NAVBAR = () => {
                             // style={{cursor:"pointer",background:"transparent",height:"40px",color:"#fff",textDecoration:"underline"}}
                         >
                             forgot password
-                        </a>                        
+                        </a>                         */}
                     </>
                     :
                     <>
@@ -287,11 +346,11 @@ const NAVBAR = () => {
             </div>
             <h3>webmaster: 
                 <a
-                    href="https://late-developers.com"
+                    href="https://brianwekesa.netlify.app"
                     target="_blank"
                     rel="noreferrer"
                 >
-                    late developers
+                    Brian Wekesa
                 </a>
             </h3>
         </div>

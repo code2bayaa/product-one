@@ -34,7 +34,8 @@ const SWEETPAGE = ({intitializeMovies,page,index,total_pages}) => {
             >
                 page {newPage} <FontAwesomeIcon icon={view ? faArrowUp : faArrowDown} /> 
             </button>
-            <div className={`${ view ? "flex" : "hidden"} overflow-x-auto movie-scene w-[100%] flex-col h-[60px] flex-wrap`}>
+            <div
+             className={`${ view ? "flex" : "hidden"} duration-150 overflow-x-auto movie-scene w-[100%] flex-col h-[60px] flex-wrap`}>
                 { 
                     Array(total_pages - 1 + 1)
                     .fill()

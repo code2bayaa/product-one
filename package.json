@@ -1,6 +1,6 @@
 {
-  "name": "uko_launch",
-  "version": "0.1.0",
+  "name": "UKOapp",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.13.8",
@@ -20,6 +20,7 @@
     "graphql": "^16.11.0",
     "gsap": "^3.13.0",
     "hls.js": "^1.6.5",
+    "idb": "^8.0.3",
     "jquery": "^3.7.1",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
@@ -32,6 +33,7 @@
     "react-scripts": "5.0.1",
     "react-simple-star-rating": "^5.1.7",
     "react-slick": "^0.30.3",
+    "react-snap": "^1.23.0",
     "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.19.1",
     "swiper": "^11.2.6",
@@ -39,6 +41,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "postbuild": "react-snap",
     "build": "set REACT_APP_environment=production && react-scripts build",
     "build:css": "tailwindcss -i ./src/index.css -o ./src/tailwind-output.css --watch",
     "test": "react-scripts test",
@@ -61,5 +64,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-optional-chaining": "^7.21.0"
   }
 }

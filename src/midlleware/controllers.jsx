@@ -1,5 +1,6 @@
+import { useMutation, useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import { useState, useEffect } from "react"
-import { useQuery, gql, useMutation } from '@apollo/client';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 
@@ -80,7 +81,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             // console.log("inserted genre", data);
             if (data.addGenre.success) {
                 // Refetch the query to get updated data
-                fetchGenre.refetch()
+                // fetchGenre.refetch()
 
             }
         },
@@ -113,7 +114,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
         onCompleted: (data) => {
             if (data.updateGenre.success) {
                 // Refetch the query to get updated data
-                fetchGenre.refetch()
+                // fetchGenre.refetch()
 
             }
         },
@@ -166,7 +167,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             // console.log(data)
             if (data && data.addRegion.success) {
                 // Refetch the query to get updated data
-                fetchRegion.refetch()
+                // fetchRegion.refetch()
 
             }
         },
@@ -257,7 +258,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             // console.log(data)
             if (data && data.addLanguage.success) {
                 // Refetch the query to get updated data
-                fetchLanguage.refetch()
+                // fetchLanguage.refetch()
 
             }
         },
@@ -673,11 +674,11 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             <div className="w-[100%] flex flex-col flex-wrap">
                 <div className="w-[100%] h-[auto] border-r-[3px] border-[#2E2E3A]">
                     {/* <h1 className="text-[30px] font-bold">Controllers</h1> */}
-                    <div className="w-[100%] h-[auto] text-white flex flex-row flex-wrap items-center justify-center">
+                    <div className={`${windowWidth > 800 ? "w-[70%] ml-[15%]" : "w-[100%]"} h-[auto] text-white flex flex-row flex-wrap items-center justify-center`}>
                         
                             <button
                                 onClick={() => getGenre()}
-                                className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                                className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                             >
                                 Genre 
                                 {
@@ -690,7 +691,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                         
                         <button
                             onClick={() => getRegion()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Region 
                             {
@@ -702,7 +703,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                         </button>
                         <button
                             onClick={() => getLanguage()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedLanguage ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedLanguage ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Language 
                             {
@@ -714,7 +715,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                         </button>
                         <button
                             onClick={() => getYears()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedYear ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                            className={windowWidth > 800 ? `w-[23%] h-[50px] mt-[0.5%] text-white ${selectedYear ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Year 
                             {

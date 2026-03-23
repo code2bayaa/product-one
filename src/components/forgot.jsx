@@ -1,4 +1,4 @@
-// import NAVBAR from "./nav";
+import NAVBAR from "./nav";
 import {useState,useEffect} from "react"
 import { NavLink  } from "react-router-dom"
 import MOBILE from "./mobileBar";
@@ -10,11 +10,11 @@ const FORGOT = () => {
   const [windowWidth, setWindowWidth] = useState(0)
 
     useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value      
+      const handleResize = () => {
+          setWindowWidth(window.innerWidth);
+      };
+      window.addEventListener("resize", handleResize);
+      handleResize(); // Call it once to set the initial value      
     })
 
   const handleSubmit = async (e) => {
@@ -27,7 +27,7 @@ const FORGOT = () => {
       return null
     }
 
-    const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_forgot : process.env.REACT_APP_forgot_live, {
+    const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_FORGOT : process.env.REACT_APP_FORGOT_LIVE, {
       method: "POST",
       body:JSON.stringify({
         email:form.email
@@ -44,7 +44,7 @@ const FORGOT = () => {
       return null
     }
 
-    const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_email : process.env.REACT_APP_email_live, {
+    const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_EMAIL : process.env.REACT_APP_EMAIL_LIVE, {
       cache: "no-store",
       method: 'POST', // HTTP method
       headers: {
@@ -58,7 +58,7 @@ const FORGOT = () => {
               <div style='width:80%;margin-left:10%;'>
                   <h1>Welcome To Late Developers product UKO</h1>
                   <p>Use the link to change your password</p>
-                  <p><a style="text-decoration:underline;" href="${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_app : process.env.REACT_APP_app_live}/forgot/code?code=${code}">click me</a></p>
+                  <p><a style="text-decoration:underline;" href="${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_APP : process.env.REACT_APP_APP_LIVE}/forgot/code?code=${code}">click me</a></p>
                   <p>Have an idea, contact us to implement it, it's not too late - web - mobile - tv - tablet</p>
                   <p>For more information contact info@late-developers.com © 2025</p>
                   <a href="https://late-developers.com" style="text-decoration:none;color:#000;font-weight:bold;">Visit our website</a>
@@ -82,11 +82,9 @@ const FORGOT = () => {
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {
                 windowWidth > 800 ?
-                <>
-                </> 
-                // <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
-                //     <NAVBAR/>
-                // </div>
+                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                    <NAVBAR/>
+                </div>
                 :
                 <MOBILE/>
             }
@@ -108,12 +106,12 @@ const FORGOT = () => {
                             onChange={(e) => setForm(() => ({...form, [e.target.name] : e.target.value}))}
                         />
                         <button 
-                            type="submit"
-                            disabled={loading}
-                            className="w-[40%] h-[40px] text-white bg-[#000] mx-[30%]"
-                            >
-                            {loading ? "sending..." :"Send Email"}
-                            </button>
+                          type="submit"
+                          disabled={loading}
+                          className="w-[40%] h-[40px] text-white bg-[#000] mx-[30%]"
+                        >
+                          {loading ? "sending..." :"Send Email"}
+                        </button>
                         <fieldset>
                             <NavLink to="/signup" className="w-[48%] m-[1%] underline">Create an Account</NavLink>
                             <NavLink to="/signin" className="w-[48%] m-[1%] underline">Sign In</NavLink>     
@@ -122,7 +120,6 @@ const FORGOT = () => {
                     </div>
                 </div>
                 </div>
-     
             </div>
         </div>
     )

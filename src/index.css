@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
+/* @import "tailwindcss"; */
 @layer base {
   :root {
     /* Cinema-inspired color palette */
@@ -171,7 +171,7 @@ code {
 }
 
 .slick-slide{
-  width:3.5% !important;
+  width:300px !important;
   height: 100%;
 }
 
@@ -180,11 +180,19 @@ code {
   height: 100%;
 }
 
+.wall-border{
+  border-image: url(assets/border2.png) 30 round;
+  -moz-border-image: url(assets/border2.png) 30 round;
+  -webkit-border-image: url(assets/border2.png) 30 round;
+  border-width: 30px;
+  border-style: solid; 
+}
+
 .slick-track{
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-  height:600px;
+  height:450px;
 }
 
 html,body{
@@ -199,6 +207,10 @@ html,body{
   width:100%;
   overflow-y: hidden;
   overflow-x: hidden;
+}
+
+button{
+  cursor: pointer;
 }
 .swiper{
   transition:3s ease-in infinite;
@@ -233,22 +245,151 @@ html,body{
   width : 100%;
   /* max-height:550px; */
   height:500px;
+  z-index: 2 !important;
+  box-shadow: 2px 2px 10px 0px rgba(0,0,0,0.75);
+  border-radius:16px;
   /* border-radius:5px; */
   /* margin-top:5%; */
 }
 .plyr__video-wrapper{
   height:100%;
   width:100%;
+  z-index: 2;
 }
 .plyr__controls{
   display:none
 }
 video, iframe{
-  height:500px;
+  height:400px;
   width:100%;
+}
+iframe[title="YouTube video player"]{
+  height:400px !important;
+  width:80% !important;
+  margin-left: 10%;
+}
+.vjs_video_814-dimensions{
+  width:100% !important;
+  height: 400px;
+}
+.vjs_video_3-dimensions{
+  width:100% !important;
+  height: 400px;
+}
+.video-js .vjs-tech{
+  width: 100% !important;
+  height: 400px !important;
+}
+
+/* base player container */
+.vjs-onstream .vjs-control-bar,
+.vjs-onstream .vjs-tech {
+font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 
+/* Overall player look */
+.vjs-onstream.video-js {
+--bg: rgba(10, 11, 13, 0.75);
+--glass: rgba(255,255,255,0.06);
+--accent: linear-gradient(90deg, #6EE7B7 0%, #3B82F6 100%);
+--accent-solid: #3B82F6;
+--muted: rgba(255,255,255,0.6);
+--white: #ffffff;
+
+
+background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.35));
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+height: auto;
+}
+
+
+/* big center play button */
+.vjs-onstream .vjs-big-play-button {
+width: 84px;
+height: 84px;
+border-radius: 999px;
+border: none;
+background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.06)), var(--accent);
+box-shadow: 0 8px 24px rgba(59,130,246,0.28);
+transform: translateY(-10%);
+transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.18s;
+}
+.vjs-onstream .vjs-big-play-button:hover { transform: translateY(-14%) scale(1.02); }
+.vjs-onstream .vjs-big-play-button .vjs-icon-placeholder { display: none; }
+.vjs-onstream .vjs-big-play-button:before {
+content: '\25B6'; /* play triangle */
+color: white;
+font-size: 28px;
+position: relative;
+left: 6px;
+}
+
+
+/* minimal control bar glass */
+.vjs-onstream .vjs-control-bar {
+background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+border-top: 1px solid rgba(255,255,255,0.04);
+padding: 10px 12px;
+align-items: center;
+gap: 10px;
+}
+
+/* control buttons look */
+.vjs-onstream .vjs-control {
+color: var(--white);
+opacity: 0.95;
+transition: opacity 0.18s ease, transform 0.12s ease;
+border-radius: 8px;
+padding: 6px;
+}
+.vjs-onstream .vjs-control:hover { opacity: 1; transform: translateY(-2px); background: rgba(255,255,255,0.02); }
+
+
+/* progress bar styling */
+.vjs-onstream .vjs-progress-control {
+flex: 1 1 auto;
+min-width: 120px;
+margin: 0 10px;
+}
+
+
+.vjs-onstream .vjs-progress-holder {
+height: 8px;
+border-radius: 999px;
+background: rgba(255,255,255,0.06);
+overflow: hidden;
+box-shadow: inset 0 -1px 0 rgba(255,255,255,0.02);
+}
+.vjs-onstream .vjs-play-progress,
+.vjs-onstream .vjs-volume-level {
+background: var(--accent-solid);
+background-image: var(--accent);
+height: 100%;
+transition: width 0.12s linear;
+box-shadow: 0 2px 8px rgba(59,130,246,0.18);
+}
+.vjs-onstream .vjs-load-progress { background: rgba(255,255,255,0.08); height: 100%; }
+
+
+/* time displays */
+.vjs-onstream .vjs-time-control { font-size: 12px; color: var(--muted); }
+
+
+/* volume panel custom look */
+.vjs-onstream .vjs-volume-panel {
+display: flex; align-items: center; gap: 8px; margin-right: 6px;
+}
+
+
+.vjs-onstream .vjs-volume-control .vjs-volume-bar {
+width: 80px; height: 6px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.04);
+}
+
+
+/* fullscreen button more prominent */
 /* .playfair-display-<uniquifier> {
   font-family: "Playfair Display", serif;
   font-optical-sizing: auto;
@@ -413,7 +554,139 @@ video, iframe{
   background-repeat: no-repeat;
   
 }
+
+.anime-nav{
+  background-image: url(assets/anime.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bollywood-nav{
+  background-image: url(assets/bollywood.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.china-nav{
+  background-image: url(assets/china.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.korea-nav{
+  background-image: url(assets/korea.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.nav-bar{
+  background-image: url(assets/smoke2.gif);
+  background-repeat: no-repeat;
+  background-position: 100% 100%;
+}
+
+.nav-bar-full{
+  background-image: url(assets/smoke2.gif);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+    box-shadow:0 0 30px rgba(255, 255, 255, 0.7),
+              inset 0 0 60px rgba(255, 255, 255, 0.6);
+}
+
+.video-wrapper iframe{
+  position: relative;
+  width: 90%;
+  /* margin-left:5%; */
+  height: 400px;
+  border-radius: 16px;
+  z-index: 2;
+  /* margin-top:10%; */
+  top:9%;
+  overflow: hidden;
+  background: #000;
+
+  /* Inset shadow like YouTube */
+  /* box-shadow:0 0 30px rgba(255, 255, 255, 0.7),
+              inset 0 0 60px rgba(255, 255, 255, 0.6); */
+}
+
+/* Optional background blur under the edges */
+.video-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(12px);
+  z-index: 1;
+  pointer-events: none;
+  height: 550px;
+  width:100%;
+  
+  /* margin-left:20%;  */
+  /* margin-top:3.5%;
+  /* background-color: #000; */
+}
+
+.video-wrapper{
+  height:450px;
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.35);
+}
+/* .video-wrapper iframe {
+  position: relative;
+  z-index: 2;
+  border: none;
+  border-radius: 16px;
+} */
+
+.default-text{
+  font-family: "Playfair Display", serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.video-plyr-wrapper::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(12px);
+  z-index: 1;
+  pointer-events: none;
+  height: 500px;
+  width:70%;
+  margin-left:15%;
+}
+.gradient-text {
+  background: radial-gradient(circle, #FFD800 0%, #005B6E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
 @media(max-width:800px){
+  .plyr{
+    width : 90%;
+    height:300px;
+    border-radius:10px;
+    margin-top:5%;
+    margin-left:5%;
+  }
+  .video-plyr-wrapper::before{
+    content: "";
+    height: 350px;
+    width:100%;
+    margin-left:0%;
+    margin-top: 0%;
+    position:absolute;
+  }
+  .video-wrapper::before {
+    width:100% !important;
+  }
   .swiper-button-prev::after{
     font-size: 120% !important;
     width:30%;
@@ -426,8 +699,21 @@ video, iframe{
   .swiper-button-next, .swiper-button-prev{
     width:15% !important;
   }
+
+  .clips .swiper-slide{
+    width:300px !important;
+  }
+  
   #build{
     font-size: 80% !important;
+  }
+
+  iframe{
+    height:300px !important;
+  }
+
+  .video-wrapper iframe{
+    top:-12%;
   }
   
 }

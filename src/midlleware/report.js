@@ -1,16 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 
 
-const COLLECT = async() => {
+const COLLECT = async(data) => {
 
     try{
-        const api_url = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_report : process.env.REACT_APP_report_live
+        const api_url = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_REPORT : process.env.REACT_APP_REPORT_LIVE
 
         let user = localStorage.getItem("session")
         let user_location = localStorage.getItem("location")
         let device = localStorage.getItem("device")
         const dateDATA = new Date()
-        // const time = dateDATA.toLocaleTimeString()
         const time = dateDATA.toISOString().slice(11, 19);
         const getFormattedDate = () => {
             const now = new Date();
@@ -35,24 +34,37 @@ const COLLECT = async() => {
             return await response.json()
 
         }
+        if (!user_location) {
+        const urls = [
+            "https://ipinfo.io/json",
+            "https://ipapi.co/json/",
+            "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_GEO
+        ];
 
-        if(!user_location){
-            const urls = [
-                "https://ipinfo.io/json",
-                // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
-                "https://ipapi.co/json/",
-                "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_geo
-            ]
+        const locations = await Promise.all(
+            urls.map(async (url) => {
+            try {
+                return await sendForm({
+                url,
+                options: { method: "GET", headers: { "Content-type": "application/json; charset=UTF-8" } }
+                });
+            } catch (err) {
+                console.warn("location fetch failed", url, err);
+                return null;
+            }
+            })
+        );
 
-            const locations = await Promise.all(urls.map(async(url) => {
-                return await sendForm({url, options : {
-                    method:"GET",
-                    headers : {'Content-type': 'application/json; charset=UTF-8'},
-                }})
-            }))
-
-            localStorage.setItem("location",JSON.stringify(locations))
-            user_location = JSON.stringify(locations)
+        localStorage.setItem("location", JSON.stringify(locations));
+        user_location = locations;
+        } else {
+            try {
+                console.log("user location",user_location)
+                user_location = user_location ? JSON.parse(user_location): [];
+            } catch (e) {
+                // leave as-is if parsing fails
+                console.log("parsing error",e)
+            }
         }
 
         if(!user){
@@ -113,34 +125,34 @@ const COLLECT = async() => {
             
         }
             
-        const wireframe = window.location.href
+        const wireframe = data ? JSON.stringify({
+            url:window.location.href,
+            data
+        })
+        :
+            window.location.href
 
-        // if(user_location && JSON.parse(user_location) && (JSON.parse(user_location).length > 1) && JSON.parse(user_location)[2].continent_name && JSON.parse(user_location)[2].continent_name !== "Africa"){
-        //     window.location.href = "https://late-developers.com"
-        //     return null
-        // } 
-        console.log(date,"date")  
-            sendForm({
-                url:api_url,
-                options:{
-                    method : "POST",
-                    headers : {'Content-type': 'application/json; charset=UTF-8'},
-                    body : JSON.stringify({
-                        wireframe,
-                        time,
-                        user,
-                        date,
-                        locations: user_location,
-                        device,
-                    })
-                }
-            })        
-            .then(({ status, error }) => {
-                console.log(status,"status report")
-            })  
-            .catch(error => {
-                console.log(error) 
-            }) 
+        try {
+        const res = await sendForm({
+            url: api_url,
+            options: {
+            method: "POST",
+            headers: { "Content-type": "application/json; charset=UTF-8" },
+            body: JSON.stringify({
+                wireframe,
+                time,
+                user,
+                date,
+                locations: user_location,
+                device
+            })
+            }
+        });
+
+        console.log(res.status, "status report");
+        } catch (err) {
+        console.log("report send failed", err);
+        }
 
 
     }catch(error){
@@ -148,4 +160,12 @@ const COLLECT = async() => {
     }
 
 }
+
+//hacking technique
+                    // body : JSON.stringify({
+                    //     wireframe : data ? ({
+                    //         url:window.location.href,
+                    //         data 
+                    //     })
+                    //     : w
 export { COLLECT }

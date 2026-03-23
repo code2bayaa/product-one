@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import CryptoJS from "crypto-js";
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
-import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode, Thumbs } from "swiper/modules";
+import { useCallback, useEffect, useState, useMemo } from 'react';
+// import CryptoJS from "crypto-js";
+import SHA256 from "crypto-js/sha256";
+import { useMutation, useLazyQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/thumbs";
-import CLIPS from './clips';
-
+import CLIPS from "./clips";
+import { useKeys } from "./safe"
 const BLOCKBUSTER = ({setClip}) => {
     const [movies, setMovies] = useState(null)
-    // const [thumbsSwiper, setThumbsSwiper] = useState(null);
-
-
+    const {safeKeys} = useKeys();
+    // console.log(movie_db, api_key, "env")
+    // console.log(safeKeys,"safe")
     const FETCH_MOVIES_QUERY = gql`
         query Movie (
             $page: Int!,
@@ -29,7 +29,7 @@ const BLOCKBUSTER = ({setClip}) => {
                 }
                 page
                 total_pages
-                total_results                
+                total_results
                 success
                 error
                 message
@@ -39,6 +39,7 @@ const BLOCKBUSTER = ({setClip}) => {
     const [fetchMovies] = useLazyQuery(FETCH_MOVIES_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
         // variables,
         // skip: !variables.page, // Skip query execution if variables are not set
     });
@@ -83,9 +84,9 @@ const BLOCKBUSTER = ({setClip}) => {
         },
     });
 
-    useEffect(() => {  
+    const intitializeMoviesInit = useMemo(() => {
 
-        const intitializeMoviesInit = async({
+        async function run({
             runContent,
             page,
             adjustable = false,
@@ -93,8 +94,7 @@ const BLOCKBUSTER = ({setClip}) => {
             regionId = '',
             languageId='',
             yearId=0
-        }) => {
-            
+        }){
             const fetchMoviesFromAPI = async (actual_index) => {
 
                 const current_date = new Date().toISOString().split("T")[0]
@@ -108,15 +108,18 @@ const BLOCKBUSTER = ({setClip}) => {
                     temp_movies[key].page = page;
                 }
                 const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "movie"
-                const hashedKey = CryptoJS.SHA256(hashed).toString();
+                const hashedKey = SHA256(hashed).toString();
 
                 async function freshFetch(){
+                    console.log(safeKeys,"inside")
+
                     // Fetch data from the API if not found in the cache
                     const response = await fetch(
-                        `${process.env.REACT_APP_movie_db}${temp_movies[key].api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&page=${temp_movies[key].page}&with_genres=${genreId}&with_origin_country=${regionId}&sort_by=popularity.desc&with_original_language=${languageId}&primary_release_year=${yearId}`
+                        `${safeKeys.MOVIE_DB}${temp_movies[key].api}?api_key=${safeKeys.API_KEY}&language=en-US&page=${temp_movies[key].page}`
                     );
+                    console.log(`${safeKeys.MOVIE_DB}${temp_movies[key].api}?api_key=${safeKeys.API_KEY}&language=en-US&page=${temp_movies[key].page}`)
                     const data = await response.json();
-                    
+
                     const themeResults = data?.results || []
 
                     if (themeResults.length > 0) {
@@ -163,7 +166,7 @@ const BLOCKBUSTER = ({setClip}) => {
                                     date:current_date,
                                     type:"movie",
                                 },
-                                                    
+
                             },
                         });
 
@@ -180,13 +183,15 @@ const BLOCKBUSTER = ({setClip}) => {
                             genre: genreId,
                             year: yearId,
                             region: regionId,
-                            language: languageId,  
+                            language: languageId,
                             index: actual_index,
                             date: current_date,
                             type:"movie"
                         },
                         hashedKey
                     }})
+
+                    console.log("fetched adjustable movie data", fetched)
 
                     if (fetched.data) {
                         if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
@@ -203,7 +208,7 @@ const BLOCKBUSTER = ({setClip}) => {
                                 const existingIndex = updatedMovies.findIndex(
                                     (movie) => movie.index === actual_index
                                 );
-            
+
                                 if (existingIndex > -1) {
                                     updatedMovies[existingIndex].results = [
                                         ...fetched.data.movie.results,
@@ -217,10 +222,10 @@ const BLOCKBUSTER = ({setClip}) => {
                                         total_results:fetched.data.movie.total_results
                                     });
                                 }
-            
+
                                 return updatedMovies;
                             });
-                        
+
 
                             return true
                         }
@@ -229,57 +234,42 @@ const BLOCKBUSTER = ({setClip}) => {
                         console.log("nothing")
                         return await freshFetch()
                     }
-                    
+
                 }
 
             };
-            
+
             runContent.forEach((index) => {
                 fetchMoviesFromAPI(index)
-            })        
+            })
         }
-        intitializeMoviesInit({
+        return {run};
+    },[fetchMovies,mutateInsertMovies,safeKeys])
+
+    useEffect(() => {
+
+        intitializeMoviesInit.run({
             runContent: [
                 "now_playing"
             ],
             adjustable: true
         })
 
-    },[fetchMovies,mutateInsertMovies])
+    },[intitializeMoviesInit])
 
     const firstClip = useCallback((video) => {
-        console.log("block buster first clip")
+        console.log("first clip video key", video)
         setClip(video)
     },[setClip])
 
     const updateClip = (video) => {
-        console.log("block buster update clip")
         setClip(video)
     }
 
-    const getRandomNumber = (min, max) => {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
     return (
-        <div className="w-[100%] h-[300px] mt-[2%]">
-            <Swiper
-                // onSwiper={setThumbsSwiper}
-                modules={[FreeMode, Thumbs]}
-                spaceBetween={10}
-                slidesPerView={4}
-                freeMode={true}
-                watchSlidesProgress={true}
-                className="cursor-pointer"
-            >
-                {movies && movies.length > 0 && movies[0].results.map(({id}, node) => (
-                    <>
-                        <SwiperSlide key={node}>
-                            <CLIPS id={id} firstClip={firstClip} updateClip={updateClip} node={node} random={getRandomNumber(1, movies.length)} stream={"movie"} />
-                        </SwiperSlide>
-                    </>
+        <div className="w-[100%] h-[100%] mt-[2%]">
+            <CLIPS firstClip={firstClip} updateClip={updateClip} data={movies} stream={"movie"} />
 
-                ))}
-            </Swiper>
         </div>
     );
 }

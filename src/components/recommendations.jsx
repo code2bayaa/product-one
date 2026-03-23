@@ -1,20 +1,27 @@
+
+import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Carousel from "../midlleware/carousel";
-import { faStar, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faEye, faPlay, faTvAlt } from "@fortawesome/free-solid-svg-icons";
 import SWEETPAGE from "../midlleware/pages";
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
-
+import { useKeys } from './safe';
 const RECOMMENDATIONS = () => {
-    // const { id, stream, background } = useParams();
     const hasFetched = useRef(false)
     const [recommendations, setRecommendations] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const {safeKeys} = useKeys()
+
+    // const router = useRouter()
+    // const params = useSearchParams();
+    // const state = JSON.parse(decodeURIComponent(params.get("state")));    
+    // const state = useStates("recommendations")
     const {state} = useLocation()
     const navigate = useNavigate()
     const id = state.id
@@ -22,7 +29,7 @@ const RECOMMENDATIONS = () => {
     const background = state.background
     useEffect(() => {
         const handleResize = () => {
-            setWindowWidth(window.innerWidth);
+            setWindowWidth(window.screen.width);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
@@ -30,7 +37,51 @@ const RECOMMENDATIONS = () => {
             window.removeEventListener("resize", handleResize);
         };
     },[])
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
 
+        // Create the external script
+        const externalScript = document.createElement("script");
+        externalScript.type = "text/javascript";
+        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            document.body.removeChild(externalScript);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.crossorigin = "anonymous";
+        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+        inlineScript.async = true
+        // Create the external script
+        // const externalScript = document.createElement("script");
+        // externalScript.type = "text/javascript";
+        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        // document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            // document.body.removeChild(externalScript);
+        };
+    }, []);
+    
     const FETCH_MOVIE_QUERY = gql`
         query recommendedMovies(
             $id:ID!
@@ -69,6 +120,7 @@ const RECOMMENDATIONS = () => {
     `
     const [fetchMovie] = useLazyQuery(FETCH_MOVIE_QUERY,{
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     });
 
     const INSERT_MOVIE_MUTATION = gql`
@@ -108,7 +160,14 @@ const RECOMMENDATIONS = () => {
             }
         },
         onError: (error) => {
-            console.error("Error inserting movies into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
@@ -117,17 +176,20 @@ const RECOMMENDATIONS = () => {
         try{
             
             const type = stream === "movies" ? "movie" : "tv"
-            const api = `${process.env.REACT_APP_movie_db}${type}/${id}/recommendations?api_key=${process.env.REACT_APP_api_key}&page=${page}`
+            const api = `${safeKeys.MOVIE_DB}${type}/${id}/recommendations?api_key=${safeKeys.API_KEY}&page=${page}`
             async function freshFetch(){
                 const response = await fetch(`${api}`);
                 const recommendations_data = await response.json();
                 setRecommendations(() => ({...recommendations_data})); 
-                mutateInsertMovie({ variables: {
-                    ...recommendations_data,
-                    page,
-                    type,
-                    id:id?parseInt(id):-1
-                }} );
+                // console.log(recommendations_data)
+                if(recommendations_data.total_results < 2){
+                    mutateInsertMovie({ variables: {
+                        ...recommendations_data,
+                        page,
+                        type,
+                        id:id?parseInt(id):-1
+                    }} );
+                }
                 return {...recommendations_data}
             } 
             if(!recommendations || adjustable){
@@ -150,7 +212,7 @@ const RECOMMENDATIONS = () => {
         }catch(error){
             // console.log(error,"error")
             if(!recommendations){
-                const api = `${process.env.REACT_APP_movie_db}${stream === "movies" ? "movie" : "tv"}/${id}/recommendations?api_key=${process.env.REACT_APP_api_key}&page=${page}`
+                const api = `${safeKeys.MOVIE_DB}${stream === "movies" ? "movie" : "tv"}/${id}/recommendations?api_key=${safeKeys.API_KEY}&page=${page}`
                 fetch(`${api}`)
                 .then(data => data.json())
                 .then(data => setRecommendations(() => ({...data})))
@@ -195,10 +257,10 @@ const RECOMMENDATIONS = () => {
     return (
         <>
 
-            <div className={`w-[100%] ${windowWidth > 800 ? "h-[100%]" : "h-[92%]"}  bg-cover bg-no-repeat bg-center text-white`} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${process.env.REACT_APP_img_poster + "/" + background + ".jpg" || "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+            <div className={`w-[100%] ${windowWidth > 800 ? "h-[100%]" : "h-[92%]"}  bg-cover bg-no-repeat bg-center text-white`} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${safeKeys.IMG_POSTER + "/" + background + ".jpg" || "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
+                <div className="w-[20%] absolute h-[100%]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
                 :
@@ -206,7 +268,9 @@ const RECOMMENDATIONS = () => {
             }
             <div className={windowWidth > 800 ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene duration-100"}>
                 {
-                    recommendations ?
+                    recommendations && recommendations.total_results < 2 ? 
+                        <h2 className="ml-[15%]">No Recommendations</h2>
+                    : recommendations ?
                     <> 
                     <div className={windowWidth > 800 ? "w-[100%] h-[auto] flex flex-wrap flex-row":"w-[100%] h-[auto]"} style={{boxShadow:"0px 4px 10px #fff"}}>
                         <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[25%]"}>
@@ -225,7 +289,7 @@ const RECOMMENDATIONS = () => {
                                 <PICTURE picture={getPoster(1)} classes={"h-[400px]"} />
                             </div>
                         </div>                        
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + process.env.REACT_APP_img_poster + getPoster(2) + ")"}}>                            
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + safeKeys.IMG_POSTER + getPoster(2) + ")"}}>                            
                             <div
                                 className="w-[40%] backdrop-blur-md h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(2)} classes={"h-[65%] mt-[10%] w-[100%] object-contain"} />
@@ -248,7 +312,7 @@ const RECOMMENDATIONS = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + process.env.REACT_APP_img_poster + getPoster(3) + ")"}}>                            
+                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + safeKeys.IMG_POSTER + getPoster(3) + ")"}}>                            
                             <div
                                 className="w-[40%] backdrop-blur-md h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(3)} classes={"h-[65%] mt-[10%] w-[100%] object-contain"} />
@@ -258,6 +322,16 @@ const RECOMMENDATIONS = () => {
                             >
                                 <article className="m-[1%]">
                                     {recommendations.results.length > 0 && recommendations.results[recommendations.results.length - 3].overview.substr(0,200)}...
+                                    <div style={{overflow:"hidden",margin:"5px"}}>
+                                        <ins
+                                            className="adsbygoogle"
+                                            style={{display:"block",width:"100%",height:"auto"}}
+                                            data-ad-client="ca-pub-8036256488117651"
+                                            data-ad-slot="1234567890"
+                                            data-ad-format="auto"
+                                            data-full-width-responsive="true"
+                                        ></ins>
+                                    </div>
                                 </article>
                                 <h2 className="m-[1%] text-[30px] text-[#ffd800]">{(recommendations.results.length > 0 && recommendations.results[recommendations.results.length - 3].name) || (recommendations.results.length > 0 && recommendations.results[recommendations.results.length - 3].title)}</h2>
                                 <button
@@ -277,29 +351,81 @@ const RECOMMENDATIONS = () => {
                             <h1 style={{textAlign:"center",textDecoration:"underline"}}>RECOMMENDED { stream === "movies" ? "MOVIES" : "TV"}</h1>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={recommendations?.page} index={"recommendation"} total_pages={recommendations?.total_pages}/>
 
-                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
-                                
+                            <div className={`w-[100%] h-auto flex flex-row flex-wrap`}>
                                 {
-                                    recommendations.results.map(({adult,backdrop_path,genre_ids,id,name,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
+                            <div className={windowWidth > 800 ? `w-[100%] h-auto flex flex-row flex-wrap`: "w-[90%] flex flex-row flex-wrap mx-[5%]"}>
+                                {
+                                    recommendations.results.map(({adult,first_air_date,backdrop_path,genres,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <div 
                                             key={movie_key} 
-                                            onClick={() => navRoute({
-                                                url:`/${stream}/id`,
-                                                state:{
-                                                    id
-                                                }})}  
-                                            className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[45%] m-[1%] hover:skew-4 h-[100%] hover:contrast-150"}>
-                                            <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
-                                                <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
-                                                    <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
-                                                </div>
+                                            className={windowWidth > 800 ? "w-[31%] m-[0.5%] h-[250px] hover:skew-4 hover:contrast-150 flex flex-row":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}
+                                        >
+                                            <div className={
+                                                windowWidth > 800 ? "w-[45%] m-[1%]" 
+                                                : "w-[100%] h-[160px] p-0"
+                                                }
+                                            >
+                                                <PICTURE 
+                                                    key={id} 
+                                                    classes={`object-cover rounded-lg h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} 
+                                                    picture={poster_path || backdrop_path} 
+                                                />
                                             </div>
+                                            {
+                                                windowWidth > 800 ?
+                                                    <div className="w-[50%] h-[100%]">
+                                                        <h2 className={windowWidth > 800 ? "text-[18px] h-[10%] gradient-text font-bold":""}>{title || original_title || name || original_name }</h2>
+
+                                                        <div className="w-[100%] h-[10%] flex">
+                                                            <FontAwesomeIcon icon={faTvAlt}/>
+
+                                                            |
+
+                                                            <span style={{color:"#ffd800"}} className="text-[15px]" ><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</span>
+
+                                                            |
+                                                            {(release_date && release_date.split("-")[0]) || (first_air_date && first_air_date.split("-")[0])}
+                                                            {/* {console.log(genres)} */}
+                                                        
+                                                            {/* {genres && genres.length > 0 ? genres[0].name : "N/A"} */}
+                                                        </div>
+                                                        <article className="w-[100%] overflow-hidden h-[70%] text-[15px] relative bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                            {overview.length > 150 ? overview.slice(0,150) + "..." : overview}
+                                                        </article>
+                                                        <button
+                                                            onClick={() => navRoute({
+                                                                url:name || original_name ? `/series/id` : `/movies/id`,
+                                                                state:{
+                                                                    id
+                                                                }
+                                                            })}
+                                                            className="h-[10%] w-[70%] text-[#fff] bg-[#808C8C] rounded-md cursor-pointer"
+                                                        >
+                                                            <FontAwesomeIcon icon={faPlay} /> <span>play</span>
+                                                        </button>
+                                                    </div> 
+                                                :
+                                                    <div className="w-[100%] h-[40px]">
+                                                        <button
+                                                            onClick={() => navRoute({
+                                                                url:name || original_name ? `/series/id` : `/movies/id`,
+                                                                state:{
+                                                                    id
+                                                                }
+                                                            })}
+                                                            className="h-[100%] w-[100%] text-[#fff] bg-[#808C8C] rounded-md cursor-pointer"
+                                                        >
+                                                            <FontAwesomeIcon icon={faPlay} /> <span>play</span>
+                                                        </button>                                                        
+                                                    </div>
+                                            }
+
                                         </div>
                                     )
                                 }
-                            </div>
+                            </div> 
+                                }
+                            </div> 
                         </div>
                         </>
                         :

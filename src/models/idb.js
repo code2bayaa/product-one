@@ -1,10 +1,11 @@
 import { openDB } from "idb";
 
 export async function getDB() {
-  return await openDB("video-store", 1, {
+  return await openDB("video-store", 3, {
     upgrade(db) {
+      console.log("Upgrading DB...",db)
       if (!db.objectStoreNames.contains("videos")) {
-        db.createObjectStore("videos", { keyPath: 'id', autoIncrement: true });
+        db.createObjectStore("videos", { keyPath: 'id', autoIncrement: true});
       }
     },
   });
@@ -17,7 +18,8 @@ export async function saveVideo(blob, subtitle, image, data, name) {
     const db = await getDB();
     await db.put("videos", { 
       id:name,
-      video:blob, name, subtitle, image, data, downloadedAt: Date.now() });
+      video:blob, name, subtitle, image, data, downloadedAt: Date.now() 
+    });
   }catch(error){
     console.log({error})
   }

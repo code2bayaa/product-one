@@ -15,7 +15,8 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
     const [themes, setThemes] = useState(null)
     const [countries, setCountries] = useState(null)
     const navigate = useNavigate();
-  const navRoute = ({state,url}) => {
+    // const client = useApolloClient();
+    const navRoute = ({state,url}) => {
         navigate(url,{
             state : {
                 ...state
@@ -89,6 +90,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
     const [fetch_countries] = useLazyQuery(FETCH_COUNTRIES,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
         // variables,
         // skip: !variables.page, // Skip query execution if variables are not set
     });
@@ -296,7 +298,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
                         <FontAwesomeIcon icon={faArrowAltCircleDown}/>
                     }
                 </button>
-                <button
+                {/* <button
                     onClick={() => navRoute({
                         url:"/discover",
                         state:{
@@ -306,7 +308,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
                     className={windowWidth > 800 ? "w-[60%] h-[60px] text-red-200 underline m-[1%] rounded-md" : "w-[100%] h-[60px] text-red-200 underline rounded-md"}
                 >
                     discover more {mode==="movie"?"movies":"tv shows"}
-                </button>
+                </button> */}
                 <div className={`w-[100%] ${reveal ? "flex" : "hidden"} movie-scene h-[60px] overflow-x-auto text-white flex-col flex-wrap`}>
                     {
                         countries && countries.map(({english_name,iso_3166_1},index) => 

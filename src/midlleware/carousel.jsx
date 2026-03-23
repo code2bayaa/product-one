@@ -99,20 +99,38 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
           scrollbar={{draggable:false}}
         >
           {
-            images.map(({vote_count,poster_path,id,title,name,original_name,original_title,overview,vote_average,popularity},index) => (
+            images.map(({
+              vote_count,
+              poster_path,
+              id,title,name,original_name,original_title,overview,
+              vote_average,popularity,
+              cast_id,
+              character,
+              credit_id,
+              gender,
+              // id,
+              // name,
+              order,
+              profile_path
+            },index) => (
               <SwiperSlide key={index} virtual={index}>
                 
                 <div 
                   className={windowWidth > 800 ? "w-[100%] h-[100%] hover:skew-4 hover:contrast-150":"w-[100%] hover:skew-4 h-[90%] hover:contrast-150"}
                   style={{
                     boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
-                      overflow: "hidden",
+                    overflow: "hidden",
                   }}
                 >
-                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} />
+                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || profile_path} />
                     <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[90%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
                         <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
-                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
+                        {
+                          windowWidth > 800 ?
+                            <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count || credit_id}</p>
+                          :
+                            <h3 className="italic">{character}</h3>
+                        }
                         {/* <article className="text-[15px]">{overview}</article> */}
                         {/* <NavLink key={index} className={`h-[60px]`} to={type === "movies" ? `/movies/${id}`: `/series/${id}`}>
                           <FontAwesomeIcon icon={faEye} /> { mode === "init" ? "read" : "watch" }
@@ -120,12 +138,12 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
                         <button key={index}
                          className={`h-[60px]`}
                          onClick={() => navRoute({
-                            url:mode === "tv" ? '/series/id' : '/movies/id',
-                            state:{
-                                id
-                            }
+                          url:mode === "movie" && type === "people" ? `/movies/person` : mode === "tv" && type === "people" ? "/tv/person" : mode === "tv" ? '/series/id' : '/movies/id',
+                          state:{
+                              id
+                          }
                         })} >
-                            <FontAwesomeIcon icon={faEye} /> { mode === "init" ? "read" : "watch" }
+                          <FontAwesomeIcon icon={faEye} /> { mode === "init" || type === "people" ? "read" : "watch" }
                         </button>  
                     </div>
                 </div>                

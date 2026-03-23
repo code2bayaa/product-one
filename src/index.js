@@ -1,13 +1,33 @@
-// import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+// index.jsx
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
-import {RouterProvider, createBrowserRouter} from "react-router-dom"
-
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import './index.css';
-// import App from './App';
-// import EMPIRE from './components/index.jsx';
+import './tailwind-output.css';
+
+// import ERROR from './components/error.jsx';
+// import DOWNLOAD from './components/download.jsx';
+// import OFFLINE from './components/offline.jsx';
+// import HOME from './components/home.jsx';
+// import ABOUT from './components/about.jsx';
+// import BLOGS from './components/blogs.jsx';
+// import MOVIES from './components/movies.jsx';
+// import MOVIE from './components/movie.jsx';
+// import SERIES from './components/series.jsx';
+// import PERSON from './components/person.jsx';
+// import SEARCH from './components/search.jsx';
+// import NETFLIX from './components/netflix.jsx';
+// import DISNEY from './components/disney.jsx';
+// import ANIME from './components/anime.jsx';
+// import SIGNIN from './components/signin.jsx';
+// import SIGNUP from './components/signup.jsx';
+// import LIBRARY from './components/library.jsx';
+// import PRIVACY from './components/privacy.jsx';
+// import TERMS from './components/terms.jsx';
+// import TALENT from './components/talented.jsx';
+// import DISCOVER from './components/discover.jsx';
+// import SPEED from './components/speed.jsx';
 import MOVIES from './components/movies.jsx';
-import './tailwind-output.css'
 import ERROR from './components/error.jsx';
 import SERIES from './components/series.jsx';
 import PEOPLE from './components/people.jsx';
@@ -20,7 +40,6 @@ import PERSON from './components/person.jsx';
 import SEASON from './components/season.jsx';
 import EPISODE from './components/episode.jsx';
 import TRAILER from './components/trailer.jsx';
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import PLAY from './components/play.jsx';
 import PLAYER from './components/player.jsx';
 import SIGNIN from './components/signin.jsx';
@@ -28,6 +47,7 @@ import NETFLIX from './components/netflix.jsx';
 import DISNEY from './components/disney.jsx';
 import CREDITS from './components/credits.jsx';
 import SUBSCRIBE from './components/subscribe.jsx';
+import SUBSCRIBEAPP from './components/subscribeapp.jsx';
 import TESTSOCKETS from './components/test.jsx';
 import PLAYLIST from './components/playlist.jsx';
 import FOLLOW from './components/follow.jsx';
@@ -36,7 +56,8 @@ import SIGNUP from './components/signup.jsx';
 import FORGOT from './components/forgot.jsx';
 import CHANGEPAGE from './components/code.jsx';
 import DISCOVER from './components/discover.jsx';
-import TALENT from './components/talented.jsx';
+import DISCOVERTV from './components/discovertv.jsx';
+// import TALENT from './components/talented.jsx';
 import SPEED from './components/speed.jsx';
 import DOWNLOAD from './components/download.jsx';
 import OFFLINE from './components/offline.jsx';
@@ -46,19 +67,30 @@ import PRIVACY from './components/privacy.jsx';
 import BLOGS from './components/blogs.jsx';
 import ABOUT from './components/about.jsx';
 import HOME from './components/home.jsx';
-// import reportWebVitals from './reportWebVitals';
-// import MUX from './components/mux.jsx';
-// serviceWorkerRegistration.register(); // ✅ not unregister()
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('./service-worker.js')
-//     .then(reg => console.log('✅ Custom Service Worker registered:', reg.scope))
-//     .catch(err => console.error('❌ SW registration failed:', err));
-// }
+// import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+import ApolloWrapper from "./graphQL/provider";
+import HINDU from './components/hindu.jsx';
+import KOREA from './components/korea.jsx';
+import CHINA from './components/china.jsx';
+import CHANGE from './components/change.jsx';
+import DEVICE from "./components/devices.jsx";
+import { KeyProvider } from './components/safe.jsx';
 
-const routers = [
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('✅ Service Worker registered:', reg.scope))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
+
+const baseRoutes = [
   {
     path : "/about",
     element : <ABOUT/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/devices",
+    element : <DEVICE/>,
     errorElement : <ERROR/>
   },
   {
@@ -88,6 +120,21 @@ const routers = [
   },
   {
     path : "/netflix/movie",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/hindu/movie",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/korea/movie",
+    element : <MOVIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/china/movie",
     element : <MOVIE/>,
     errorElement : <ERROR/>
   },
@@ -137,6 +184,21 @@ const routers = [
     errorElement : <ERROR/>
   },
   {
+    path : "/hindu",
+    element : <HINDU/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/korea",
+    element : <KOREA/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/china",
+    element : <CHINA/>,
+    errorElement : <ERROR/>
+  },
+  {
     path : "/disney",
     element : <DISNEY/>,
     errorElement : <ERROR/>
@@ -163,6 +225,21 @@ const routers = [
   },
   {
     path : "/netflix/serie",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/hindu/serie",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/korea/serie",
+    element : <SERIE/>,
+    errorElement : <ERROR/>
+  },
+  {
+    path : "/china/serie",
     element : <SERIE/>,
     errorElement : <ERROR/>
   },
@@ -272,6 +349,11 @@ const routers = [
     elementError:<ERROR/>
   },
   {
+    path:"/subscribe/:user",
+    element:<SUBSCRIBEAPP/>,
+    elementError:<ERROR/>
+  },
+  {
     path:"/playlist",
     element:<PLAYLIST/>,
     elementError:<ERROR/>
@@ -302,6 +384,11 @@ const routers = [
     elementError:<ERROR/>
   },
   {
+    path:"/change",
+    element:<CHANGE />,
+    elementError:<ERROR />
+  },
+  {
     path:"/forgot",
     element:<FORGOT/>,
     elementError:<ERROR/>
@@ -311,16 +398,22 @@ const routers = [
     element:<CHANGEPAGE/>,
     elementError:<ERROR/>
   },
+  // {
+  //   path:"/talent",
+  //   element:<TALENT/>,
+  //   elementError:<ERROR/>
+  // },
   {
-    path:"/talent",
-    element:<TALENT/>,
-    elementError:<ERROR/>
-  },
-  {
-    path:"/discover",
+    path:"/discover/movie",
     element:<DISCOVER/>,
     elementError:<ERROR/>
   },
+  {
+    path:"/discover/tv",
+    element:<DISCOVERTV/>,
+    elementError:<ERROR/>
+  },
+  
   {
     path:"/library",
     element:<LIBRARY/>,
@@ -335,53 +428,60 @@ const routers = [
     path:"/terms",
     element:<TERMS/>,
     elementError:<ERROR/>
-  }]
+  },
+  { path: "/offline", element: <OFFLINE />, errorElement: <ERROR /> },
+  { path: "/offline/download", element: <DOWNLOAD />, errorElement: <ERROR /> },
+]
 
-if(!navigator.onLine){
-  console.log("offline")
-  routers.push({
-    path : "/",
-    element : <DOWNLOAD/>,
-    errorElement : <ERROR/>
-  })
-  routers.push({
-    path:"/offline",
-    element:<OFFLINE/>,
-    errorElement:<ERROR/>
-  })
-}else{
-  console.log("online")
-  // routers.push({
-  //   path : "/",
-  //   element : <EMPIRE/>,
-  //   errorElement : <ERROR/>
-  // })
-  routers.push({
-    path : "/",
-    element : <HOME/>,
-    errorElement : <ERROR/>
-  })
+async function isReallyOnline() {
+  try {
+    const response = await fetch(process.env.REACT_APP_environment === "development"
+      ? process.env.REACT_APP_online
+      : process.env.REACT_APP_online_live);
+
+      console.log(process.env.REACT_APP_online,response,"check online")
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
-const router = createBrowserRouter(routers)
-const client = new ApolloClient({
+// 🧩 Initialize app only after connectivity check
+(async function initApp() {
+  const online = await isReallyOnline();
+  let routes = [...baseRoutes];
+  console.log(navigator)
+  if (!online) {
+    console.log("🔴 Offline — using offline routes");
+    routes.push(
+      { path: "/", element: <DOWNLOAD />, errorElement: <ERROR /> },
+      { path: "/offline", element: <OFFLINE />, errorElement: <ERROR /> }
+    );
+  } else {
 
-  uri: process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_graphql : process.env.REACT_APP_graphql_live,
+    if(navigator.onLine){
+      console.log("🟢 Online — using home route");
+      routes.push({ path: "/", element: <HOME />, errorElement: <ERROR /> });
+    }else{
+      console.log("🔴 Offline — using offline routes");
+      routes.push(
+        { path: "/", element: <DOWNLOAD />, errorElement: <ERROR /> },
+        { path: "/offline", element: <OFFLINE />, errorElement: <ERROR /> }
+      );
+    }
 
-  cache: new InMemoryCache(),
+  }
 
-});
-const root = ReactDOM.createRoot(document.getElementById('build'));
-root.render(
-  <ApolloProvider client={client}>
-    <StrictMode>
-      <RouterProvider router={router} />
-    </StrictMode>
-  </ApolloProvider>
+  const router = createBrowserRouter(routes);
 
-);
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-// reportWebVitals();
+  const root = ReactDOM.createRoot(document.getElementById('build'));
+  root.render(
+    <KeyProvider>
+      <ApolloWrapper>
+        <StrictMode>
+          <RouterProvider router={router} />
+        </StrictMode>
+      </ApolloWrapper>
+    </KeyProvider>
+  );
+})();

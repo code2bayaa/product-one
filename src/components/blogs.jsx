@@ -19,7 +19,7 @@ const BLOGS = () => {
     },[]) 
     useEffect(() => {
         async function runLikes(){
-            const res = await fetch(process.env.REACT_APP_environment === "development" ? `${process.env.REACT_APP_outside}/Twitter/Tweets` : `${process.env.REACT_APP_outside_live}/Twitter/Tweets`)
+            const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? `${process.env.REACT_APP_OUTSIDE}/Twitter/Tweets` : `${process.env.REACT_APP_OUTSIDE_LIVE}/Twitter/Tweets`)
               const {body, status} = await res.json()
               console.log(body)
               if(!status){

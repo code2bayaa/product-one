@@ -4,18 +4,24 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlayCircle, faStar, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
-import { useLazyQuery, gql, useMutation } from '@apollo/client';
+import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
-
+import { useKeys } from "./safe";
 const EPISODE = () => {
-    // const { id, season, episodeID, episode, name, background } = useParams();
     const [layouts,setLayouts] = useState(false)
-    // const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
-    const { state } = useLocation();
-    const navigate = useNavigate();
+    const [checkURL, setCheckURL] = useState(null)
+    const {safeKeys} = useKeys()
+    // const [state,setState] = useState(null)
+    // const router = useRouter()
+    // const params = useSearchParams();
+    // const state = JSON.parse(decodeURIComponent(params.get("state"))); 
     const hasFetched = useRef({id:false,credits:false,images:false,tv:false})
+    // const state = useStates("season")
+    const navigate = useNavigate();
+    const {state} = useLocation()
     const id = state.id
     const name = state.name
     const episodeID = state.episodeID
@@ -25,6 +31,58 @@ const EPISODE = () => {
     const direct = state.direct
     const index = state.index
     const anime = state.anime
+    const moveEpisodes = state.moveEpisodes
+    const moveSeasons = state.moveSeasons    
+    const client = useApolloClient();
+
+    // useEffect(() => {
+    //     setState(() => JSON.parse(localStorage.getItem("season")))
+    // },[])
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+
+        // Create the external script
+        const externalScript = document.createElement("script");
+        externalScript.type = "text/javascript";
+        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            document.body.removeChild(externalScript);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.crossorigin = "anonymous";
+        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+        inlineScript.async = true
+        // Create the external script
+        // const externalScript = document.createElement("script");
+        // externalScript.type = "text/javascript";
+        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        // document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            // document.body.removeChild(externalScript);
+        };
+    }, []);
 
     useEffect(() => {
         const sendForm = async({url,options}) => {
@@ -47,7 +105,7 @@ const EPISODE = () => {
                     "https://ipinfo.io/json",
                     // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
                     "https://ipapi.co/json/",
-                    "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_geo
+                    "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_GEO
                 ]
 
                 const locations = await Promise.all(urls.map(async(url) => {
@@ -109,6 +167,7 @@ const EPISODE = () => {
     `
     const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     })
 
     const [mutateInsertImage] = useMutation(gql`
@@ -152,7 +211,14 @@ const EPISODE = () => {
             }
         },
         onError: (error) => {
-            console.error("insert image Error:", error);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
@@ -189,9 +255,25 @@ const EPISODE = () => {
     const [fetchEpisode] = useLazyQuery(FETCH_MOVIE_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
         // variables,
         // skip: !variables.page, // Skip query execution if variables are not set
     });
+    useEffect(() => {
+        const invalidateCache = () => {
+            console.log("Invalidating Apollo Client cache");
+            client.refetchQueries({
+                include: [FETCH_MOVIE_QUERY] // Refetch all queries using this query
+            });
+            // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+        };
+
+        // Set up the timer to invalidate the cache after 24 hours
+        const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+
+        // Clear the timer when the component unmounts to prevent memory leaks
+        return () => clearTimeout(timerId);
+    }, [client,FETCH_MOVIE_QUERY]); // 
 
     const INSERT_MOVIE_MUTATION = gql`
         mutation AddEpisode(
@@ -229,14 +311,20 @@ const EPISODE = () => {
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting episode into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
     const FETCH_CREDITS_QUERY = gql`
         query Credits (
-            $id: Int!
+            $id: ID!
         ){
             credits(
                 id:$id
@@ -304,11 +392,28 @@ const EPISODE = () => {
     const [fetchCreditsData] = useLazyQuery(FETCH_CREDITS_QUERY,{
     // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     });
+
+    // useEffect(() => {
+    //     const invalidateCache = () => {
+    //         console.log("Invalidating Apollo Client cache");
+    //         client.refetchQueries({
+    //             include: [FETCH_CREDITS_QUERY] // Refetch all queries using this query
+    //         });
+    //         // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+    //     };
+
+    //     // Set up the timer to invalidate the cache after 24 hours
+    //     const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+
+    //     // Clear the timer when the component unmounts to prevent memory leaks
+    //     return () => clearTimeout(timerId);
+    // }, [client,FETCH_CREDITS_QUERY]); //
 
     const INSERT_CREDITS_MUTATION = gql`
         mutation AddCredits(
-            $id:Int!
+            $id:ID!
             $cast:[CAST_INPUT]
             $crew:[CREW_INPUT]
             $chunking:Boolean!
@@ -346,14 +451,20 @@ const EPISODE = () => {
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting credits into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
     const FETCH_IMDB_QUERY = gql`
         query IMDB(
-            $id: Int!
+            $id: ID!
         ){
             imdb(
                 id:$id
@@ -368,6 +479,7 @@ const EPISODE = () => {
     const [fetchIMDBData] = useLazyQuery(FETCH_IMDB_QUERY,{
     // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     });
 
     const UPDATE_IMDB_MUTATION = gql`
@@ -404,15 +516,21 @@ const EPISODE = () => {
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting credits into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
     const graphImages = useCallback(async() => {
 
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/images?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}/episode/${episode}/images?api_key=${safeKeys.API_KEY}`);
             const getImageData = await response.json();
             console.log(getImageData,"images")
             let value = 0
@@ -466,7 +584,7 @@ const EPISODE = () => {
     const fetchTV = useCallback(async() => {
 
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}/episode/${episode}?api_key=${safeKeys.API_KEY}`);
             const data = await response.json();
             const newData = {...data}
             delete newData.crew
@@ -485,11 +603,11 @@ const EPISODE = () => {
         const checkFeedback = (id) => {
             console.log(id,"id")
             //authentication
-            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+            fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
+                    fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -505,35 +623,40 @@ const EPISODE = () => {
                 }
             })
         }
-        const fetched = await fetchEpisode({
-            variables : { 
-                id:episodeID
-                // season:season ? parseInt(season):-1,
-                // episode: episode? parseInt(episode):-1
-            }})
-            console.log(fetched)
-        if (fetched.data && fetched.data.episode.air_date === null) {
-            console.log("first time...")
-            const tv = await freshFetch()
-            setSerie(() => ({...fetched.data.episode,...tv}));
-            checkFeedback(tv.id)
-        }else if(fetched.data && fetched.data.episode.success){
-            console.log("Using cached data:", fetched.data)
-            setSerie(() => ({...fetched.data.episode}))
-            checkFeedback(fetched.data.episode.id)
-        }else {
+        try{
+            const fetched = await fetchEpisode({
+                variables : { 
+                    id:episodeID
+                    // season:season ? parseInt(season):-1,
+                    // episode: episode? parseInt(episode):-1
+                }})
+                console.log(fetched)
+            if (fetched.data && fetched.data.episode.air_date === null) {
+                console.log("first time...")
+                const tv = await freshFetch()
+                setSerie(() => ({...fetched.data.episode,...tv}));
+                checkFeedback(tv.id)
+            }else if(fetched.data && fetched.data.episode.success){
+                console.log("Using cached data:", fetched.data)
+                setSerie(() => ({...fetched.data.episode}))
+                checkFeedback(fetched.data.episode.id)
+            }else {
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}))
+                checkFeedback(tv.id)
+            }
+        }catch(error){
+            console.log(error,"error")
             const tv = await freshFetch()
             setSerie(() => ({...tv}))
             checkFeedback(tv.id)
         }
-        
-
 
     },[id, season, episode, episodeID, fetchEpisode, mutateInsertTV])
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/credits?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}/episode/${episode}/credits?api_key=${safeKeys.API_KEY}`);
             const credits_data = await response.json();
             console.log(credits_data)
             function chunkArray(array, size) {
@@ -543,7 +666,7 @@ const EPISODE = () => {
                 }
                 return result;
             }
-            let cast_all_results = [...credits_data.cast]
+            let cast_all_results = credits_data.hasOwnProperty("cast") ? [...credits_data.cast] : [];
             if(cast_all_results.length > 100){
                 const chunks = chunkArray(cast_all_results, 100);
                 for (let i = 0; i < chunks.length; i++) {
@@ -566,33 +689,33 @@ const EPISODE = () => {
                     },
                 });
             }
-            let crew_all_results = [...credits_data.crew]
-            if(crew_all_results.length > 100){
-                const chunks = chunkArray(crew_all_results, 100);
-                for (let i = 0; i < chunks.length; i++) {
-                    mutateInsertCredits({
-                        variables: {
-                            crew:chunks[i],
-                            id:id?parseInt(id):0,
-                            chunking:true,
-                            chunking_index:i                        
-                        },
-                    });
-                }
-            }else{
-                mutateInsertCredits({
-                    variables: {
-                        crew:crew_all_results,
-                        id:id?parseInt(id):0,
-                        chunking:false,
-                        chunking_index:0                    
-                    },
-                });
-            }
+            // let crew_all_results = [...credits_data.crew]
+            // if(crew_all_results.length > 100){
+            //     const chunks = chunkArray(crew_all_results, 100);
+            //     for (let i = 0; i < chunks.length; i++) {
+            //         mutateInsertCredits({
+            //             variables: {
+            //                 crew:chunks[i],
+            //                 id:id?parseInt(id):0,
+            //                 chunking:true,
+            //                 chunking_index:i                        
+            //             },
+            //         });
+            //     }
+            // }else{
+            //     mutateInsertCredits({
+            //         variables: {
+            //             crew:crew_all_results,
+            //             id:id?parseInt(id):0,
+            //             chunking:false,
+            //             chunking_index:0                    
+            //         },
+            //     });
+            // }
             return {...credits_data}
         } 
-
-        const current_date = new Date().toISOString().split("T")[0]
+        try{
+            const current_date = new Date().toISOString().split("T")[0]
             const fetched = await fetchCreditsData({
                 variables : { id:id?parseInt(id):0, date:current_date }})
             // console.log(fetched)
@@ -603,33 +726,45 @@ const EPISODE = () => {
                 const credits = await freshFetch()
                 setCredit(() => ({...credits}));
             }
+        }catch(error){
+            console.log(error,"error")
+            const credits = await freshFetch()
+            setCredit(() => ({...credits}));
+        }
+
         
 
     },[id, season, episode, fetchCreditsData, mutateInsertCredits])
 
     const fetchID = useCallback(async() => {
-        async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/episode/${episode}/external_ids?api_key=${process.env.REACT_APP_api_key}`);
-            const imdb_data = await response.json();
-            // console.log(imdb_data,"imdb")
-            mutateUpdateIMDB({
-                variables: {external_id:imdb_data,id:id?parseInt(id):0,type:"tv"},
-            });
-            return {...imdb_data}
-        } 
-
         if(!imdb){
-            const current_date = new Date().toISOString().split("T")[0]
-            const fetched = await fetchIMDBData({
-                variables : { id:id?parseInt(id):0, date:current_date }})
-            console.log(fetched)
-            if(fetched.data && fetched.data.imdb.success){
-                console.log("Using cached data:", fetched.data);
-                setIMDB(() => ({...fetched.data.imdb}));
-            }else {
+            async function freshFetch(){
+                const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}/episode/${episode}/external_ids?api_key=${safeKeys.API_KEY}`);
+                const imdb_data = await response.json();
+                // console.log(imdb_data,"imdb")
+                mutateUpdateIMDB({
+                    variables: {external_id:imdb_data,id:id?parseInt(id):0,type:"tv"},
+                });
+                return {...imdb_data}
+            } 
+            try{
+                const current_date = new Date().toISOString().split("T")[0]
+                const fetched = await fetchIMDBData({
+                    variables : { id:id?parseInt(id):0, date:current_date }})
+                console.log(fetched)
+                if(fetched.data && fetched.data.imdb.success){
+                    console.log("Using cached data:", fetched.data);
+                    setIMDB(() => ({...fetched.data.imdb}));
+                }else {
+                    const imdb = await freshFetch()
+                    setIMDB(() => ({...imdb}));
+                }
+            }catch(error){
+                console.log(error,"error")
                 const imdb = await freshFetch()
                 setIMDB(() => ({...imdb}));
             }
+
         }
 
     },[id, season, episode, fetchIMDBData, mutateUpdateIMDB, imdb])
@@ -643,10 +778,10 @@ const EPISODE = () => {
     },[fetchID])
 
     useEffect(() => {
-        // if(hasFetched.current.images){
-        //     return
-        // }
-        // hasFetched.current.images = true        
+        if(hasFetched.current.images){
+            return
+        }
+        hasFetched.current.images = true        
         graphImages()
     },[graphImages])
 
@@ -668,7 +803,7 @@ const EPISODE = () => {
 
     useEffect(() => {
         const handleResize = () => {
-            setWindowWidth(window.innerWidth);
+            setWindowWidth(window.screen.width);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
@@ -677,10 +812,10 @@ const EPISODE = () => {
     const addToPlayList = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`,{
+            fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST : process.env.REACT_APP_PLAYLIST_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -721,124 +856,9 @@ const EPISODE = () => {
         }
 
     }
-
-    // useEffect(() => {
-    //             if(!images)
-    //         return null
-    //     let value = 0
-    //     // console.log(images)
-    //     const {backdrops, posters, logos, stills} = images
-    //     let path = ''
-    //     if(backdrops && backdrops.length > 0){
-    //         const heights = backdrops.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
-    //         let key = backdrops.findIndex(({height}) => height === value)
-    //         if(key > -1){
-    //             path = backdrops[key].file_path
-    //         }
-    //     } 
-    //     if(posters && posters.length > 0){
-    //         const heights = posters.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let posters_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
-    //         if(posters_value > value){
-    //             let key = posters.findIndex(({height}) => height === posters_value)
-    //             if(key > -1){
-    //                 path = posters[key].file_path
-    //             }
-    //             value = posters_value
-    //         }
-    //     }
-    //     if(stills && stills.length > 0){
-    //         const heights = stills.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let stills_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
-    //         if(stills_value > value){
-    //             let key = stills.findIndex(({height}) => height === stills_value)
-    //             if(key > -1){
-    //                 path = stills[key].file_path
-    //             }
-    //             value = stills_value
-    //         }
-    //     }        
-    //     if(logos && logos.length > 0){
-    //         const heights = logos.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let logos_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] : uniqueHeights[0];
-    //         if(logos_value > value){
-    //             let key = logos.findIndex(({height}) => height === logos_value)
-    //             if(key > -1){
-    //                 path = logos[key].file_path
-    //             }
-    //         }
-    //     }
-    //     setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
-    // },[images,episode])
-
-    // const getBackground = useMemo(() => {
-
-    //     if(fetchedImageBackgrounds)
-    //         return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
-    //     if(!images)
-    //         return null
-    //     let value = 0
-    //     const {backdrops, posters, logos, stills} = images
-    //     let path = ''
-    //     if(backdrops && backdrops.length > 0){
-    //         const heights = backdrops.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
-    //         let key = backdrops.findIndex(({height}) => height === value)
-    //         if(key > -1){
-    //             path = backdrops[key].file_path
-    //         }
-    //     } 
-    //     if(posters && posters.length > 0){
-    //         const heights = posters.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let posters_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
-    //         if(posters_value > value){
-    //             let key = posters.findIndex(({height}) => height === posters_value)
-    //             if(key > -1){
-    //                 path = posters[key].file_path
-    //             }
-    //             value = posters_value
-    //         }
-    //     }
-    //     if(stills && stills.length > 0){
-    //         const heights = stills.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let stills_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] :  uniqueHeights[0];
-    //         if(stills_value > value){
-    //             let key = stills.findIndex(({height}) => height === stills_value)
-    //             if(key > -1){
-    //                 path = stills[key].file_path
-    //             }
-    //             value = stills_value
-    //         }
-    //     }        
-    //     if(logos && logos.length > 0){
-    //         const heights = logos.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let logos_value = uniqueHeights.length > episode ? uniqueHeights[episode] : uniqueHeights.length > 1 ? uniqueHeights[1] : uniqueHeights[0];
-    //         if(logos_value > value){
-    //             let key = logos.findIndex(({height}) => height === logos_value)
-    //             if(key > -1){
-    //                 path = logos[key].file_path
-    //             }
-    //         }
-    //     }
-    //     if(path)
-    //         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
-    //     else
-    //         setFetchedImageBackgrounds("null")
-    //     return process.env.REACT_APP_img_poster + path
-    // },[fetchedImageBackgrounds,episode,images]);
-
     const openPlay = async() => {
 
-        if(serie && serie.hasOwnProperty("url") && serie.url){
+        async function goTOSPEED(){
             function getCurrentWeek() {
                 const now = new Date();
                 const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -851,21 +871,43 @@ const EPISODE = () => {
             if(serie && serie.url && serie.url.quality && serie.url.quality === "CAM" && currentWeek > serie.url.week){
                 // document.location.href = `/video/episode/${episodeID}/${name}/${serie.season_number}/${serie.episode_number}/${serie.air_date}/${imdb.imdb_id}${images}`;
                 navRoute({
-                url:`/video/episode`,
-                state:{
-                    stream:"episode",
-                    id:episodeID,
-                    name,
-                    season:serie.season_number,
-                    episode:serie.episode_number,
-                    background:images,
-                    date:serie.air_date,
-                    imdbId:imdb?.imdb_id,
-                    anime
+                    ref:"episode",
+                    url:`/video/episode`,
+                    state:{
+                        stream:"episode",
+                        id:episodeID,
+                        serieID:id,
+                        name,
+                        season:serie.season_number,
+                        episode:serie.episode_number,
+                        background:images,
+                        date:serie.air_date,
+                        imdbId:imdb?.imdb_id,
+                        anime,
+                        seasons:moveSeasons,
+                        episodes:moveEpisodes
+                }})
+            }else if(checkURL && checkURL.quality && checkURL.quality === "CAM" && currentWeek > checkURL.week){
+                navRoute({
+                    ref:"episode",
+                    url:`/video/episode`,
+                    state:{
+                        stream:"episode",
+                        id:episodeID,
+                        serieID:id,
+                        name,
+                        season:serie.season_number,
+                        episode:serie.episode_number,
+                        background:images,
+                        date:serie.air_date,
+                        imdbId:imdb?.imdb_id,
+                        anime,
+                        seasons:moveSeasons,
+                        episodes:moveEpisodes
                 }})
             }else{
                 async function authentication(){
-                    const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+                    const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
                     const {status,message,user} = await res.json()
                     console.log(message)
                     return ({status,user})
@@ -877,7 +919,7 @@ const EPISODE = () => {
                 if(isLoggedIn.status){
                     user = isLoggedIn.user
 
-                    const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_user_paid : process.env.REACT_APP_user_paid_live}`,{
+                    const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_USER_PAID : process.env.REACT_APP_USER_PAID_LIVE}`,{
                         credentials: "include",
                         method:"POST",
                         headers:{
@@ -911,7 +953,7 @@ const EPISODE = () => {
                         })
                     }
 
-                    const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_user_credits : process.env.REACT_APP_check_user_credits_live,{credentials: "include"})
+                    const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_USER_CREDITS : process.env.REACT_APP_CHECK_USER_CREDITS_LIVE,{credentials: "include"})
                     const {sum,message} = await res.json()
                     console.log(message)
                     //affordable for one movie | episode
@@ -921,7 +963,7 @@ const EPISODE = () => {
                 }else{
                     user = localStorage.getItem("session")
                     console.log("id",episodeID)
-                    const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_paid : process.env.REACT_APP_paid_live}`,{
+                    const res = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PAID : process.env.REACT_APP_PAID_LIVE}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json",
@@ -954,7 +996,7 @@ const EPISODE = () => {
                         })
                     }
 
-                    const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_report_credits : process.env.REACT_APP_check_report_credits_live}`,{
+                    const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_REPORT_CREDITS : process.env.REACT_APP_CHECK_REPORT_CREDITS_LIVE}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json",
@@ -982,51 +1024,97 @@ const EPISODE = () => {
                         timer: 1500
                     })
                     return 
-                }                
-                // document.location.href = `/speed/${serie.url.fileName}${images}/${episodeID}/tv`
-                
+                }                                
                 navRoute({
-                url:`/speed`,
-                state:{
-                    stream:"tv",
-                    id:episodeID,
-                    name:serie.url.fileName,
-                    background:images,
-                    dash:serie.url.hasOwnProperty("dash")?true:false
+                    ref:"speed",
+                    url:`/speed`,
+                    state:{
+                        stream:"tv",
+                        id:episodeID,
+                        name,
+                        season:serie.season_number,
+                        episode:serie.episode_number,
+                        background:images,
+                        dash:serie.url.hasOwnProperty("dash")?true:false,
+                        seasons:moveSeasons,
+                        episodes:moveEpisodes,
+                        serieID:id,
+                        serie_name:name
                 }}) 
             }
-            
+        }
+
+        if(serie && serie.hasOwnProperty("url") && serie.url){
+            await goTOSPEED()
+        }else if(checkURL){
+            await goTOSPEED()
         }else{
-            console.log(images,background,index)
-            // document.location.href = `/video/episode/${episodeID}/${name}/${serie.season_number}/${serie.episode_number}/${serie.air_date}/${imdb.imdb_id}${images}`
             if(direct){
                 navRoute({
+                    ref:"play",
                     url:`/play`,
                     state:{
                         id:direct,
                         index,
                         background,
-                        many:serie.episode_number
+                        many:serie.episode_number,
+                        seasons:moveSeasons,
+                        episodes:moveEpisodes,
+                        serieID:id,
+                        serie_name:name
                     }})
             }else{
                 navRoute({
-                url:`/video/episode`,
-                state:{
-                    stream:"episode",
-                    id:episodeID,
-                    name,
-                    season:serie.season_number,
-                    episode:serie.episode_number,
-                    background:images,
-                    date:serie.air_date,
-                    year:serie.air_date.substring(0,4),
-                    imdbId:imdb?.imdb_id,
-                    anime
+                    ref:"episode",
+                    url:`/video/episode`,
+                    state:{
+                        stream:"episode",
+                        id:episodeID,
+                        serieID:id,
+                        name,
+                        season:serie.season_number,
+                        episode:serie.episode_number,
+                        background:images,
+                        date:serie.air_date,
+                        year:serie.air_date.substring(0,4),
+                        imdbId:imdb?.imdb_id,
+                        anime,
+                        seasons:moveSeasons,
+                        episodes:moveEpisodes,
                 }})
             }
         }
     }
-    const navRoute = ({url,state}) => {
+    useEffect(() => {
+        async function checkURLFN(){
+            const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_URL : process.env.REACT_APP_CHECK_URL_LIVE}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                    "Accept":"application/json"
+                },
+                body:JSON.stringify({
+                    type:"episode",
+                    id:episodeID
+                })
+            })
+
+            const {status,data} = await response.json()
+
+            if(status)
+                setCheckURL(data)
+
+            console.log("creating fast stream...")
+        }
+
+        if(serie && serie.hasOwnProperty("url") && serie.url){
+            console.log("no need to check")
+        }else
+            checkURLFN()
+
+    },[episodeID,serie])
+
+    const navRoute = ({url,state,ref}) => {
         navigate(url,{
             state : {
                 ...state
@@ -1035,11 +1123,11 @@ const EPISODE = () => {
     }
     return (
 credits && serie ? 
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? process.env.REACT_APP_img_poster + images : process.env.REACT_APP_img_poster + background})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : safeKeys.IMG_POSTER + background})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
-                    <NAVBAR/>
+                <div className="w-[20%] h-[100%] absolute" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                    <NAVBAR data={`${name} || season ${serie.season_number} || episode ${serie.episode_number}`}/>
                 </div>
                 :
                 <MOBILE/>
@@ -1052,7 +1140,7 @@ credits && serie ?
                             <div 
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
                                 style={{
-                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("still_path") && serie.still_path ? process.env.REACT_APP_img_poster + serie.still_path : images ?  process.env.REACT_APP_img_poster + images :  process.env.REACT_APP_img_poster + "/" + background + ".jpg") + ")",
+                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("still_path") && serie.still_path ? safeKeys.IMG_POSTER + serie.still_path : images ?  safeKeys.IMG_POSTER + images :  safeKeys.IMG_POSTER + "/" + background + ".jpg") + ")",
                                     boxShadow:"rgba(0, 0, 0, 0.97) -70px -100px 120px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
@@ -1069,25 +1157,29 @@ credits && serie ?
                                 {
                                     serie.hasOwnProperty("url") && serie.url && serie.url.hasOwnProperty("quality") && serie.url.quality && <h3 className="text-[#ffd800]">{serie.url.quality}</h3>
                                 }
-                                {/* <h3 style={{color:"#ffd800"}}>genre</h3>
                                 {
-                                    serie.genres.map(({name}) => `${name}`).join(" || ")
-
-                                } */}
-                                {/* <h3 style={{color:"#ffd800"}}>{serie.in_production ? "airing" : "ended"}</h3> */}
-                                {/* <h3 style={{color:"#ffd800"}}>current episode</h3> */}
-                                {/* <span>{serie.last_episode_to_air.name} || {serie.last_episode_to_air.air_date} || {serie.last_episode_to_air.season_number} || {serie.last_episode_to_air.episode_number}</span> */}
-                                {/* <h3>seasons || {serie.number_of_seasons}</h3>
-                                <h3>episodes || {serie.number_of_episodes}</h3> */}
-                                {/* <h3>{serie.video ? "available":"not available"}</h3> */}
-                                {/* <h4>{ (serie.episode_run_time[0] > 60) ? Math.floor(serie.episode_run_time[0] / 60) + "h" + " " + serie.episode_run_time[0] % 60 + "min" : serie.episode_run_time[0] + "min" }</h4> */}
+                                    checkURL && checkURL.hasOwnProperty("quality") && checkURL.quality && <h3 className="text-[#ffd800]">{checkURL.quality}</h3>
+                                }
+                                {
+                                    ((serie && serie.hasOwnProperty("url") && serie.url) || checkURL) ? <p>fast stream</p> : <p>slow stream</p>
+                                }
                                 <article>
                                     {serie.overview}
+                                    <div style={{overflow:"hidden",margin:"5px"}}>
+                                        <ins
+                                            className="adsbygoogle"
+                                            style={{display:"block",width:"100%",height:"auto"}}
+                                            data-ad-client="ca-pub-8036256488117651"
+                                            data-ad-slot="1234567890"
+                                            data-ad-format="auto"
+                                            data-full-width-responsive="true"
+                                        ></ins>
+                                    </div>
                                 </article>
                                 <div className="w-[100%] flex flex-row flex-wrap border-b-[#fff] border-b-[2px]">
                                     <button
-                                        // to={`/series/video/series/${id}/${serie.season_number}/${serie.episode_number}/${background}`}
                                         onClick={() => navRoute({
+                                            ref:"trailer",
                                             url:`/series/episode/trailer`,
                                             state:{
                                                 stream:"series",
@@ -1108,7 +1200,7 @@ credits && serie ?
                                                 <button
                                                     type="button"
                                                     onClick={() => openPlay()}
-                                                    className={windowWidth > 800 ? "text-[#ffd800] text-[30px] w-[15%] underline text-center min-h-[40px] m-[1%]":"text-[#ffd800] w-[48%] mt-[1%] ml-[1%] text-center justify-center h-[40px] rounded-full"}
+                                                    className={windowWidth > 800 ? "text-[#ffd800] text-[30px] w-[15%] underline text-center min-h-[40px] m-[1%]":"text-[#ffd800] text-[30px] w-[48%] mt-[1%] ml-[1%] text-center justify-center h-[40px] rounded-full"}
                                                 >
                                                     <h3>play</h3> <FontAwesomeIcon icon={faPlayCircle} />
                                                 </button>
@@ -1118,6 +1210,7 @@ credits && serie ?
                                     
                                     <button
                                         onClick={() => navRoute({
+                                            ref:"similar",
                                             url:`/series/similar`,
                                             state:{
                                                 stream:"series",
@@ -1132,6 +1225,7 @@ credits && serie ?
                                     
                                     <button
                                         onClick={() => navRoute({
+                                            ref:"recommendations",
                                             url:`/series/recommendations`,
                                             state:{
                                                 stream:"series",
@@ -1144,21 +1238,6 @@ credits && serie ?
                                         <h2>recommended tv</h2>
                                     </button>                                    
                                 </div>
-                                {/* <div className="w-[100%] h-[100px] movie-scene overflow-x-auto flex flex-col flex-wrap">
-                                    {
-                                        serie?.episodes.map(({vote_average,name,episode_number},node) => 
-                                            <NavLink
-                                                to={`/series/season/${id}`}
-                                                key={node}
-                                                className={windowWidth > 800 ? "text-[#ffd800] w-[23%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]" : "text-[#ffd800] w-[98%] text-center min-h-[40px] m-[1%] bg-[#000] border-[2px]"}
-                                            >
-                                                <p>{name}</p>
-                                                <p>episode {episode_number}</p>
-                                                <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {vote_average}</p>
-                                            </NavLink>
-                                        )
-                                    }
-                                </div> */}
                                 <div className="w-[100%]">
                                     <button
                                         type="button"
@@ -1193,6 +1272,7 @@ credits && serie ?
                                             <div 
                                                 key={serie_key} 
                                                 onClick={() => navRoute({
+                                                    ref:"person",
                                                     url:`/series/person`,
                                                     state:{
                                                         id
@@ -1200,7 +1280,7 @@ credits && serie ?
                                                 className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150":"cursor-pointer w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         <h3 style={{fontStyle:"italic"}}>{roles && roles.length > 0 && roles[0].character}</h3>
@@ -1212,7 +1292,7 @@ credits && serie ?
                                 </div>
                             </div>
                         }
-                        {
+                        {/* {
                             credits.crew && credits.crew.length > 0 &&
                             <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"cursor-pointerw-[100%] h-[420px] my-[2%]"}>
 
@@ -1242,7 +1322,7 @@ credits && serie ?
                                     }
                                 </div>
                             </div>
-                        }
+                        } */}
                         {
                             credits.guest_stars && credits.guest_stars.length > 0 &&
                             <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
@@ -1255,6 +1335,7 @@ credits && serie ?
                                             <div 
                                                 key={serie_key} 
                                                 onClick={() => navRoute({
+                                                    ref:"person",
                                                     url:`/series/person`,
                                                     state:{
                                                         id
@@ -1262,7 +1343,7 @@ credits && serie ?
                                                 className={windowWidth > 800 ? "w-[25%] h-[100%] cursor-pointer hover:contrast-150":"cursor-pointer w-[48%] h-[100%] mx-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         <h3>{character}</h3>
@@ -1274,18 +1355,6 @@ credits && serie ?
                                 </div>
                             </div>
                         }
-                        {/* <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
-                            {
-                                Object.entries(images).map(([key,value],node) => 
-                                    value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] w-[48%] h-[50%]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-contain h-[100%]"} />
-                                        </div>
-                                    )
-                                )
-                            }
-
-                        </div> */}
                         </>
 
                 </div>

@@ -4,11 +4,11 @@ import { useState, useEffect } from "react"
 import NAVBAR from "./nav"
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
-import { NavLink } from "react-router-dom";
 import SWEETPAGE from "../midlleware/pages";
 import PICTURE from "../midlleware/picture";
 import CryptoJS from "crypto-js";
 import { useNavigate } from "react-router-dom"
+import { useKeys } from "./safe";
 
 const MOBILE = () => {
     const [open, setOpen] = useState(false)
@@ -16,6 +16,7 @@ const MOBILE = () => {
     const [search_content, setSearchContent] = useState([]);
     const [windowWidth, setWindowWidth] = useState(0);
     const navigate = useNavigate();
+    const {safeKeys} = useKeys()
 
     useEffect(() => {
         const handleResize = () => {
@@ -39,18 +40,18 @@ const MOBILE = () => {
 
             // Usage:
             const currentWeek = getCurrentWeek();
-            console.log(currentWeek,typeof currentWeek);
-            console.log("searching for...",search)
+            // console.log(currentWeek,typeof currentWeek);
+            // console.log("searching for...",search)
             runContent.forEach(async({index, api, page, type, select, insert}) => {
-                console.log("running")
+                // console.log("running")
                 const hashed = page + search + type
                 const hashedKey = CryptoJS.SHA256(hashed).toString();
-                console.log("hashedKey",hashedKey)
+                // console.log("hashedKey",hashedKey)
                 async function freshFetch(){
-                    const response = await fetch(`${process.env.REACT_APP_movie_db}${api}?api_key=${process.env.REACT_APP_api_key}&language=en-US&query=${search}&page=${page}`);
+                    const response = await fetch(`${safeKeys.MOVIE_DB}${api}?api_key=${safeKeys.API_KEY}&language=en-US&query=${search}&page=${page}`);
                     const data = await response.json();
         
-                    console.log(data,"fresh")
+                    // console.log(data,"fresh")
                     if (data.results.length > 0) {
                         setSearchContent((prevSearch) => {
                             prevSearch = prevSearch || [];
@@ -208,7 +209,6 @@ const MOBILE = () => {
                                     <div className="w -[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
                                         {
                                             results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
-                                                <NavLink  to={`/${index}/${id}`} >
                                                 <div 
                                                     key={search_key}
                                                     onClick={() => navRoute({
@@ -220,7 +220,7 @@ const MOBILE = () => {
                                                     className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}
                                                 >
                                                     <div key={search_key} className="w-[100%] h-[100%]">
-                                                        <PICTURE classes={'object-cover h-[100%]'} picture={poster_path || backdrop_path || profile_path} />
+                                                        <PICTURE classes={'object-cover h-[100%] w-[100%]'} picture={poster_path || backdrop_path || profile_path} />
                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                             <h2 className="text-[10px] font-bold">{name || original_name || title || original_title}</h2>
                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { 
@@ -234,7 +234,6 @@ const MOBILE = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                </NavLink>
                                             )
                                         }
                                     </div>

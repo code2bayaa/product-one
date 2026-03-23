@@ -5,9 +5,10 @@ import SOCKETS from "../midlleware/sockets";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import Swal from "sweetalert2";
 import {useNavigate} from "react-router-dom"
-
+import { useKeys } from "./safe";
 const SUBSCRIBE = () => {
 
+    const {safeKeys} = useKeys()
     const [windowWidth,setWindowWidth] = useState(0)
     const [payment, setPayment] = useState(null)
     const [loading, setLoading] = useState({paypal:false,mpesa:false})
@@ -17,8 +18,8 @@ const SUBSCRIBE = () => {
     const router = useNavigate()
    const initialOptions = {
 
-        "client-id":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_paypal_sandbox_client: process.env.REACT_APP_paypal_live_client,
-
+        "client-id":process.env.REACT_APP_ENVIRONMENT === "development" ? safeKeys.PAYPAL_SANDBOX_CLIENT: safeKeys.PAYPAL_LIVE_CLIENT,
+        // "client-id":"",
         // "enable-funding": "venmo",
 
         "disable-funding": "",
@@ -62,7 +63,7 @@ const SUBSCRIBE = () => {
 
         try{
             setLoading({...loading,mpesa:true})
-            const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_mpesa : process.env.REACT_APP_init_mpesa_live,{
+            const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INIT_MPESA : process.env.REACT_APP_INIT_MPESA_LIVE,{
                 credentials: "include",
                 method:"POST",
                 body : JSON.stringify({
@@ -93,38 +94,68 @@ const SUBSCRIBE = () => {
             setPayment("mpesa")
             //open model to wait for payment success
             modalRef.current?.showModal();
-
-            SOCKETS.connect().then(socket => {
-                socket.emit("user", data.MerchantRequestID)
-                socket.on("callback", async({data}) => {
-                    //check if payment was cancelled
-                    console.log(data)
-                    if(data.ResultCode !== 0){
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: message,
-                            showConfirmButton: false,
-                            timer: 2500
-                        })
-                        setLoading({...loading,mpesa:false})
-                        modalRef.current?.close()
-                        socket.emit("destroy", data.MerchantRequestID);
-                        return null
-                    }
+            SOCKETS.connect()
+            SOCKETS.socketConnect()
+            SOCKETS.socketModule.emit("user", data.MerchantRequestID)
+            SOCKETS.socketModule.on("callback", async({data}) => {
+                //check if payment was cancelled
+                // console.log(data)
+                if(data.ResultCode !== 0){
                     Swal.fire({
-                        icon: 'success',
-                        title: 'confirmed',
-                        text: "success",
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: message,
                         showConfirmButton: false,
                         timer: 2500
                     })
-                    socket.emit("destroy", data.MerchantRequestID);
-                    //include app pay
-                    runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
-                    
+                    setLoading({...loading,mpesa:false})
+                    modalRef.current?.close()
+                    SOCKETS.socketModule.emit("destroy", data.MerchantRequestID);
+                    return null
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'confirmed',
+                    text: "success",
+                    showConfirmButton: false,
+                    timer: 2500
                 })
+                SOCKETS.socketModule.emit("destroy", data.MerchantRequestID);
+                //include app pay
+                runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
+                
             })
+            // SOCKETS.connect().then(socket => {
+            //     socket.emit("user", data.MerchantRequestID)
+            //     socket.on("callback", async({data}) => {
+            //         //check if payment was cancelled
+            //         console.log(data)
+            //         if(data.ResultCode !== 0){
+            //             Swal.fire({
+            //                 icon: 'error',
+            //                 title: 'Oops...',
+            //                 text: message,
+            //                 showConfirmButton: false,
+            //                 timer: 2500
+            //             })
+            //             setLoading({...loading,mpesa:false})
+            //             modalRef.current?.close()
+            //             socket.emit("destroy", data.MerchantRequestID);
+            //             return null
+            //         }
+            //         Swal.fire({
+            //             icon: 'success',
+            //             title: 'confirmed',
+            //             text: "success",
+            //             showConfirmButton: false,
+            //             timer: 2500
+            //         })
+            //         socket.emit("destroy", data.MerchantRequestID);
+            //         //include app pay
+            //         runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
+                    
+            //     })
+            // })
 
         }catch(error){
             console.log(error,error.message,"error")
@@ -136,7 +167,7 @@ const SUBSCRIBE = () => {
     const runPurchase = async({data,payment}) => {
         console.log("running purchase...")
         //insert payment
-        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_payment : process.env.REACT_APP_payment_live,{
+        const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PAYMENT : process.env.REACT_APP_PAYMENT_LIVE,{
             credentials: "include",
             method:"POST",
             body : JSON.stringify({
@@ -149,7 +180,7 @@ const SUBSCRIBE = () => {
         });
 
         const {status,message} = await res.json()
-        console.log(status,"status",message,"message")
+        // console.log(status,"status",message,"message")
         if(!status){
             Swal.fire({
                 icon: 'error',
@@ -162,7 +193,7 @@ const SUBSCRIBE = () => {
 
         console.log("include credits")
         //include credits
-        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_add_user_credits : process.env.REACT_APP_add_user_credits_live,{
+        const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_ADD_USER_CREDITS : process.env.REACT_APP_ADD_USER_CREDITS_LIVE,{
             credentials: "include",
             method:"POST",
             body : JSON.stringify({
@@ -192,7 +223,7 @@ const SUBSCRIBE = () => {
     }
     const payWithPayPal = async() => {
         setLoading({...loading,paypal:true})
-        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
         const {status,message} = await res.json()
         console.log(message)
         if(status){
@@ -318,7 +349,7 @@ const SUBSCRIBE = () => {
 
                                     try {
 
-                                        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_paypal_orders : process.env.REACT_APP_init_paypal_orders_live, {
+                                        const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INIT_PAYPAL_ORDERS : process.env.REACT_APP_INIT_PAYPAL_ORDERS_LIVE, {
                                             method: "POST",
                                             credentials: "include",
                                             headers: {
@@ -373,7 +404,7 @@ const SUBSCRIBE = () => {
                                 onApprove={async (data, actions) => {
                                     try {
                                         // console.log(data,"approve data")
-                                        const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_init_paypal_capture : process.env.REACT_APP_init_paypal_capture_live,
+                                        const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INIT_PAYPAL_CAPTURE : process.env.REACT_APP_INIT_PAYPAL_CAPTURE_LIVE,
                                             {
                                                 method: "POST",
                                                 credentials: "include",

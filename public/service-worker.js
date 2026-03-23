@@ -11,11 +11,11 @@ const OFFLINE_URLS = [
   '/image/logo2.png',
   '/image/logo3.png',
   '/videos/load.mp4',
-  // '/static/js/main.54418ade.js', // adjust as needed
-  // '/static/js/main.54418ade.js.LICENSE.txt',
-  // '/statisc/js/main.54418ade.js.map',
-  // '/static/css/main.1601dc8d.css',
-  // '/static/css/main.1601dc8d.css.map',
+  // '/static/js/main.38e27127.js', // adjust as needed
+  // '/static/js/main.38e27127.js.LICENSE.txt',
+  // '/static/js/main.38e27127.js.map',
+  // '/static/css/main.b58bbd89.css',
+  // '/static/css/main.b58bbd89.css.map',
       '/static/css/main.css', // adjust as needed
     '/static/js/bundle.js',
 ];

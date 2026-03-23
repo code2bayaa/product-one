@@ -1,17 +1,18 @@
+import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faAngleDoubleRight, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
 import CryptoJS from "crypto-js";
+import { useKeys } from './safe';
 const PERSON = () => {
 
-    // const { id } = useParams();
     const hasFetched= useRef({images:false,tv:false,movies:false,person:false,feedback:false})
     const [person, setPerson] = useState(null)
     const [movies, setMovies] = useState(null)
@@ -19,13 +20,61 @@ const PERSON = () => {
     const [images, setImages] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     const [following,setFollowing] = useState(null)
-    const { state } = useLocation();
+    const {safeKeys} = useKeys()
+    // const { state } = useLocation();
     const navigate = useNavigate();
+    const {state} = useLocation()
     const id = state.id
+    const client = useApolloClient();
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+
+        // Create the external script
+        const externalScript = document.createElement("script");
+        externalScript.type = "text/javascript";
+        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            document.body.removeChild(externalScript);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.crossorigin = "anonymous";
+        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+        inlineScript.async = true
+        // Create the external script
+        // const externalScript = document.createElement("script");
+        // externalScript.type = "text/javascript";
+        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        // document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            // document.body.removeChild(externalScript);
+        };
+    }, []);
 
     useEffect(() => {
         const handleResize = () => {
-            setWindowWidth(window.innerWidth);
+            setWindowWidth(window.screen.width);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
@@ -63,6 +112,7 @@ const PERSON = () => {
     `
     const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     })
 
     const [mutateInsertImage] = useMutation(gql`
@@ -110,7 +160,7 @@ const PERSON = () => {
     const graphImages = useCallback(async() => {
 
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}person/${id}/images?api_key=${safeKeys.API_KEY}`);
             const getImageData = await response.json();
             console.log(getImageData,"images")
             let value = 0
@@ -191,8 +241,23 @@ const PERSON = () => {
     `
     const [fetchPersonData] = useLazyQuery(FETCH_PERSON_QUERY,{
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     });
+    useEffect(() => {
+        const invalidateCache = () => {
+            console.log("Invalidating Apollo Client cache");
+            client.refetchQueries({
+                include: [FETCH_PERSON_QUERY] // Refetch all queries using this query
+            });
+            // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+        };
 
+        // Set up the timer to invalidate the cache after 24 hours
+        const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+
+        // Clear the timer when the component unmounts to prevent memory leaks
+        return () => clearTimeout(timerId);
+    }, [client,FETCH_PERSON_QUERY]); // 
     const INSERT_PERSON_MUTATION = gql`
         mutation AddPersonID(
             $single:PERSON_ID
@@ -236,7 +301,7 @@ const PERSON = () => {
     const fetchPerson = useCallback(async() => {
 
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}person/${id}?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}person/${id}?api_key=${safeKeys.API_KEY}`);
             const data = await response.json();
             console.log(data)
             mutateInsertPerson({
@@ -274,11 +339,11 @@ const PERSON = () => {
         }
         hasFetched.current.feedback = true        
         const checkFeedback = (id) => {
-            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+            fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_followers_select : process.env.REACT_APP_followers_select_live}`,{
+                    fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_FOLLOWERS_SELECT : process.env.REACT_APP_FOLLOWERS_SELECT_LIVE}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -356,7 +421,23 @@ const PERSON = () => {
     `
     const [fetchMovie] = useLazyQuery(FETCH_MOVIE_QUERY,{
         notifyOnNetworkStatusChange: true,
+        // fetchPolicy: 'cache-first',
     });
+    useEffect(() => {
+        const invalidateCache = () => {
+            console.log("Invalidating Apollo Client cache");
+            client.refetchQueries({
+                include: [FETCH_MOVIE_QUERY] // Refetch all queries using this query
+            });
+            // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+        };
+
+        // Set up the timer to invalidate the cache after 24 hours
+        const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+
+        // Clear the timer when the component unmounts to prevent memory leaks
+        return () => clearTimeout(timerId);
+    }, [client,FETCH_MOVIE_QUERY]); // 
 
     const INSERT_MOVIE_MUTATION = gql`
         mutation AddPlayed(
@@ -438,14 +519,15 @@ const PERSON = () => {
             
             const hashed = id + "movie"
             const hashedKey = CryptoJS.SHA256(hashed).toString();
-            const api = `${process.env.REACT_APP_movie_db}person/${id}/movie_credits?api_key=${process.env.REACT_APP_api_key}`
             async function freshFetch(){
+                const api = `${safeKeys.MOVIE_DB}person/${id}/movie_credits?api_key=${safeKeys.API_KEY}`
                 const response = await fetch(`${api}`);
                 const movies_data = await response.json();
                 console.log(movies_data,"movie")
                 setMovies(() => ({...movies_data})); 
                 mutateInsertMovie({ variables: {
                     ...movies_data,
+                    type:"movie",
                     hashedKey
                 }} );
                 return {...movies_data}
@@ -469,7 +551,7 @@ const PERSON = () => {
         
         }catch(error){
             console.log(error,"error")
-                const api = `${process.env.REACT_APP_movie_db}person/${id}/movie_credits?api_key=${process.env.REACT_APP_api_key}`
+                const api = `${safeKeys.MOVIE_DB}person/${id}/movie_credits?api_key=${safeKeys.API_KEY}`
                 fetch(`${api}`)
                 .then(data => data.json())
                 .then(data => setMovies(() => ({...data})))
@@ -483,14 +565,16 @@ const PERSON = () => {
             const hashed = id + "tv"
             const hashedKey = CryptoJS.SHA256(hashed).toString();
 
-            const api = `${process.env.REACT_APP_movie_db}person/${id}/tv_credits?api_key=${process.env.REACT_APP_api_key}`
+            
             async function freshFetch(){
+                const api = `${safeKeys.MOVIE_DB}person/${id}/tv_credits?api_key=${safeKeys.API_KEY}`
                 const response = await fetch(`${api}`);
                 const movies_data = await response.json();
                 console.log(movies_data)
                 setSeries(() => ({...movies_data})); 
                 mutateInsertTV({ variables: {
                     ...movies_data,
+                    type:"tv",
                     hashedKey
                 }} );
                 return {...movies_data}
@@ -514,7 +598,7 @@ const PERSON = () => {
         
         }catch(error){
             console.log(error,"error")
-                const api = `${process.env.REACT_APP_movie_db}person/${id}/tv_credits?api_key=${process.env.REACT_APP_api_key}`
+                const api = `${safeKeys.MOVIE_DB}person/${id}/tv_credits?api_key=${safeKeys.API_KEY}`
                 fetch(`${api}`)
                 .then(data => data.json())
                 .then(data => setSeries(() => ({...data})))
@@ -528,31 +612,63 @@ const PERSON = () => {
         //     return
         // }
         // hasFetched.current.images = true
-        graphImages()
+        // graphImages()
+        const controller = new AbortController();
+        graphImages(controller.signal).catch(err => {
+            if (err && err.name === 'AbortError') return;
+            console.error("graphImages outer error", err);
+        });
+        return () => {
+            controller.abort();
+        };
     },[graphImages])
 
     useEffect(() => {
-        if(hasFetched.current.person){
-            return
-        }
-        hasFetched.current.person = true
-        fetchPerson();
+        // if(hasFetched.current.person){
+        //     return
+        // }
+        // hasFetched.current.person = true
+        // fetchPerson();
+        const controller = new AbortController();
+        fetchPerson(controller.signal).catch(err => {
+            if (err && err.name === 'AbortError') return;
+            console.error("fetchPerson outer error", err);
+        });
+        return () => {
+            controller.abort();
+        };
     }, [fetchPerson]);
 
     useEffect(() => {
-        if(hasFetched.current.movies){
-            return
-        }
-        hasFetched.current.movies = true
-        fetchMovies();
+        // if(hasFetched.current.movies){
+        //     return
+        // }
+        // hasFetched.current.movies = true
+        // fetchMovies();
+        const controller = new AbortController();
+        fetchMovies(controller.signal).catch(err => {
+            if (err && err.name === 'AbortError') return;
+            console.error("fetchMovies outer error", err);
+        });
+        return () => {
+            controller.abort();
+        };
     }, [fetchMovies]);
 
     useEffect(() => {
-        if(hasFetched.current.tv){
-            return
-        }
-        hasFetched.current.tv = true
-        fetchTV();
+        // if(hasFetched.current.tv){
+        //     return
+        // }
+        // hasFetched.current.tv = true
+        // fetchTV();
+        const controller = new AbortController();
+        fetchTV(controller.signal).catch(err => {
+            if (err && err.name === 'AbortError') return;
+            console.error("fetchTV outer error", err);
+        });
+        return () => {
+            controller.abort();
+        };
     }, [fetchTV]);
 
     // const getBackground = () => {
@@ -566,16 +682,16 @@ const PERSON = () => {
     //     let path = (key > -1) ? profiles[key].file_path : ""
             
 
-    //     return process.env.REACT_APP_img_poster + path
+    //     return safeKeys.IMG_POSTER + path
     // }
 
     const addToFollowers = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url :process.env.REACT_APP_api_url_live ,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL :process.env.REACT_APP_API_URL_LIVE ,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_followers : process.env.REACT_APP_followers_live}`,{
+            fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_FOLLOWERS : process.env.REACT_APP_FOLLOWERS_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -625,21 +741,21 @@ const PERSON = () => {
     return (
         
         series && movies && person ?
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? process.env.REACT_APP_img_poster + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
+                <div className="w-[20%] absolute h-[100%]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth > 800 ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] text-justify justify-center items-center":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
             
                 
                 <>
                     {/* <div className="w-[100%] h-[60%]"> */}
-                        <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "h-[60%]" : "h-[auto]"} text-justify justify-center items-center`}>
+                        {/* <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "min-h-[60%] h-auto" : "h-[auto]"} text-justify justify-center items-center`}> */}
                             <div className={windowWidth > 800 ? "w-[40%] h-[auto] m-[1%] float-left backdrop-blur-md":"w-[98%] h-[auto] m-[1%] backdrop-blur-md"}>
                                 <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-[#ffd800]"} />
                             </div>
@@ -654,6 +770,16 @@ const PERSON = () => {
                             <article>
                                 {person.biography}
                             </article>
+                            <div style={{overflow:"hidden",margin:"5px"}}>
+                                <ins
+                                    className="adsbygoogle"
+                                    style={{display:"block",width:"100%",height:"auto"}}
+                                    data-ad-client="ca-pub-8036256488117651"
+                                    data-ad-slot="1234567890"
+                                    data-ad-format="auto"
+                                    data-full-width-responsive="true"
+                                ></ins>
+                            </div>
                             <div className={windowWidth > 800 ? "w-[56%] float-right":"w-[100%]"}>
                                 <button
                                     type="button"
@@ -674,8 +800,8 @@ const PERSON = () => {
                                     
                                 </button>
                             </div>                            
-                        </div>
-                                <div className={windowWidth > 800 ? "w-[90%] min-h-[100%] ml-[5%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
+                        {/* </div> */}
+                                <div className={windowWidth > 800 ? "w-[90%] min-h-[100%] ml-[5%] mt-[1%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
                                     {
 
                                         ((series.cast && series.cast.length > 0) || (series.crew && series.crew.length > 0)) &&
@@ -690,11 +816,11 @@ const PERSON = () => {
                                                             series.cast && series.cast.map(({character,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <div key={movie_key} 
                                                                     // to={`/series/${id}`} 
-                                                                    onClick={() => navMovie(id,`/people/serie`)}
-                                                                    className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                    onClick={() => navMovie(id,`/people/serie`,"tv")}
+                                                                    className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115  duration-700 hover:contrast-150":"cursor-pointer w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
-                                                                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                             <h2 style={{fontStyle:"italic"}}>{character}</h2>
@@ -717,11 +843,11 @@ const PERSON = () => {
                                                                     <div 
                                                                         key={movie_key} 
                                                                         // to={`/series/${id}`}
-                                                                        onClick={() => navMovie(id,`/people/serie`)} 
-                                                                        className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                        onClick={() => navMovie(id,`/people/serie`,"tv")} 
+                                                                        className={windowWidth > 800 ? "w-[25%] h-[100%] hover:scale-115 duration-700 m-[0.5%] hover:contrast-150":"w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                         <div className="w-[100%] h-[100%]">
                                                                             <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
-                                                                            <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                                            <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                                 <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                                 <h2 style={{fontStyle:"italic"}}>{job}</h2>
@@ -751,11 +877,11 @@ const PERSON = () => {
                                                                 <div 
                                                                     key={movie_key} 
                                                                     // to={`/movies/${id}`}
-                                                                    onClick={() => navMovie(id,`/people/movie`)} 
-                                                                    className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                    onClick={() => navMovie(id,`/people/movie`,"movies")} 
+                                                                    className={windowWidth > 800 ? "w-[25%] h-[100%] hover:scale-115  duration-700 m-[0.5%] hover:contrast-150":"w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
-                                                                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                             <h2 style={{fontStyle:"italic"}}>{character}</h2>
@@ -777,11 +903,13 @@ const PERSON = () => {
                                                                 <div 
                                                                     key={movie_key} 
                                                                     // to={`/movies/${id}`} 
-                                                                    onClick={() => navMovie(id,`/people/movie`)}
-                                                                    className={windowWidth > 800 ? "w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                    onClick={() => navMovie(id,`/people/movie`,"movies")}
+                                                                    className={
+                                                                        windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115  duration-700 hover:contrast-150":
+                                                                        "cursor-pointer w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
                                                                         <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
-                                                                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                                        <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                                             <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                             <h2 style={{fontStyle:"italic"}}>{job}</h2>
@@ -797,13 +925,12 @@ const PERSON = () => {
                                         </div>
                                     }
                                 </div>
-                            {/* </div> */}
                             </>
 
             
-        </div>
-    </div>
-                            :
+                    </div>
+                </div>
+            :
                 <LOAD/>
     )
 }

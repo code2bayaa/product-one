@@ -1,32 +1,42 @@
+import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback
+import { useState, useEffect, useCallback, useRef
 
  } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar } from "@fortawesome/free-solid-svg-icons";
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
-
+import { useKeys } from './safe';
 const SERIE = () => {
-    // const { id } = useParams();
-    // const hasFetched = useRef({tv:false,images:false,credits:false,feedback:false})
+    const hasFetched = useRef({credits:false,images:false,feedback:false,tv:false})
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [playlist,setPlaylist] = useState(null)
-    // const [fetchedImage, setFetchedImage] = useState(null)
-    // const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
+    const controller = new AbortController();
+    const aborter = useRef(null);
+    const aborterOne = useRef(null);
+    const aborterTwo = useRef(null);
+    const {safeKeys} = useKeys()
+    // const params = useSearchParams();
+    // const state = JSON.parse(decodeURIComponent(params.get("state")));
+    // const state = useStates("tv")
+    // const router = useRouter()
+    // const { state } = useLocation();
+    // const navigate = useNavigate();
     const { state } = useLocation();
     const navigate = useNavigate();
     const id = state.id
+    // console.log("state id",id)
     useEffect(() => {
         const handleResize = () => {
-            setWindowWidth(window.innerWidth);
+            setWindowWidth(window.screen.width);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
@@ -34,36 +44,81 @@ const SERIE = () => {
             window.removeEventListener("resize", handleResize);
         };
     },[])
-    const FETCH_IMAGE_QUERY = gql`
-        query Image (
-            $type: String!
-            $season: Int!
-            $episode: Int! 
-            $id : ID! 
-        ){
-            image(
-                type:$type,
-                episode:$episode,
-                season:$season,
-                id:$id
-            ) {
-                data {
-                    id
-                    path
-                }
-                meta_data {
-                    type
-                    season
-                    episode
-                }
-                success
-                error
-            }
-        }
-    `
-    const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
-        notifyOnNetworkStatusChange: true,
-    })
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+
+        // Create the external script
+        const externalScript = document.createElement("script");
+        externalScript.type = "text/javascript";
+        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            document.body.removeChild(externalScript);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.crossorigin = "anonymous";
+        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+        inlineScript.async = true
+        // Create the external script
+        // const externalScript = document.createElement("script");
+        // externalScript.type = "text/javascript";
+        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        // document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            // document.body.removeChild(externalScript);
+        };
+    }, []);
+    // const FETCH_IMAGE_QUERY = gql`
+    //     query Image (
+    //         $type: String!
+    //         $season: Int!
+    //         $episode: Int! 
+    //         $id : ID! 
+    //     ){
+    //         image(
+    //             type:$type,
+    //             episode:$episode,
+    //             season:$season,
+    //             id:$id
+    //         ) {
+    //             data {
+    //                 id
+    //                 path
+    //             }
+    //             meta_data {
+    //                 type
+    //                 season
+    //                 episode
+    //             }
+    //             success
+    //             error
+    //         }
+    //     }
+    // `
+    // const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
+    //     notifyOnNetworkStatusChange: true,
+    //     fetchPolicy: 'cache-first',
+    // })
 
     const [mutateInsertImage] = useMutation(gql`
         mutation AddImage(
@@ -109,104 +164,257 @@ const SERIE = () => {
             }
         },
         onError: (error) => {
-            console.error("insert image Error:", error);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                // (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
 
-    const FETCH_MOVIE_QUERY = gql`
-        query SingleTV (
-            $id: ID!
-        ){
-            singleTV(
-                id:$id
+    const FETCH_COMINED_QUERY = gql`
+        query TvPayload (
+            $image: IMAGE_TV_ARGUMENTS!
+            $tv: SINGLE_TV_ARGUMENTS!
+            $credit: CREDIT_ITEM_TV_ARGUMENTS!
+        ) {
+            tvPayload(
+                image: $image,
+                tv: $tv,
+                credit: $credit
             ) {
-
-                adult
-                backdrop_path
-                created_by {
-                    id
-                    credit_id
-                    name
-                    gender
-                    profile_path
+                image {
+                    data {
+                        id
+                        path
+                    }
+                    meta_data {
+                        type
+                        season
+                        episode
+                    }
+                    success
+                    error
                 }
-                episode_run_time
-                first_air_date
-                genres {
+                tv {
+                    adult
+                    backdrop_path
+                    created_by {
+                        id
+                        credit_id
+                        name
+                        gender
+                        profile_path
+                    }
+                    episode_run_time
+                    first_air_date
+                    genres {
+                        id
+                        name
+                    }
+                    homepage
                     id
+                    in_production
+                    languages
+                    last_air_date
+                    last_episode_to_air {
+                        name
+                        air_date
+                        episode_number
+                        season_number
+                    },
                     name
-                }
-                homepage
-                id
-                in_production
-                languages
-                last_air_date
-                last_episode_to_air {
-                    name
-                    air_date
-                    episode_number
-                    season_number
-                },
-                name
-                next_episode_to_air {
-                    name
-                    air_date
-                    episode_number
-                    season_number
-                }
-                networks {
-                    id
-                    logo_path
-                    name
+                    next_episode_to_air {
+                        name
+                        air_date
+                        episode_number
+                        season_number
+                    }
+                    networks {
+                        id
+                        logo_path
+                        name
+                        origin_country
+                    }
+                    number_of_episodes
+                    number_of_seasons
                     origin_country
-                }
-                number_of_episodes
-                number_of_seasons
-                origin_country
-                original_language
-                original_name
-                overview
-                popularity
-                poster_path
-                production_companies {
-                    id
-                    logo_path
-                    name,
-                    origin_country
-                }
-                production_countries {
-                    iso_3166_1
-                    name
-                }
-                seasons {
-                    episode_count
-                    id
-                    name
-                    season_number
+                    original_language
+                    original_name
+                    overview
+                    popularity
+                    poster_path
+                    production_companies {
+                        id
+                        logo_path
+                        name,
+                        origin_country
+                    }
+                    production_countries {
+                        iso_3166_1
+                        name
+                    }
+                    seasons {
+                        episode_count
+                        id
+                        name
+                        season_number
+                        vote_average
+                    },
+                    spoken_languages {
+                        english_name
+                        iso_639_1
+                        name
+                    }
+                    status
+                    tagline
+                    type
                     vote_average
-                },
-                spoken_languages {
-                    english_name
-                    iso_639_1
-                    name
+                    vote_count
+                    message
+                    success
                 }
-                status
-                tagline
-                type
-                vote_average
-                vote_count
-                message
+                credit {
+                    cast {
+                        adult
+                        gender
+                        id
+                        known_for_department
+                        name
+                        original_name
+                        popularity
+                        profile_path
+                        cast_id
+                        character
+                        credit_id
+                        order
+                    }
+                    crew {
+                        adult
+                        gender
+                        id
+                        known_for_department
+                        name
+                        original_name
+                        popularity
+                        profile_path
+                        credit_id
+                        department
+                        job
+                    }              
+                    success
+                    error
+                    message                
+                }
                 success
+                error
             }
         }
     `
-    const [fetchSingleTV] = useLazyQuery(FETCH_MOVIE_QUERY,{
-        // pollInterval: 500, // fetches new data at that interval
+
+    const [fetchCombined] = useLazyQuery(FETCH_COMINED_QUERY,{
         notifyOnNetworkStatusChange: true,
-        // variables,
-        // skip: !variables.page, // Skip query execution if variables are not set
+        fetchPolicy: 'cache-first',
     });
+
+    // const FETCH_MOVIE_QUERY = gql`
+    //     query SingleTV (
+    //         $id: ID!
+    //     ){
+    //         singleTV(
+    //             id:$id
+    //         ) {
+
+    //             adult
+    //             backdrop_path
+    //             created_by {
+    //                 id
+    //                 credit_id
+    //                 name
+    //                 gender
+    //                 profile_path
+    //             }
+    //             episode_run_time
+    //             first_air_date
+    //             genres {
+    //                 id
+    //                 name
+    //             }
+    //             homepage
+    //             id
+    //             in_production
+    //             languages
+    //             last_air_date
+    //             last_episode_to_air {
+    //                 name
+    //                 air_date
+    //                 episode_number
+    //                 season_number
+    //             },
+    //             name
+    //             next_episode_to_air {
+    //                 name
+    //                 air_date
+    //                 episode_number
+    //                 season_number
+    //             }
+    //             networks {
+    //                 id
+    //                 logo_path
+    //                 name
+    //                 origin_country
+    //             }
+    //             number_of_episodes
+    //             number_of_seasons
+    //             origin_country
+    //             original_language
+    //             original_name
+    //             overview
+    //             popularity
+    //             poster_path
+    //             production_companies {
+    //                 id
+    //                 logo_path
+    //                 name,
+    //                 origin_country
+    //             }
+    //             production_countries {
+    //                 iso_3166_1
+    //                 name
+    //             }
+    //             seasons {
+    //                 episode_count
+    //                 id
+    //                 name
+    //                 season_number
+    //                 vote_average
+    //             },
+    //             spoken_languages {
+    //                 english_name
+    //                 iso_639_1
+    //                 name
+    //             }
+    //             status
+    //             tagline
+    //             type
+    //             vote_average
+    //             vote_count
+    //             message
+    //             success
+    //         }
+    //     }
+    // `
+    // const [fetchSingleTV] = useLazyQuery(FETCH_MOVIE_QUERY,{
+    //     // pollInterval: 500, // fetches new data at that interval
+    //     notifyOnNetworkStatusChange: true,
+    //     fetchPolicy: 'cache-first',
+    //     // variables,
+    //     // skip: !variables.page, // Skip query execution if variables are not set
+    // });
 
     const INSERT_MOVIE_MUTATION = gql`
         mutation addTV(
@@ -235,74 +443,81 @@ const SERIE = () => {
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting movies into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
-    const FETCH_CREDITS_QUERY = gql`
-        query Credits (
-            $id: Int!
-        ){
-            credits(
-                id:$id
-            ) {
-                cast {
-                    roles {
-                        credit_id
-                        character
-                        episode_count
-                    }
-                    adult
-                    gender
-                    id
-                    known_for_department
-                    name
-                    original_name
-                    popularity
-                    profile_path
-                    cast_id
-                    character
-                    credit_id
-                    total_episode_count
-                    order
-                }
-                crew {
-                    jobs {
-                        credit_id
-                        job
-                        episode_count
-                    }
-                    adult
-                    gender
-                    id
-                    known_for_department
-                    name
-                    original_name
-                    popularity
-                    profile_path
-                    cast_id
-                    character
-                    credit_id
-                    total_episode_count
-                    order
-                }              
-                success
-                error
-                message
-            }
-        }
-    `
-    const [fetchCreditsData] = useLazyQuery(FETCH_CREDITS_QUERY,{
-    // pollInterval: 500, // fetches new data at that interval
-    notifyOnNetworkStatusChange: true,
-    // variables,
-    // skip: !variables.page, // Skip query execution if variables are not set
-    });
+    // const FETCH_CREDITS_QUERY = gql`
+    //     query Credits (
+    //         $id: ID!
+    //     ){
+    //         credits(
+    //             id:$id
+    //         ) {
+    //             cast {
+    //                 roles {
+    //                     credit_id
+    //                     character
+    //                     episode_count
+    //                 }
+    //                 adult
+    //                 gender
+    //                 id
+    //                 known_for_department
+    //                 name
+    //                 original_name
+    //                 popularity
+    //                 profile_path
+    //                 cast_id
+    //                 character
+    //                 credit_id
+    //                 total_episode_count
+    //                 order
+    //             }
+    //             crew {
+    //                 jobs {
+    //                     credit_id
+    //                     job
+    //                     episode_count
+    //                 }
+    //                 adult
+    //                 gender
+    //                 id
+    //                 known_for_department
+    //                 name
+    //                 original_name
+    //                 popularity
+    //                 profile_path
+    //                 cast_id
+    //                 character
+    //                 credit_id
+    //                 total_episode_count
+    //                 order
+    //             }              
+    //             success
+    //             error
+    //             message
+    //         }
+    //     }
+    // `
+    // const [fetchCreditsData] = useLazyQuery(FETCH_CREDITS_QUERY,{
+    // // pollInterval: 500, // fetches new data at that interval
+    // notifyOnNetworkStatusChange: true,
+    // fetchPolicy: 'cache-first',
+    // // variables,
+    // // skip: !variables.page, // Skip query execution if variables are not set
+    // });
 
     const INSERT_CREDITS_MUTATION = gql`
         mutation AddCredits(
-            $id:Int!
+            $id:ID!
             $cast:[CAST_INPUT]
             $crew:[CREW_INPUT]
             $chunking:Boolean!
@@ -341,223 +556,169 @@ const SERIE = () => {
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting credits into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
-    const graphImages = useCallback(async() => {
+    // const graphImages = useCallback(async() => {
 
-        async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/images?api_key=${process.env.REACT_APP_api_key}`);
-            const getImageData = await response.json();
-            console.log(getImageData,"images")
-            let value = 0
-            const {backdrops, posters, logos} = getImageData
-            let path = ''
-            if(backdrops && backdrops.length > 0){
-                value = Math.max(...backdrops.map(({height}) => height))
-                let key = backdrops.findIndex(({height}) => height === value)
-                if(key > -1){
-                    path = backdrops[key].file_path
-                }
-            } 
-            if(posters && posters.length > 0){
-                let posters_value = Math.max(...posters.map(({height}) => height))
-                if(posters_value > value){
-                    let key = posters.findIndex(({height}) => height === posters_value)
-                    if(key > -1){
-                        path = posters[key].file_path
-                    }
-                    value = posters_value
-                }
-            }
-            if(logos && logos.length > 0){
-                let logos_value = Math.max(...logos.map(({height}) => height))
-                if(logos_value > value){
-                    let key = logos.findIndex(({height}) => height === logos_value)
-                    if(key > -1){
-                        path = logos[key].file_path
-                    }
-                }
-            }
+    //     function freshFetch(){
+    //         fetch(`${safeKeys.MOVIE_DB}tv/${id}/images?api_key=${safeKeys.API_KEY}`)
+    //         .then(response => response.json())
+    //         .then(getImageData => {
+    //             let value = 0
+    //             const {backdrops, posters, logos} = getImageData
+    //             let path = ''
+    //             if(backdrops && backdrops.length > 0){
+    //                 value = Math.max(...backdrops.map(({height}) => height))
+    //                 let key = backdrops.findIndex(({height}) => height === value)
+    //                 if(key > -1){
+    //                     path = backdrops[key].file_path
+    //                 }
+    //             } 
+    //             if(posters && posters.length > 0){
+    //                 let posters_value = Math.max(...posters.map(({height}) => height))
+    //                 if(posters_value > value){
+    //                     let key = posters.findIndex(({height}) => height === posters_value)
+    //                     if(key > -1){
+    //                         path = posters[key].file_path
+    //                     }
+    //                     value = posters_value
+    //                 }
+    //             }
 
-            mutateInsertImage({ variables: { meta_data : {
-                    type:"tv",
-                    season:-1,
-                    episode:-1,
-                    id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,path}                  
-            } });
-            console.log(path,"path" )
-            return path
-            // if(path)
-            //     setImages(path.substring(1).substring(0,path.substring(1).length - 4))
-            // else
-            //     setImages("null")            
-            // function chunkArray(array, size) {
-            //     const result = [];
-            //     for (let i = 0; i < array.length; i += size) {
-            //         result.push(array.slice(i, i + size));
-            //     }
-            //     return result;
-            // }
-            // let backdrops_all_results = [...getImageData.backdrops]
-            // if(backdrops_all_results.length > 100){
-            //     const chunks = chunkArray(backdrops_all_results, 100);
-            //     for (let i = 0; i < chunks.length; i++) {
-            //         mutateInsertImage({
-            //              variables: {
-            //                  meta_data : {
-            //                     type:"tv",
-            //                     season:-1,
-            //                     episode:-1,
-            //                     id:id?parseInt(id):-1
-            //                 },
-            //                 data:{id:getImageData.id,backdrops:chunks[i]},
-            //                 chunking:true,
-            //                 chunking_index:i
-            //             } 
-            //         });
-            //     }
-            // }else{
-            //     mutateInsertImage({ variables: { meta_data : {
-            //         type:"tv",
-            //         season:-1,
-            //         episode:-1,
-            //         id:id?parseInt(id):-1
-            //     }, data:{id:getImageData.id,backdrops:getImageData.backdrops},
-            //                     chunking:false,
-            //         chunking_index:0
-            //     } });
-            // }
-            // let logos_all_results = [...getImageData.logos]
-            // if(logos_all_results.length > 100){
-            //     const chunks = chunkArray(logos_all_results, 100);
-            //     for (let i = 0; i < chunks.length; i++) {
-            //         mutateInsertImage({ variables: { meta_data : {
-            //             type:"tv",
-            //             season:-1,
-            //             episode:-1,
-            //             id:id?parseInt(id):-1
-            //         }, data:{id:getImageData.id,logos:chunks[i]},
-            //         chunking:true,
-            //         chunking_index:i                    
-            //     } });
-            //     }
-            // }else{
-            //     mutateInsertImage({ variables: { meta_data : {
-            //         type:"tv",
-            //         season:-1,
-            //         episode:-1,
-            //         id:id?parseInt(id):-1
-            //     }, data:{id:getImageData.id,logos:getImageData.logos},
-            //                     chunking:false,
-            //         chunking_index:0
-            //      } });
-            // }
-            // let posters_all_results = [...getImageData.posters]
-            // if(posters_all_results.length > 100){
-            //     const chunks = chunkArray(posters_all_results, 100);
-            //     for (let i = 0; i < chunks.length; i++) {
-            //         mutateInsertImage({ variables: { meta_data : {
-            //             type:"tv",
-            //             season:-1,
-            //             episode:-1,
-            //             id:id?parseInt(id):-1
-            //         }, data:{id:getImageData.id,posters:chunks[i]},
-            //             chunking:true,
-            //             chunking_index:i                    
-            //     } });
-            //     }
-            // }else{
-            //     mutateInsertImage({ variables: { meta_data : {
-            //         type:"tv",
-            //         season:-1,
-            //         episode:-1,
-            //         id:id?parseInt(id):-1
-            //     }, data:{id:getImageData.id,posters:getImageData.posters},
-            //                         chunking:false,
-            //             chunking_index:0 
-            //          } });
-            // }
-            // return {...getImageData}
-        }         
-        try{
-            const fetched = await fetchImage({
-                variables : {
-                type:"tv",
-                episode:-1,
-                season:-1,
-                id:id?parseInt(id):-1
-            }})
-            console.log(fetched)
-            if (fetched.data && fetched.data.image.success) {
-                console.log("image cached data:", fetched.data);
-                setImages(() => (fetched.data.image.data.path))
+    //             if(logos && logos.length > 0){
+    //                 let logos_value = Math.max(...logos.map(({height}) => height))
+    //                 if(logos_value > value){
+    //                     let key = logos.findIndex(({height}) => height === logos_value)
+    //                     if(key > -1){
+    //                         path = logos[key].file_path
+    //                     }
+    //                 }
+    //             }
+    //             setImages(() => (path))
+    //             mutateInsertImage({ variables: { meta_data : {
+    //                     type:"tv",
+    //                     season:-1,
+    //                     episode:-1,
+    //                     id:id?parseInt(id):-1
+    //                 }, data:{id:getImageData.id,path}                  
+    //             } });
+    //         })
 
-            }else {
-                const path = await freshFetch()
-                setImages(path)
-                // setImages(() => ({...getImageData}))
-            }
-        
+    //     }         
+    //     try{
+    //         // fetchImage({
+    //         //     variables : {
+    //         //     type:"tv",
+    //         //     episode:-1,
+    //         //     season:-1,
+    //         //     id:id?parseInt(id):-1
+    //         // }})
+    //         // .then(fetched => {
+    //         //     if (fetched.data && fetched.data.image.success) {
+    //         //         setImages(() => (fetched.data.image.data.path))
+
+    //         //     }else {
+    //         //         freshFetch()
+    //         //     }
+    //         // })
+    //         const fetched = await fetchImage({
+    //             variables : {
+    //             type:"tv",
+    //             episode:-1,
+    //             season:-1,
+    //             id:id?parseInt(id):-1
+    //         }})
+    //         if (fetched.data && fetched.data.image.success) {
+    //             setImages(() => (fetched.data.image.data.path))
+
+    //         }else {
+    //             freshFetch()
+    //         }        
             
-        }catch(error){
-            console.log(error)
-            // fetch(`${process.env.REACT_APP_movie_db}tv/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-            // .then(data => data.json())
-            // .then(data => setImages(() => ({...data})))
-            const path = await freshFetch()
-            setImages(path)            
-        
+    //     }catch(error){
+    //         freshFetch()
+    //     }
+    // },[fetchImage,id,mutateInsertImage])
 
-        }
-    },[fetchImage,id,mutateInsertImage])
+    // const fetchTV = useCallback(async() => {
+    //     function freshSingleFetch(){
+    //         fetch(`${safeKeys.MOVIE_DB}tv/${id}?api_key=${safeKeys.API_KEY}`)
+    //         .then(response => response.json())
+    //         .then(response => {
+    //             console.log(response,"response wait")
+    //             setSerie(() => ({...response}))
+    //             mutateInsertTV({
+    //                 variables: {
+    //                     single : {...response}
+    //                 },
+    //             });
+    //         })
+    //         // const data = await response.json();
 
-    const fetchTV = useCallback(async() => {
+    //         // return {...data}
+    //     } 
+    //     try{
 
-        async function freshSingleFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}?api_key=${process.env.REACT_APP_api_key}`);
-            const data = await response.json();
-            console.log(data)
+    //         const fetched = await fetchSingleTV({
+    //             variables : { id }})
+    //         console.log(fetched)
+    //         if(fetched.data && fetched.data.singleTV && !fetched.data.singleTV.seasons){
+    //             //first time serie single
+    //             console.log("first time")
+    //             // const tv = await freshSingleFetch()
+    //             // setSerie(() => ({...tv}));
+    //             freshSingleFetch()
+    //         }else if(fetched.data && fetched.data.singleTV.success){
+    //             console.log("Using cached data:", fetched.data);
+    //             setSerie(() => ({...fetched.data.singleTV}))
+    //         }else {
+    //             // const tv = await freshSingleFetch()
+    //             // setSerie(() => ({...tv}));
+    //             freshSingleFetch()
+    //         }
+    //         // fetchSingleTV({
+    //         //     variables : { id }})
+    //         //     .then((fetched) => {
+    //         //         console.log(fetched)
+    //         //         if(fetched.data && fetched.data.singleTV && !fetched.data.singleTV.seasons){
+    //         //             //first time serie single
+    //         //             console.log("first time")
+    //         //             freshSingleFetch()
+                        
+                        
+    //         //         }else if(fetched.data && fetched.data.singleTV.success){
+    //         //             console.log("Using cached data:", fetched.data);
+    //         //             setSerie(() => ({...fetched.data.singleTV}))
+    //         //         }else {
+    //         //             freshSingleFetch()
+    //         //         }
+    //         //     })
 
-            mutateInsertTV({
-                variables: {
-                    single : {...data}
-                },
-            });
-            return {...data}
-        } 
+    //     }catch(error){
+    //         console.log(error,"error")
+    //         freshSingleFetch()
+    //     }
 
-        const fetched = await fetchSingleTV({
-            variables : { id }})
-        console.log(fetched)
-        if(fetched.data && fetched.data.singleTV && !fetched.data.singleTV.seasons){
-            //first time serie single
-            console.log("first time")
-            const tv = await freshSingleFetch()
-            setSerie(() => ({...tv}));
-        }else if(fetched.data && fetched.data.singleTV.success){
-            console.log("Using cached data:", fetched.data);
-            setSerie(() => ({...fetched.data.singleTV}))
-        }else {
-            const tv = await freshSingleFetch()
-            setSerie(() => ({...tv}));
-        }
-        
-
-    },[fetchSingleTV,id,mutateInsertTV])
+    // },[fetchSingleTV,id,mutateInsertTV])
 
     const checkFeedback = (id) => {
         console.log(id,"id")
         //authentication
-        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
         .then(async res => {
             const {status, user} = await res.json()
             if(status){
-                console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`)
-                fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
+                console.log(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`)
+                fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`,{
                     method:"POST",
                     headers:{
                         "Content-Type":"application/json"
@@ -574,22 +735,118 @@ const SERIE = () => {
         })
     }
 
-    useEffect(() => {
-        // if(hasFetched.current.feedback){
-        //     return
-        // }
-        // hasFetched.current.feedback = true
-        if (serie && serie.id) {
-            checkFeedback(serie.id);
-        }
-    }, [serie]);
+    // useEffect(() => {
+    //     if(hasFetched.current.feedback){
+    //         return
+    //     }
+    //     hasFetched.current.feedback = true
+    //     if (serie && serie.id) {
+    //         checkFeedback(serie.id);
+    //     }
+    // }, [serie]);
 
-    const fetchCredits = useCallback(async() => {
-        try{
-            async function freshFetch(){
-                const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
-                const credits_data = await response.json();
-                console.log(credits_data)
+    // const fetchCredits = useCallback(async() => {
+    //     function freshFetch(){
+    //         fetch(`${safeKeys.MOVIE_DB}tv/${id}/aggregate_credits?api_key=${safeKeys.API_KEY}`)
+    //         .then(response => response.json())
+    //         .then(credits_data => {
+    //             console.log(credits_data)
+    //             function chunkArray(array, size) {
+    //                 const result = [];
+    //                 for (let i = 0; i < array.length; i += size) {
+    //                     result.push(array.slice(i, i + size));
+    //                 }
+    //                 return result;
+    //             }
+    //             setCredit(() => ({...credits_data}));
+    //             let cast_all_results = [...credits_data.cast]
+    //             if(cast_all_results.length > 100){
+    //                 const chunks = chunkArray(cast_all_results, 100);
+    //                 for (let i = 0; i < chunks.length; i++) {
+    //                     mutateInsertCredits({
+    //                         variables: {
+    //                             cast:chunks[i],
+    //                             id:id?parseInt(id):0,
+    //                             chunking:true,
+    //                             chunking_index:i
+    //                         },
+    //                     });
+    //                 }
+    //             }else{
+    //                 mutateInsertCredits({
+    //                     variables: {
+    //                         cast:cast_all_results,
+    //                         id:id?parseInt(id):0,
+    //                         chunking:false,
+    //                         chunking_index:0
+    //                     },
+    //                 });
+    //             }
+    //         })
+
+
+    //         // let crew_all_results = [...credits_data.crew]
+    //         // if(crew_all_results.length > 100){
+    //         //     const chunks = chunkArray(crew_all_results, 100);
+    //         //     for (let i = 0; i < chunks.length; i++) {
+    //         //         mutateInsertCredits({
+    //         //             variables: {
+    //         //                 crew:chunks[i],
+    //         //                 id:id?parseInt(id):0,
+    //         //                 chunking:true,
+    //         //                 chunking_index:i                        
+    //         //             },
+    //         //         });
+    //         //     }
+    //         // }else{
+    //         //     mutateInsertCredits({
+    //         //         variables: {
+    //         //             crew:crew_all_results,
+    //         //             id:id?parseInt(id):0,
+    //         //             chunking:false,
+    //         //             chunking_index:0                    
+    //         //         },
+    //         //     });
+    //         // }
+    //         // return {...credits_data}
+    //     } 
+    //     try{
+    //         const current_date = new Date().toISOString().split("T")[0]
+    //         // fetchCreditsData({
+    //         //     variables : { id:id?parseInt(id):0, date:current_date }})
+    //         // .then(fetched => {
+    //         //     console.log(fetched)
+    //         //     if(fetched.data && fetched.data.credits.success){
+    //         //         console.log("Using cached data:", fetched.data);
+    //         //         setCredit(() => ({...fetched.data.credits}));
+    //         //     }else {
+    //         //         freshFetch()
+                    
+    //         //     }
+    //         // })
+    //         const fetched = await fetchCreditsData({
+    //             variables : { id:id?parseInt(id):0, date:current_date }})
+    //         console.log(fetched)
+    //         if(fetched.data && fetched.data.credits.success){
+    //             console.log("Using cached data:", fetched.data);
+    //             setCredit(() => ({...fetched.data.credits}));
+    //         }else {
+    //             freshFetch()
+    //         }
+        
+    //     }catch(error){
+    //         console.log(error,error.message,"error")
+    //         freshFetch()
+    //     }
+
+
+    // },[fetchCreditsData,id,mutateInsertCredits])
+
+    const creditRing = async(payload) => {
+        function freshFetch(){
+            fetch(`${safeKeys.MOVIE_DB}tv/${id}/aggregate_credits?api_key=${safeKeys.API_KEY}`)
+            .then(response => response.json())
+            .then(credits_data => {
                 function chunkArray(array, size) {
                     const result = [];
                     for (let i = 0; i < array.length; i += size) {
@@ -597,6 +854,7 @@ const SERIE = () => {
                     }
                     return result;
                 }
+                setCredit(() => ({...credits_data}));
                 let cast_all_results = [...credits_data.cast]
                 if(cast_all_results.length > 100){
                     const chunks = chunkArray(cast_all_results, 100);
@@ -620,96 +878,222 @@ const SERIE = () => {
                         },
                     });
                 }
-                let crew_all_results = [...credits_data.crew]
-                if(crew_all_results.length > 100){
-                    const chunks = chunkArray(crew_all_results, 100);
-                    for (let i = 0; i < chunks.length; i++) {
-                        mutateInsertCredits({
-                            variables: {
-                                crew:chunks[i],
-                                id:id?parseInt(id):0,
-                                chunking:true,
-                                chunking_index:i                        
-                            },
-                        });
-                    }
-                }else{
-                    mutateInsertCredits({
-                        variables: {
-                            crew:crew_all_results,
-                            id:id?parseInt(id):0,
-                            chunking:false,
-                            chunking_index:0                    
-                        },
-                    });
-                }
-                return {...credits_data}
-            } 
+            })
 
-            const current_date = new Date().toISOString().split("T")[0]
-            const fetched = await fetchCreditsData({
-                variables : { id:id?parseInt(id):0, date:current_date }})
-            console.log(fetched)
-            if(fetched.data && fetched.data.credits.success){
-                console.log("Using cached data:", fetched.data);
-                setCredit(() => ({...fetched.data.credits}));
+
+            // let crew_all_results = [...credits_data.crew]
+            // if(crew_all_results.length > 100){
+            //     const chunks = chunkArray(crew_all_results, 100);
+            //     for (let i = 0; i < chunks.length; i++) {
+            //         mutateInsertCredits({
+            //             variables: {
+            //                 crew:chunks[i],
+            //                 id:id?parseInt(id):0,
+            //                 chunking:true,
+            //                 chunking_index:i                        
+            //             },
+            //         });
+            //     }
+            // }else{
+            //     mutateInsertCredits({
+            //         variables: {
+            //             crew:crew_all_results,
+            //             id:id?parseInt(id):0,
+            //             chunking:false,
+            //             chunking_index:0                    
+            //         },
+            //     });
+            // }
+            // return {...credits_data}
+        } 
+
+        if(payload && payload.success){
+            return setCredit(() => ({...payload}));
+        }else {
+            const credits = await freshFetch()
+            return setCredit(() => ({...credits}));
+        }
+    }
+    
+    const movieRing = async(payload) => {
+        function freshSingleFetch(){
+            fetch(`${safeKeys.MOVIE_DB}tv/${id}?api_key=${safeKeys.API_KEY}`)
+            .then(response => response.json())
+            .then(response => {
+                console.log(response,"response wait")
+                setSerie(() => ({...response}))
+                mutateInsertTV({
+                    variables: {
+                        single : {...response}
+                    },
+                });
+            })
+        }    
+        if(payload && !payload.seasons){
+            //first time serie single
+            // console.log("first time")
+            freshSingleFetch()
+        }else if(payload && payload.success){
+            setSerie(() => ({...payload}))
+        }else {
+            freshSingleFetch()
+        } 
+    }
+    
+    const imageRing = async(payload) => {
+        function freshFetch(){
+            fetch(`${safeKeys.MOVIE_DB}tv/${id}/images?api_key=${safeKeys.API_KEY}`)
+            .then(response => response.json())
+            .then(getImageData => {
+                let value = 0
+                const {backdrops, posters, logos} = getImageData
+                let path = ''
+                if(backdrops && backdrops.length > 0){
+                    value = Math.max(...backdrops.map(({height}) => height))
+                    let key = backdrops.findIndex(({height}) => height === value)
+                    if(key > -1){
+                        path = backdrops[key].file_path
+                    }
+                } 
+                if(posters && posters.length > 0){
+                    let posters_value = Math.max(...posters.map(({height}) => height))
+                    if(posters_value > value){
+                        let key = posters.findIndex(({height}) => height === posters_value)
+                        if(key > -1){
+                            path = posters[key].file_path
+                        }
+                        value = posters_value
+                    }
+                }
+
+                if(logos && logos.length > 0){
+                    let logos_value = Math.max(...logos.map(({height}) => height))
+                    if(logos_value > value){
+                        let key = logos.findIndex(({height}) => height === logos_value)
+                        if(key > -1){
+                            path = logos[key].file_path
+                        }
+                    }
+                }
+                setImages(() => (path))
+                mutateInsertImage({ variables: { meta_data : {
+                        type:"tv",
+                        season:-1,
+                        episode:-1,
+                        id:id?parseInt(id):-1
+                    }, data:{id:getImageData.id,path}                  
+                } });
+            })
+
+        }         
+        try{
+            if (payload && payload.success) {
+                console.log("image cached data:", payload);
+                setImages(() => (payload.data.path))
             }else {
-                const credits = await freshFetch()
-                setCredit(() => ({...credits}));
+                freshFetch()
             }
         
+            
         }catch(error){
-            console.log(error,error.message,"error")
+            console.log(error)
+            freshFetch()            
+
         }
+    }
 
+    const oneRing = useCallback(async() => {
+        try{
+    
+            console.log("tv id", id)
+            const fetched = await fetchCombined({
+            variables : { 
+                    tv: {id},
+                    image: {
+                        type:"tv",
+                        episode:-1,
+                        season:-1,
+                        id:id?parseInt(id):-1
+                    },
+                    credit: {id:id?parseInt(id):0}
+                }
+            })
+            console.log(fetched)
+            // if(fetched.data.moviePayload.success){
+                const imagePayload = fetched.data?.moviePayload?.image
+                const moviePayload = fetched.data?.moviePayload?.tv
+                const creditPayload = fetched.data?.moviePayload?.credit
 
-    },[fetchCreditsData,id,mutateInsertCredits])
+                movieRing(moviePayload)
+                imageRing(imagePayload)
+                creditRing(creditPayload)
+            // }
+            
+        }catch(error){
+            console.log(error)
+            
+        }
+    },[fetchCombined, id])
 
     useEffect(() => {
-        // if(hasFetched.current.images){
-        //     return
-        // }
-        // hasFetched.current.images = true
-        graphImages()
-    },[graphImages])
+        oneRing()
+        return () => {
+            controller.abort();
+        };
+    }, [oneRing]);
 
-    useEffect(() => {
-        // if(hasFetched.current.tv){
-        //     return
-        // }
-        // hasFetched.current.tv = true
-        fetchTV()
+    // useEffect(() => {
+    //     if(hasFetched.current.images){
+    //         return
+    //     }
+    //     // Cancel previous fetch
+    //     if (aborterOne.current) aborterOne.current.abort();
+    //     aborterOne.current = new AbortController();
+    //     hasFetched.current.images = true
+    //     graphImages()
+    //     return () => {
+    //         if (aborterOne.current) aborterOne.current.abort();
+    //     };
+    // },[graphImages])
 
+    // useEffect(() => {
+    //     if(hasFetched.current.tv){
+    //         return
+    //     }
+    //     hasFetched.current.tv = true
+    //     // Cancel previous fetch
+    //     if (aborterTwo.current) aborterTwo.current.abort();
+    //     aborterTwo.current = new AbortController();
+    //     fetchTV()
+    //     return () => {
+    //         if (aborterTwo.current) aborterTwo.current.abort();
+    //     };
 
-    }, [fetchTV]);
+    // }, [fetchTV]);
 
-    useEffect(() => {
-        // if(hasFetched.current.credits){
-        //     return
-        // }
-        // hasFetched.current.credits = true
-        fetchCredits();
-    }, [fetchCredits]);
+    // useEffect(() => {
+    //     if(hasFetched.current.credits){
+    //         return
+    //     }
+    //     hasFetched.current.credits = true
+    //     // Cancel previous fetch
+    //     if (aborter.current) aborter.current.abort();
+    //     aborter.current = new AbortController();
+    //     fetchCredits();
+    //     return () => {
+    //         if (aborter.current) aborter.current.abort();
+    //     };
+    // }, [fetchCredits]);
 
-
-    // const getBackground = useMemo(() => {
-    //     if(fetchedImageBackgrounds)
-    //         return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
-    //     if(!images)
-    //         return null
-    //     console.log(images,"images")
-
-    //     return process.env.REACT_APP_img_poster + path
-    // },[images, fetchedImageBackgrounds]);
 
     const addToPlayList = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            console.log(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`)
-            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist : process.env.REACT_APP_playlist_live}`,{
+            // console.log(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST : process.env.REACT_APP_PLAYLIST_LIVE}`)
+            fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INSERT_PLAYLIST : process.env.REACT_APP_INSERT_PLAYLIST_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -761,10 +1145,10 @@ const SERIE = () => {
     return (
         
     credits && serie ? 
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? process.env.REACT_APP_img_poster + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
+                <div className="w-[20%] h-[100%] absolute" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
                 :
@@ -776,7 +1160,7 @@ const SERIE = () => {
                             <div 
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[40%] m-[0.5%] h-[auto] float-left"} 
                                 style={{
-                                    backgroundImage:"url(" + process.env.REACT_APP_img_poster + serie?.poster_path + ")",
+                                    backgroundImage:"url(" + safeKeys.IMG_POSTER + serie?.poster_path + ")",
                                     boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
@@ -786,7 +1170,7 @@ const SERIE = () => {
                                 }
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[auto] justify-center items-center":"w-[100%] h-[auto]"}>
-                                <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>
+                                <h1 className="text-[30px] gradient-text">{serie.name}</h1>
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{serie.tagline}"</p>
                                 <h3>{serie.first_air_date} <FontAwesomeIcon icon={faAngleDoubleRight} /> {serie.last_air_date}</h3>
                                 <h3>{serie.revenue}</h3>
@@ -803,6 +1187,16 @@ const SERIE = () => {
                                 { serie.episode_run_time && serie.episode_run_time.length > 0 && <h4>{ (serie.episode_run_time[0] > 60) ? (Math.floor(serie.episode_run_time[0] / 60)) + "h " + (serie.episode_run_time[0] % 60) + "min" : serie.episode_run_time[0] + "min" }</h4>}
                                 <article>
                                     {serie.overview || "waiting for more content"}
+                                    <div style={{overflow:"hidden",margin:"5px"}}>
+                                        <ins
+                                            className="adsbygoogle"
+                                            style={{display:"block",width:"100%",height:"auto"}}
+                                            data-ad-client="ca-pub-8036256488117651"
+                                            data-ad-slot="1234567890"
+                                            data-ad-format="auto"
+                                            data-full-width-responsive="true"
+                                        ></ins>
+                                    </div>
                                 </article>
                                 <div className="w-[100%] flex flex-row flex-wrap border-b-[#fff] border-b-[2px]">
                                     <button
@@ -812,10 +1206,11 @@ const SERIE = () => {
                                                 stream:"tv",
                                                 id:serie.id,
                                                 background:images
-                                            }})}                                        
-                                        className={windowWidth > 800 ? "w-[23%] flex flex-row flex-nowrap text-center underline h-[80px] ":" shadow-md shadow-[#ffd800] w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
+                                            }})} 
+                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
+
                                     >
-                                        <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/>
+                                        {/* <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/> */}
                                         <h2>trailors</h2>
                                     </button>
                                     <button
@@ -825,10 +1220,9 @@ const SERIE = () => {
                                                 stream:"series",
                                                 id:serie.id,
                                                 background:images
-                                            }})}                                        
-                                        className={windowWidth > 800 ? "w-[23%] flex flex-row text-center underline  min-h-[40px] m-[1%]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
+                                            }})} 
+                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
                                     >
-                                        <img src="/image/2798007.png" alt="UKOapp" className="w-[50%]"/>
                                         <h2>similar tv</h2>
                                     </button>
                                     
@@ -839,10 +1233,9 @@ const SERIE = () => {
                                                 stream:"series",
                                                 id:serie.id,
                                                 background:images
-                                            }})}                                        
-                                        className={windowWidth > 800 ? "w-[23%] flex flex-row text-center min-h-[40px] underline m-[1%]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
+                                            }})} 
+                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
                                     >
-                                        <img src="/image/11327060.png" alt="UKOapp" className="w-[50%]"/>
                                         <h2>recommended tv</h2>
                                     </button>
                                 </div>
@@ -850,7 +1243,6 @@ const SERIE = () => {
                                     {
                                         serie?.seasons && serie?.seasons.map(({episode_count,id,name,season_number,vote_average},node) => 
                                             <button
-                                                // to={`/series/${serie.id}/${id}/${season_number}/${serie.name}${images}`}
                                                 onClick={() => navRoute({
                                                     url:`/series/season`,
                                                     state:{
@@ -859,6 +1251,7 @@ const SERIE = () => {
                                                         seasonID:id,
                                                         season:season_number,
                                                         name:serie.name,
+                                                        seasons:serie.seasons,
                                                         background:images,
                                                         anime:serie.genres ? serie.genres.find(({id}) => id === 16):serie.genre_ids?serie.genre_ids.includes(16):false,
                                                     }})}                                                
@@ -907,14 +1300,14 @@ const SERIE = () => {
                                             <div 
                                                 key={serie_key} 
                                                 onClick={() => navRoute({
-                                                    url:`/series/person`,
+                                                    url:`/people/id`,
                                                     state:{
                                                         id
                                                     }})}  
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[48%] h-[100%] m-[0.5%] hover:skew-4 hover:contrast-150"}>
+                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[48%] h-[100%] m-[0.5%] hover:scale-115 duration-700 hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} picture={profile_path} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         {
@@ -933,7 +1326,7 @@ const SERIE = () => {
                                 </div>
                             </div>
                         }
-                        {
+                        {/* {
                             credits.crew && credits.crew.length > 0 &&
                             <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
 
@@ -970,7 +1363,7 @@ const SERIE = () => {
                                     }
                                 </div>
                             </div>
-                        }
+                        } */}
                         {/* <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
                             {
                                 Object.entries(images).map(([key,value],node) => 

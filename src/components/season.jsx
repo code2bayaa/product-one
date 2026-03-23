@@ -4,34 +4,82 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faBasketShopping, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
-import { useLazyQuery, gql, useMutation } from '@apollo/client';
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
-
+import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
+import { useKeys } from "./safe";
 const SEASON = () => {
-    // const { seasonID, id, season, name, background } = useParams();
     const hasFetched = useRef({tv:false,images:false,credits:false})
     const [serie, setSerie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [windowWidth, setWindowWidth] = useState(0);
     const [playlist,setPlaylist] = useState(null)
-    // const [fromAnime,setAnime] = useState(null)
-    const { state } = useLocation();
-    const navigate = useNavigate();
+    const {state} = useLocation()
+    const {safeKeys} = useKeys()
+    const navigate = useNavigate()
+    // const router = useRouter()
+    // const params = useSearchParams();
+    // const state = JSON.parse(decodeURIComponent(params.get("state")));  
+    // const state = useStates("serie")
     const id = state.id
-    // const [fetchedImageBackgrounds,setFetchedImageBackgrounds] = useState(null)
-
     const serie_name = state.name
     const seasonID = state.seasonID
     const season = state.season
     const background = state.background
     const anime = state.anime
+    const moveSeasons = state.seasons
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+
+        // Create the external script
+        const externalScript = document.createElement("script");
+        externalScript.type = "text/javascript";
+        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            document.body.removeChild(externalScript);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Create the inline script
+        const inlineScript = document.createElement("script");
+        inlineScript.type = "text/javascript";
+        inlineScript.crossorigin = "anonymous";
+        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
+        inlineScript.async = true
+        // Create the external script
+        // const externalScript = document.createElement("script");
+        // externalScript.type = "text/javascript";
+        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+
+        // Append both to the body
+        document.body.appendChild(inlineScript);
+        // document.body.appendChild(externalScript);
+
+        // Cleanup on unmount
+        return () => {
+            document.body.removeChild(inlineScript);
+            // document.body.removeChild(externalScript);
+        };
+    }, []);
 
     useEffect(() => {
         const handleResize = () => {
-            setWindowWidth(window.innerWidth);
+            setWindowWidth(window.screen.width);
         };
         window.addEventListener("resize", handleResize);
         handleResize(); // Call it once to set the initial value
@@ -69,6 +117,7 @@ const SEASON = () => {
     `
     const [fetchImage] = useLazyQuery(FETCH_IMAGE_QUERY,{
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
     })
 
     const [mutateInsertImage] = useMutation(gql`
@@ -113,7 +162,14 @@ const SEASON = () => {
             }
         },
         onError: (error) => {
-            console.error("insert image Error:", error);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
@@ -160,6 +216,7 @@ const SEASON = () => {
     const [fetchSeason] = useLazyQuery(FETCH_MOVIE_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
         // variables,
         // skip: !variables.page, // Skip query execution if variables are not set
     });
@@ -190,14 +247,20 @@ const SEASON = () => {
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting season into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
     const FETCH_CREDITS_QUERY = gql`
         query Credits (
-            $id: Int!
+            $id: ID!
         ){
             credits(
                 id:$id
@@ -250,15 +313,16 @@ const SEASON = () => {
         }
     `
     const [fetchCreditsData] = useLazyQuery(FETCH_CREDITS_QUERY,{
-    // pollInterval: 500, // fetches new data at that interval
-    notifyOnNetworkStatusChange: true,
-    // variables,
-    // skip: !variables.page, // Skip query execution if variables are not set
+        // pollInterval: 500, // fetches new data at that interval
+        notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
+        // variables,
+        // skip: !variables.page, // Skip query execution if variables are not set
     });
 
     const INSERT_CREDITS_MUTATION = gql`
         mutation AddCredits(
-            $id:Int!
+            $id:ID!
             $cast:[CAST_INPUT]
             $crew:[CREW_INPUT]
             $chunking:Boolean!
@@ -280,34 +344,29 @@ const SEASON = () => {
     const [mutateInsertCredits] = useMutation(INSERT_CREDITS_MUTATION, {
         onCompleted: (data) => {
             if (data && data.addCredits.success) {
-                // Refetch the query to get updated data
-                // console.log(fetchImage)
-                // fetchedCredits.refetch().then((refetched) => {
-                //     console.log(refetched)
-                //     if(refetched.data.credits.success){
-                //         const ref = refetched?.data?.credits
-                //         const typeGetImageData = {...ref}
-                //         setCredit(() => ({...typeGetImageData}))
-                //     }
-
-                // })
-
+                console.log(data)
             } else {
                 console.error("Failed to insert credits into MySQL:", data.addCredits.message, data.addCredits.error);
             }
         },
         onError: (error) => {
-            console.log(error,"error")
-            console.error("Error inserting credits into MySQL:", error.message);
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
         },
     });
 
     const graphImages = useCallback(async() => {
 
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/images?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}/images?api_key=${safeKeys.API_KEY}`);
             const getImageData = await response.json();
-            console.log(getImageData,"images")
+            // console.log(getImageData,"images")
             let value = 0
             const {backdrops, posters, logos} = getImageData
             let path = ''
@@ -363,15 +422,11 @@ const SEASON = () => {
             }else {
                 const path = await freshFetch()
                 setImages(path)
-                // setImages(() => ({...getImageData}))
             }
         
             
         }catch(error){
             console.log(error)
-            // fetch(`${process.env.REACT_APP_movie_db}tv/${id}/images?api_key=${process.env.REACT_APP_api_key}`)
-            // .then(data => data.json())
-            // .then(data => setImages(() => ({...data})))
             const path = await freshFetch()
             setImages(path)            
         
@@ -382,7 +437,7 @@ const SEASON = () => {
     const fetchTV = useCallback(async() => {
 
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}?api_key=${safeKeys.API_KEY}`);
             const data = await response.json();
             const newData = {...data }
             newData.episodes = newData?.episodes.map(({crew,guest_stars,cast, ...rest}) => rest) || []
@@ -398,11 +453,11 @@ const SEASON = () => {
         const checkFeedback = (id) => {
             console.log(id,"id")
             //authentication
-            fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url: process.env.REACT_APP_api_url_live,{credentials: "include"})
+            fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL: process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
             .then(async res => {
                 const {status, user} = await res.json()
                 if(status){
-                    fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist_select : process.env.REACT_APP_playlist_select_live}`,{
+                    fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`,{
                         method:"POST",
                         headers:{
                             "Content-Type":"application/json"
@@ -419,19 +474,26 @@ const SEASON = () => {
             })
         }
 
-        const fetched = await fetchSeason({
-            variables : { id:seasonID }})
-        console.log(fetched,seasonID,"id")
-        if (fetched.data && fetched.data.season && !fetched.data.season.episodes) {
-            console.log("first time...")
-            const tv = await freshFetch()
-            setSerie(() => ({...tv}));
-            checkFeedback(tv.id)
-        }else if(fetched.data && fetched.data.season.success){
-            console.log("Using cached data:", fetched.data);
-            setSerie(() => ({...fetched.data.season}));
-            checkFeedback(fetched.data.season.id)
-        }else {
+        try{
+            const fetched = await fetchSeason({
+                variables : { id:seasonID }})
+            console.log(fetched,seasonID,"id")
+            if (fetched.data && fetched.data.season && !fetched.data.season.episodes) {
+                console.log("first time...")
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}));
+                checkFeedback(tv.id)
+            }else if(fetched.data && fetched.data.season.success){
+                console.log("Using cached data:", fetched.data);
+                setSerie(() => ({...fetched.data.season}));
+                checkFeedback(fetched.data.season.id)
+            }else {
+                const tv = await freshFetch()
+                setSerie(() => ({...tv}));
+                checkFeedback(tv.id)
+            }
+        }catch(error){
+            console.log(error,"error")
             const tv = await freshFetch()
             setSerie(() => ({...tv}));
             checkFeedback(tv.id)
@@ -440,49 +502,10 @@ const SEASON = () => {
 
     },[fetchSeason, id, season, seasonID, mutateInsertTV]);
 
-    // useEffect(() => {
-    //     if(serie && anime){
-    //         const {season_number, id} = serie
-    //         console.log(season_number,serie_name)
-
-        
-    //         console.log("genre")
-    //         async function runAnime(){
-    //             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_stream : process.env.REACT_APP_stream_live}`,{
-    //                 method:"POST",
-    //                 headers:{
-    //                     "Content-Type":"application/json",
-    //                     "Accept":"application/json"
-    //                 },
-    //                 body:JSON.stringify({
-    //                     name:serie_name,
-    //                     anime:true,
-    //                     // year,
-    //                     season:season_number,
-    //                     // episode,
-    //                     id,
-    //                     stream:"episode",
-    //                     // address,
-    //                     // day:dayStr,
-    //                     // month:monthStr
-    //                 })
-    //             })
-    //             const {status, count, movies, portal} = await response.json()
-
-    //             console.log(status,movies,count)
-    //             setAnime({status,count})
-    //         }
-    //         runAnime()
-
-            
-    //     }
-
-    // },[serie,serie_name,anime])
-
 
     const fetchCredits = useCallback(async() => {
         async function freshFetch(){
-            const response = await fetch(`${process.env.REACT_APP_movie_db}tv/${id}/season/${season}/aggregate_credits?api_key=${process.env.REACT_APP_api_key}`);
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/${season}/aggregate_credits?api_key=${safeKeys.API_KEY}`);
             const credits_data = await response.json();
             function chunkArray(array, size) {
                 const result = [];
@@ -540,6 +563,7 @@ const SEASON = () => {
             return {...credits_data}
         } 
 
+        try{
             const current_date = new Date().toISOString().split("T")[0]
             const fetched = await fetchCreditsData({
                 variables : { id:id?parseInt(id):0, date:current_date }})
@@ -551,15 +575,19 @@ const SEASON = () => {
                 const credits = await freshFetch()
                 setCredit(() => ({...credits}));
             }
-        
+        }catch(error){
+            console.log(error,"error")
+            const credits = await freshFetch()
+            setCredit(() => ({...credits}));
+        }
 
     },[fetchCreditsData, id, season, mutateInsertCredits]);
 
     useEffect(() => {
-        // if(hasFetched.current.images){
-        //     return
-        // }
-        // hasFetched.current.images = true
+        if(hasFetched.current.images){
+            return
+        }
+        hasFetched.current.images = true
         graphImages()
     },[graphImages])
 
@@ -581,10 +609,10 @@ const SEASON = () => {
     const addToPlayList = async() => {
 
         //authentication
-        const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+        const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
         const {status, user} = await res.json()
         if(status){
-            fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_playlist :process.env.REACT_APP_playlist_live}`,{
+            fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST :process.env.REACT_APP_PLAYLIST_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -625,122 +653,7 @@ const SEASON = () => {
 
     }
 
-    // useEffect(() => {
-        
-    //     if(!images)
-    //         return null
-    //     let value = 0
-    //     // console.log(images)
-    //     const {backdrops, posters, logos, stills} = images
-    //     let path = ''
-    //     if(backdrops && backdrops.length > 0){
-    //         const heights = backdrops.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
-    //         let key = backdrops.findIndex(({height}) => height === value)
-    //         if(key > -1){
-    //             path = backdrops[key].file_path
-    //         }
-    //     } 
-    //     if(posters && posters.length > 0){
-    //         const heights = posters.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let posters_value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
-    //         if(posters_value > value){
-    //             let key = posters.findIndex(({height}) => height === posters_value)
-    //             if(key > -1){
-    //                 path = posters[key].file_path
-    //             }
-    //             value = posters_value
-    //         }
-    //     }
-    //     if(stills && stills.length > 0){
-    //         const heights = stills.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let stills_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
-    //         if(stills_value > value){
-    //             let key = stills.findIndex(({height}) => height === stills_value)
-    //             if(key > -1){
-    //                 path = stills[key].file_path
-    //             }
-    //             value = stills_value
-    //         }
-    //     }        
-    //     if(logos && logos.length > 0){
-    //         const heights = logos.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let logos_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
-    //         if(logos_value > value){
-    //             let key = logos.findIndex(({height}) => height === logos_value)
-    //             if(key > -1){
-    //                 path = logos[key].file_path
-    //             }
-    //         }
-    //     }
-    //     setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))        
-    // },[images, season]);
-
-    // const getBackground = useMemo(() => {
-
-    //     if(fetchedImageBackgrounds)
-    //         return process.env.REACT_APP_img_poster + "/" + fetchedImageBackgrounds + ".jpg"
-    //     if(!images)
-    //         return null
-    //     let value = 0
-    //     // console.log(images)
-    //     const {backdrops, posters, logos, stills} = images
-    //     let path = ''
-    //     if(backdrops && backdrops.length > 0){
-    //         const heights = backdrops.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
-    //         let key = backdrops.findIndex(({height}) => height === value)
-    //         if(key > -1){
-    //             path = backdrops[key].file_path
-    //         }
-    //     } 
-    //     if(posters && posters.length > 0){
-    //         const heights = posters.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let posters_value = uniqueHeights.length > season ? uniqueHeights[season] :  uniqueHeights[0];
-    //         if(posters_value > value){
-    //             let key = posters.findIndex(({height}) => height === posters_value)
-    //             if(key > -1){
-    //                 path = posters[key].file_path
-    //             }
-    //             value = posters_value
-    //         }
-    //     }
-    //     if(stills && stills.length > 0){
-    //         const heights = stills.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let stills_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
-    //         if(stills_value > value){
-    //             let key = stills.findIndex(({height}) => height === stills_value)
-    //             if(key > -1){
-    //                 path = stills[key].file_path
-    //             }
-    //             value = stills_value
-    //         }
-    //     }        
-    //     if(logos && logos.length > 0){
-    //         const heights = logos.map(({ height }) => height);
-    //         const uniqueHeights = Array.from(new Set(heights)).sort((a, b) => b - a);
-    //         let logos_value = uniqueHeights.length > season ? uniqueHeights[season] : uniqueHeights[0];
-    //         if(logos_value > value){
-    //             let key = logos.findIndex(({height}) => height === logos_value)
-    //             if(key > -1){
-    //                 path = logos[key].file_path
-    //             }
-    //         }
-    //     }
-    //     if(path)
-    //         setFetchedImageBackgrounds(path.substring(1).substring(0,path.substring(1).length - 4))
-    //     else
-    //         setFetchedImageBackgrounds("null")
-    //     return process.env.REACT_APP_img_poster + path
-    // },[images, fetchedImageBackgrounds, season]);
-    const navRoute = ({url,state}) => {
+    const navRoute = ({url,state,ref}) => {
         navigate(url,{
             state : {
                 ...state
@@ -748,23 +661,24 @@ const SEASON = () => {
         })
     }
     return (
-        credits && serie ? 
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? process.env.REACT_APP_img_poster + images : background ? process.env.REACT_APP_img_poster + background : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+        
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : background ? safeKeys.IMG_POSTER + background : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
                 windowWidth > 800 ? 
-                <div className="w-[20%] h-[100%] absolute border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
+                <div className="w-[20%] h-[100%] absolute" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-    
+            {
+                credits && serie ?
                     <div className={windowWidth > 800 ? "w-[80%] overflow-y-auto movie-scene duration-100 h-[100%] ml-[20%] flex flex-col":"w-[98%] duration-100 overflow-y-auto movie-scene mx-[1%] h-[92%] flex flex-col"}>
                         <div className={windowWidth > 800 ? "w-[100%] min-h-[70%] flex flex-row flex-wrap":"w-[100%] flex flex-col flex-wrap"}>
                             <div 
                                 className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto]"} 
                                 style={{
-                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? process.env.REACT_APP_img_poster + serie.poster_path : images ? images : background) + ")",
+                                    backgroundImage:"url(" + (serie && serie.hasOwnProperty("poster_path") && serie.poster_path ? safeKeys.IMG_POSTER + serie.poster_path : images ? images : background) + ")",
                                     boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
@@ -773,19 +687,21 @@ const SEASON = () => {
                                 }
                             </div>
                             <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center":"w-[100%] h-auto"}>
-                                <h1 className="text-[30px] text-[#ffd800]">{serie.name}</h1>
-                                {/* <p style={{fontStyle:"italic",color:"#ffd800"}}>"{serie.tagline}"</p> */}
+                                <h1 className="text-[30px] gradient-text">{serie.name}</h1>
                                 <h3>{serie.air_date}</h3>
                                 <h3>season {serie.season_number}</h3>
-                                {/* <h3 style={{color:"#ffd800"}}>{serie.in_production ? "airing" : "ended"}</h3> */}
-                                {/* <h3 style={{color:"#ffd800"}}>current episode</h3> */}
-                                {/* <span>{serie.last_episode_to_air.name} || {serie.last_episode_to_air.air_date} || {serie.last_episode_to_air.season_number} || {serie.last_episode_to_air.episode_number}</span> */}
-                                {/* <h3>seasons || {serie.number_of_seasons}</h3>
-                                <h3>episodes || {serie.number_of_episodes}</h3> */}
-                                {/* <h3>{serie.video ? "available":"not available"}</h3> */}
-                                {/* <h4>{ (serie.episode_run_time[0] > 60) ? Math.floor(serie.episode_run_time[0] / 60) + "h" + " " + serie.episode_run_time[0] % 60 + "min" : serie.episode_run_time[0] + "min" }</h4> */}
                                 <article>
                                     {serie.overview}
+                                    <div style={{overflow:"hidden",margin:"5px"}}>
+                                        <ins
+                                            className="adsbygoogle"
+                                            style={{display:"block",width:"100%",height:"auto"}}
+                                            data-ad-client="ca-pub-8036256488117651"
+                                            data-ad-slot="1234567890"
+                                            data-ad-format="auto"
+                                            data-full-width-responsive="true"
+                                        ></ins>
+                                    </div>
                                 </article>
                                 <div className={windowWidth > 800 ? "w-[100%] flex flex-row flex-wrap border-b-[#fff] border-b-[2px]":"w-[100%] flex flex-col flex-wrap border-b-[#fff] border-b-[2px]"}>
                                     <button
@@ -797,9 +713,9 @@ const SEASON = () => {
                                                 season:serie.season_number,
                                                 background:images
                                             }})}                                        
-                                        className={windowWidth > 800 ? "w-[23%] flex flex-row flex-nowrap text-center underline h-[80px] ":" shadow-md shadow-[#ffd800] w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
+                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
                                     >
-                                        <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/>
+                                        {/* <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/> */}
                                         <h2>trailors</h2>
                                     </button>
                                     <button
@@ -810,9 +726,9 @@ const SEASON = () => {
                                                 id,
                                                 background:images
                                             }})}                                        
-                                        className={windowWidth > 800 ? "w-[23%] flex flex-row text-center underline  min-h-[40px] m-[1%]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
+                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
                                     >
-                                        <img src="/image/2798007.png" alt="UKOapp" className="w-[50%]"/>
+                                        {/* <img src="/image/2798007.png" alt="UKOapp" className="w-[50%]"/> */}
                                         <h2>similar tv</h2>
                                     </button>
                                     
@@ -824,9 +740,9 @@ const SEASON = () => {
                                                 id,
                                                 background:images
                                             }})}                                        
-                                        className={windowWidth > 800 ? "w-[23%] flex flex-row text-center min-h-[40px] underline m-[1%]":"w-[48%] mt-[1%] ml-[1%] text-center min-h-[40px] underline"}
+                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
                                     >
-                                        <img src="/image/11327060.png" alt="UKOapp" className="w-[50%]"/>
+                                        {/* <img src="/image/11327060.png" alt="UKOapp" className="w-[50%]"/> */}
                                         <h2>recommended movies</h2>
                                     </button>                                    
                                 </div>
@@ -845,7 +761,9 @@ const SEASON = () => {
                                                         episode:episode.episode_number,
                                                         name:serie_name,
                                                         background:images,
-                                                        anime
+                                                        anime,
+                                                        moveSeasons,
+                                                        moveEpisodes:serie.episodes
                                                         // direct:fromAnime?serie?.id:false,
                                                         // index:fromAnime?fromAnime.count:false
                                                     }})}                                                 
@@ -898,10 +816,10 @@ const SEASON = () => {
                                                     state:{
                                                         id
                                                     }})}                                                
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"cursor-pointer w-[45%] hover:skew-4 h-[100%] m-[1%] hover:contrast-150"}>
+                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[45%] hover:scale-115 duration-700 h-[100%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={"object-cover h-[100%] rounded-xl"} picture={profile_path} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                    <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
+                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         {
@@ -920,7 +838,7 @@ const SEASON = () => {
                                 </div>
                             </div>
                         }
-                        {
+                        {/* {
                             credits.crew && credits.crew.length > 0 &&
                             <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
 
@@ -936,7 +854,7 @@ const SEASON = () => {
                                                     state:{
                                                         id
                                                     }})} 
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 m-[0.5%] hover:contrast-150":"cursor-pointer w-[48%] hover:skew-4 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[48%] hover:scale-115 duration-700 h-[100%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -957,26 +875,16 @@ const SEASON = () => {
                                     }
                                 </div>
                             </div>
-                        }
-                        {/* <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
-                            {
-                                Object.entries(images).map(([key,value],node) => 
-                                    value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] w-[48%] h-[50%]" key={node + index}>
-                                            <PICTURE picture={file_path} classes={"object-contain h-[100%]"} />
-                                        </div>
-                                    )
-                                )
-                            }
-
-                        </div> */}
+                        } */}
                         
 
                     </div>
-
-                </div>
-                    :
-                    <LOAD/>
+                :
+                    <img src="/videos/load.gif" alt="loader" className="w-[250px] h-[250px] mx-auto mt-[10%]" />
+            }
+             
+        </div>
+                    
     )
 }
 

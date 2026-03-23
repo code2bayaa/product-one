@@ -1,20 +1,21 @@
 import { NavLink } from "react-router-dom"
 import { useEffect, useState } from "react"
-import { COLLECT } from "../midlleware/report";
 import {useNavigate} from "react-router-dom"
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins } from "@fortawesome/free-solid-svg-icons";
-const NAVBAR = () => {
+import { faCirclePlay, faCoins, faHome, faSearch, faPoll, faTelevision, faUserFriends, faMobile } from "@fortawesome/free-solid-svg-icons";
+
+const NAVBAR = ({fullCover = null,data = null,main = null}) => {
 
     const [windowWidth, setWindowWidth] = useState(0);
     const [loggedIn, setLoggedIn] = useState(false)
+    
     // const [count,setCount] = useState(0)
     const [coins,setCoins] = useState(0.0)
     const [showFullscreenBtn, setShowFullscreenBtn] = useState(false);
     const router = useNavigate()
-    const api_url = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live
-    // const linkUrl = process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_live
+    const api_url = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE
+    // const linkUrl = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_LIVE
 
     // console.log(linkUrl,"link")
 
@@ -29,19 +30,20 @@ const NAVBAR = () => {
         };
     },[])
     let count = 0
-    useEffect(() => {
-        console.log("count",count)
-        !count && COLLECT()
-        count++
+    // useEffect(() => {
+    //     console.log("count",count)
+    //     !count && COLLECT(data)
+    //     count++
         
-    },[count])
+    // },[count,data])
 
     useEffect(() => {
       async function authentication(){
         const res = await fetch(api_url,{credentials: "include"})
         const {status,message} = await res.json()
-        console.log(message)
-        if(status){
+        console.log(message,status,"auth")
+        if(status && status !== 429){
+            // console.log(status, "status nav")
             // router('/admin/reports')
             setLoggedIn(true)
         }
@@ -50,10 +52,10 @@ const NAVBAR = () => {
       authentication()
       .then(status => {
             if(status){
-                fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_user_credits : process.env.REACT_APP_check_user_credits_live,{credentials: "include"})
+                fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_USER_CREDITS : process.env.REACT_APP_CHECK_USER_CREDITS_LIVE,{credentials: "include"})
                 .then(res => res.json())
                 .then(({sum,message}) => {
-                    console.log(message,sum)
+                    console.log(message,sum,"check")
                     //affordable for one movie | episode
                     if(sum){
                         setCoins(sum)
@@ -62,7 +64,7 @@ const NAVBAR = () => {
 
             }else{
                 let user = localStorage.getItem("session")
-                fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_report_credits : process.env.REACT_APP_check_report_credits_live}`,{
+                fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_REPORT_CREDITS : process.env.REACT_APP_CHECK_REPORT_CREDITS_LIVE}`,{
                     method:"POST",
                     headers:{
                         "Content-Type":"application/json",
@@ -75,7 +77,7 @@ const NAVBAR = () => {
                 })
                 .then((response) => response.json())
                 .then(({sum,message}) => {
-                    console.log(message,sum)
+                    console.log(message,sum,"check session")
                     //affordable for one movie | episode
                     if(sum){
                         setCoins(sum)
@@ -90,7 +92,7 @@ const NAVBAR = () => {
     const customSignout = async() => {
         try {
 
-            const response = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_signout : process.env.REACT_APP_signout_live,{credentials: "include"});
+            const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_signout : process.env.REACT_APP_signout_LIVE,{credentials: "include"});
         
             const {status,message} = await response.json()
 
@@ -137,9 +139,16 @@ const NAVBAR = () => {
         setShowFullscreenBtn(false);
     };
 
+    const navRoute = ({state,url}) => {
+        router(url,{
+            state : {
+                ...state
+            }
+        })
+    } 
+
     return (
-        <div className="w-[100%] movie-scene h-[100%] overflow-auto">
-            <img src="/image/logo.png" alt="logo late-developers.com" className="w-[100%] h-[200px]" />
+        <div className={`w-[100%] ${fullCover ? "nav-bar-full" : main ? "" : "nav-bar"} movie-scene h-[100%] overflow-auto`}>
             { windowWidth < 800 && (
                 <button
                     onClick={ showFullscreenBtn ? () => exitScreen(): () => bigScreen()}
@@ -161,20 +170,62 @@ const NAVBAR = () => {
                     }
                 </button>
             )}   
-            <div className="w-[100%] h-[auto] text-white">
+            <div className="w-[100%] h-[auto] text-white flex flex-column flex-wrap">
+                {
+                    windowWidth < 800 && <img src="/image/logo.png" alt="logo" className="object-cover w-[90%] h-[100px]" />
+
+                }
+                
                 <div className="w-[100%] h-[60px] text-[#ffd800] text-[30px]">
-                    <FontAwesomeIcon icon={faCoins} />{coins} <span className="text-[20px]">credits</span>
+                    <FontAwesomeIcon icon={faCoins} /><span className="gradient-text text-[25px]">{coins} credits</span>
                 </div>
                 
                 <NavLink
                     to="/"
                     className={({ isActive, isPending }) =>
-                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                     }
                 >
-                    home
+                    <FontAwesomeIcon icon={faHome} fontSize={30}/> home <img src="/image/emoji2.gif" alt="UKOapp" className="w-[20%] ml-[35%] mt-[-15%] h-[100%]" />
                 </NavLink>
                 {
+                    windowWidth < 800 && (
+                        <>
+                            <button
+                                className="w-[100%] flex backdrop-blur-lg text-[15px] h-[40px] items-center"
+                                onClick={() => router("/search")}
+                            >
+                                <FontAwesomeIcon icon={faSearch} fontSize={30}/> 
+                                <span>search movies/tv/people</span>
+                            </button>
+                            <button
+                                onClick={() => navRoute({
+                                    url:"/discover/movie",
+                                    state:{
+                                        mode:"movie"
+                                    }
+                                })}
+                                style={{background:"#808C8C"}}
+                                className="w-[100%] flex h-[40px] text-[15px] items-left text-[#fff] underline"
+                            >
+                                <FontAwesomeIcon icon={faPoll} fontSize={30}/> movie categories
+                            </button>
+                            <button
+                                onClick={() => navRoute({
+                                    url:"/discover/tv",
+                                    state:{
+                                        mode:"tv"
+                                    }
+                                })}
+                                style={{background:"#808C8C"}}
+                                className="w-[100%] flex h-[40px] text-[15px] items-left text-[#fff] underline"
+                            >
+                                <FontAwesomeIcon icon={faPoll} fontSize={30}/> tv categories
+                            </button>
+                       </>             
+                    )
+                }
+                {/* {
                     windowWidth > 800 && 
                     <NavLink
                         to="/search"
@@ -184,32 +235,56 @@ const NAVBAR = () => {
                     >
                         search
                     </NavLink>
-                }
+                } */}
                 <NavLink
                     to="/movies"
                     className={({ isActive, isPending }) =>
-                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                        isPending ? "pending items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : " items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                     }
                 >
-                    movies
+                    <FontAwesomeIcon icon={faCirclePlay} fontSize={30}/> movies
                 </NavLink>
                 <NavLink
                     to="/series"
                     className={({ isActive, isPending }) =>
-                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                        isPending ? "pending items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                     }
                 >
-                    tv shows
+                    <FontAwesomeIcon icon={faTelevision} fontSize={30}/> tv shows
                 </NavLink>
-                <NavLink
-                    to="/people"
+                {/* <NavLink
+                    to="/korea"
                     className={({ isActive, isPending }) =>
                         isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                     }
                 >
-                    people
+                    k-pop
                 </NavLink>
                 <NavLink
+                    to="/hindu"
+                    className={({ isActive, isPending }) =>
+                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                    }
+                >
+                    bollywood
+                </NavLink>
+                <NavLink
+                    to="/china"
+                    className={({ isActive, isPending }) =>
+                        isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                    }
+                >
+                    chinese
+                </NavLink> */}
+                <NavLink
+                    to="/people"
+                    className={({ isActive, isPending }) =>
+                        isPending ? "pending items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
+                    }
+                >
+                    <FontAwesomeIcon icon={faUserFriends} fontSize={30} /> people
+                </NavLink>
+                {/* <NavLink
                     to="/netflix"
                     className={({ isActive, isPending }) =>
                         isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
@@ -225,14 +300,15 @@ const NAVBAR = () => {
                 >
                     disney
                 </NavLink>
-                <NavLink
+                */}
+                {/* <NavLink
                     to="/anime"
                     className={({ isActive, isPending }) =>
                         isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                     }
                 >
                     anime
-                </NavLink>                
+                </NavLink>                  */}
                 <NavLink
                     to="/credits"
                     className={({ isActive, isPending }) =>
@@ -260,33 +336,33 @@ const NAVBAR = () => {
                 {
                     !loggedIn ? 
                     <>
-                        <NavLink
+                        {/* <NavLink
                             to="/signin"
                             className={({ isActive, isPending }) =>
                                 isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                             }
                         >
                             sign in
-                        </NavLink>
-                        {/* <a
+                        </NavLink> */}
+                        <a
                             href="/signin"                    
                             className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                             rel="noreferrer"
                             target="blank"
                         >
                             sign in
-                        </a> */}
-                        {/* <a
+                        </a>
+                        <a
                             // href={`${linkUrl}`}
                             href="/signup"
-                            // target="_blank"
+                            target="_blank"
                             rel="noreferrer"
                             className="flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                             // style={{cursor:"pointer",background:"transparent",height:"40px",color:"#fff",textDecoration:"underline"}}
                         >
                             sign up
                         </a>
-                        <a
+                        {/* <a
                             // href={`${linkUrl}`}
                             href="/forgot"
                             // target="_blank"
@@ -343,6 +419,41 @@ const NAVBAR = () => {
                 }
 
 
+            </div>
+            <div className="w-[100%] h-[auto] text-[#fff] text-center flex flex-row bg-[rgb(222.2 84% 4.9%)]">
+                <FontAwesomeIcon icon={faMobile} fontSize={30} />
+                <NavLink
+                    to="/devices"
+                    className={`${windowWidth > 800 ? "w-[48%]" : "w-[80%]"} m-[1%] underline bg-transparent border-[1.5px] border-[#2E073F] rounded-[2px]`}
+                >
+                    <p>Watch in mobile, tv</p>
+                </NavLink>
+            </div>
+            <div className="w-[100%] h-[auto] text-[#fff] text-center flex flex-row bg-[rgb(222.2 84% 4.9%)]">
+                <NavLink
+                    to="/privacy"
+                    className={`${windowWidth > 800 ? "w-[48%]" : "w-[80%]"} m-[1%] underline bg-transparent border-[1.5px] border-[#2E073F] rounded-[2px]`}
+                >
+                    Privacy
+                </NavLink>
+                <NavLink
+                    to="/terms"
+                    className={`${windowWidth > 800 ? "w-[48%]" : "w-[80%]"} m-[1%] underline bg-transparent border-[1.5px] border-[#2E073F] rounded-[2px]`}
+                >
+                    Terms
+                </NavLink>
+                <NavLink
+                    to="/blogs"
+                    className={`${windowWidth > 800 ? "w-[48%]" : "w-[80%]"} m-[1%] underline bg-transparent border-[1.5px] border-[#2E073F] rounded-[2px]`}
+                >
+                    Blog
+                </NavLink>
+                <NavLink
+                    to="/about"
+                    className={`${windowWidth > 800 ? "w-[48%]" : "w-[80%]"} m-[1%] underline bg-transparent border-[1.5px] border-[#2E073F] rounded-[2px]`}
+                >
+                    About
+                </NavLink>
             </div>
             <h3>webmaster: 
                 <a

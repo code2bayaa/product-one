@@ -1,14 +1,15 @@
 import NAVBAR from "./nav";
 import MOBILE from "./mobileBar";
-// import { useSearchParams, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import { useEffect, useRef, useState } from "react";
 
 const CREDITS = () => {
 
-    // const location = useLocation();
-    // const [searchParams] = useSearchParams();
     const [windowWidth,setWindowWidth] = useState(0)
-
+    const formRef = useRef();
+    const [form, setForm] = useState({name: "", email: "", message: "", subject : ""});
+    const [loading, setLoading] = useState(false);
+    
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -17,51 +18,79 @@ const CREDITS = () => {
         handleResize(); // Call it once to set the initial value
     },[])
 
-    useEffect(() => {
-        // Create the inline script
-        const inlineScript = document.createElement("script");
-        inlineScript.type = "text/javascript";
-        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
 
-        // Create the external script
-        const externalScript = document.createElement("script");
-        externalScript.type = "text/javascript";
-        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+    const handleChange = ({target:{ name, value }}) => {
+      setForm({ ...form, [name]: value });
+    };
 
-        // Append both to the body
-        document.body.appendChild(inlineScript);
-        document.body.appendChild(externalScript);
+    const handleSubmit = (e) => {
 
-        // Cleanup on unmount
-        return () => {
-            document.body.removeChild(inlineScript);
-            document.body.removeChild(externalScript);
-        };
-    }, []);
+        e.preventDefault();
+        setLoading(true);
+    
+        let body = { 
+            name: form.name, 
+            email : form.email, 
+            subject : form.subject, 
+            message : form.message,
+            session:localStorage.getItem("user") ? localStorage.getItem("user") : false
+        }
 
-    useEffect(() => {
-        // Create the inline script
-        const inlineScript = document.createElement("script");
-        inlineScript.type = "text/javascript";
-        inlineScript.crossorigin = "anonymous";
-        inlineScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8036256488117651"
-        inlineScript.async = true
-        // Create the external script
-        // const externalScript = document.createElement("script");
-        // externalScript.type = "text/javascript";
-        // externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_feedback : process.env.REACT_APP_feedback_live,{
+                method : "POST",
+                headers : {'Content-type': 'application/json; charset=UTF-8'},
+                body : JSON.stringify(body),
+                credentials:"include"
+            })
+        .then(res => res.json())
+        .then(({ status, error }) => {
+            
+            console.log(status)
+            if(status){
+                setLoading(false);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: "Thank you for your message 😃",
+                    showConfirmButton: false,
+                    timer: 2500
+                })
+                setTimeout(() => {
+                    setForm({
+                        name: "",
+                        email: "",
+                        subject : "",
+                        message: "",
+                    });
+                }, [3000]);
+            }
 
-        // Append both to the body
-        document.body.appendChild(inlineScript);
-        // document.body.appendChild(externalScript);
 
-        // Cleanup on unmount
-        return () => {
-            document.body.removeChild(inlineScript);
-            // document.body.removeChild(externalScript);
-        };
-    }, []);
+            if(error || !status){
+                setLoading(false);
+                console.error(error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "I didn't receive your message 😢",
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            setLoading(false);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: "I didn't receive your message 😢",
+                showConfirmButton: false,
+                timer: 1500
+            })
+        })
 
+    }
 //     useEffect(() => {
 //         // const query = searchParams.get("query");
 //         // const url = `${location.pathname}?${searchParams.toString()}`;
@@ -95,27 +124,93 @@ const CREDITS = () => {
 //         }
 //     }, [searchParams,location]);
     return (
-        <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
+        <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
                 windowWidth > 800 ? 
-                    <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
+                    <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"transparent"}}>
                         <NAVBAR/>
                     </div>
                 :
                     <MOBILE/>
             }
-            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%]" }`}>
-                <div style={{overflow:"hidden",margin:"5px"}}>
-                    Google Ad Block
-                    <ins
-                        className="adsbygoogle"
-                        style={{display:"block",width:"100%",height:"100px"}}
-                        data-ad-client="ca-pub-8036256488117651"
-                        data-ad-slot="1234567890"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"
-                    ></ins>
-                </div>
+            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%] gap-7 justify-center items-center ml-[20%]" : " gap-7 justify-center items-center w-[100%] h-[92%]" }`}>
+                <h2>Provide feedback for free credits</h2>
+                <form
+                    ref={formRef}
+                    onSubmit={(e) => handleSubmit(e)}
+                    className='w-full flex flex-col gap-7 justify-center items-center'
+                >
+                    <div className="border-b-2 border-black/20 w-[80%]">
+                        <label className='text-black-500 font-semibold'>
+                            Name
+                        </label>
+                        <input
+                            type='text'
+                            name='name'
+                            className='w-[100%] text-[#000] h-[40px]'
+                            placeholder='Name'
+                            required
+                            value={form.name}
+                            onChange={(e) => handleChange(e)}
+                            // onFocus={(e) => handleFocus(e)}
+                            // onBlur={(e) => handleBlur(e)}
+                        />
+                    </div>
+                    <div className="border-b-2 border-black/20 w-[80%]">
+                        <label className='text-black-500 font-semibold'>
+                            Email
+                        </label>
+                        <input
+                            type='email'
+                            name='email'
+                            className='w-[100%] text-[#000] h-[40px]'
+                            placeholder='BrianWekesa@hotmail.com'
+                            required
+                            value={form.email}
+                            onChange={(e) => handleChange(e)}
+                            // onFocus={(e) => handleFocus(e)}
+                            // onBlur={(e) => handleBlur(e)}
+                        />
+                    </div>
+                    <div className="border-b-2 border-black/20 w-[80%]">
+                        <label className='text-black-500 font-semibold'>
+                            Subject
+                        </label>
+                        <input
+                            name='subject'
+                            className='w-[100%] text-[#000] h-[40px]'
+                            placeholder='subject'
+                            value={form.subject}
+                            onChange={(e) => handleChange(e)}
+                            // onFocus={(e) => handleFocus(e)}
+                            // onBlur={(e) => handleBlur(e)}
+                        />
+                    </div>
+                    <div className="border-b-2 border-black/20 w-[80%]">
+                        <label className='text-black-500 font-semibold'>
+                            Your Message
+                        </label>
+                        <textarea
+                            name='message'
+                            rows='4'
+                            className='w-[100%] text-[#000] min-h-[100px]'
+                            placeholder='Write here...'
+                            value={form.message}
+                            onChange={(e) => handleChange(e)}
+                            // onFocus={(e) => handleFocus(e)}
+                            // onBlur={(e) => handleBlur(e)}
+                        />
+                    </div>
+                    <button
+                        type='submit'
+                        disabled={loading}
+                        className='w-[80%] bg-stone-900 cursor-pointer text-white font-bold py-3 px-6 rounded-md hover:glow-primary transition-all duration-300 disabled:opacity-50'
+                        // onFocus={(e) => handleFocus(e)}
+                        // onBlur={(e) => handleBlur(e)}
+                    >
+                        {loading ? "Sending..." : "Submit"}
+                    </button>
+                </form>
             </div>
         </div>
     )

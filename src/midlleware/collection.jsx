@@ -1,20 +1,18 @@
+"use client"
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
+// import { useRouter } from "next/navigation";
 
-const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
+const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,season,episode,collect,stream,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
 
     const [loading, setLoading] = useState(false);
-    // const [open,setOpen] = useState(false);
-    // const [URLS,setURLS] = useState(null);
     const [rate,setRate] = useState(0);
     const navigate = useNavigate();
-    // const [type] = useState(stream)
-    // const containerRef = useRef(null);
+    // const router = useRouter()
     
-
     useEffect(() => {
         // Check if the rate is a number and set it
         const index = (Number(seeders)/Number(maxRate)) * 10
@@ -23,82 +21,33 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
     }, [maxRate,seeders,stream]);
 
     // useEffect(() => {
-    //     const destroySession = async() => {
-    //         console.log("destroying...")
+    //     fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_DESTROY_TOKEN : process.env.REACT_APP_DESTROY_TOKEN_LIVE}`,{
+    //         method:"POST",
+    //         headers:{
+    //             "Content-Type":"application/json",
+    //             "Accept":"application/json"
+    //         },
+    //         body:JSON.stringify({
+    //             id,
+    //             index
+    //         })
+    //     }).then(responseDestroy => {
+    //         console.log(responseDestroy,"response destroy")
+    //     })
+    //     // await responseDestroy.json()
+    // },[id, index])
 
-    //         const sessionDestroy = ({status, error, message, newToken}) => {
-                
-    //             console.log(newToken,"newToken")
-    //             console.log(error,message)
-    //             if(error || !status){
-    //                 // Swal.fire({
-    //                 //     icon: 'error',
-    //                 //     title: 'Could not destroy session ' + error + message,
-    //                 //     text: error || message,
-    //                 //     showConfirmButton: false,
-    //                 //     timer: 2500
-    //                 // })
-    //                 return null
-    //             }
-    //             Swal.fire({
-    //                 icon: 'success',
-    //                 title: 'Session destroyed',
-    //                 text: "success" + message,
-    //                 showConfirmButton: false,
-    //                 timer: 2500
-    //             })
-    //             return true                
-    //         }
-
-    //         async function authentication(){
-    //             const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
-    //             const {status,message,user} = await res.json()
-    //             console.log(message)
-    //             return ({status,user})
-    //         }
-    //         const isLoggedIn = await authentication()
-
-    //         if(isLoggedIn.status){
-    //             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
-    //                 method: "POST",
-    //                 body:JSON.stringify({
-    //                     id,
-    //                     index,
-    //                     user:isLoggedIn.user
-    //                 }),
-    //                 headers: {
-    //                     'Content-Type': 'application/json', // Indicates the body is JSON
-    //                 },
-    //             });
-    //             const {status, error, message, newToken} = await response.json()
-    //             return sessionDestroy({status, error, message, newToken})
-    //         }else{
-    //             let user = localStorage.getItem("session")
-    //             const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_destroy_token : process.env.REACT_APP_destroy_token_live}`, {
-    //                 method: "POST",
-    //                 body:JSON.stringify({
-    //                     id,
-    //                     index,
-    //                     user
-    //                 }),
-    //                 headers: {
-    //                     'Content-Type': 'application/json', // Indicates the body is JSON
-    //                 },
-    //             });
-    //             const {status, error, message, newToken} = await response.json()
-    //             return sessionDestroy({status, error, message, newToken})
-    //         }
-
-    //     }
-    //     destroySession()
-    // },[id,index])
+    const navRoute = ({url,state}) => {
+        navigate(url, { state: { ...state } });
+        
+    }
 
     const runStream = async({token}) => { 
         const stream = localStorage.getItem("type")
         // console.log("inside",stream)
         //check for credits
         async function authentication(){
-            const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+            const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
             const {status,message,user} = await res.json()
             console.log(message)
             return ({status,user})
@@ -109,8 +58,7 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
         let user;
         if(isLoggedIn.status){
             user = isLoggedIn.user
-
-            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_user_paid : process.env.REACT_APP_user_paid_live}`,{
+            const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_USER_PAID : process.env.REACT_APP_USER_PAID_LIVE}`,{
                 credentials: "include",
                 method:"POST",
                 headers:{
@@ -144,7 +92,7 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                 })
             }
 
-            const res = await fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_user_credits : process.env.REACT_APP_check_user_credits_live,{credentials: "include"})
+            const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_USER_CREDITS : process.env.REACT_APP_CHECK_USER_CREDITS_LIVE,{credentials: "include"})
             const {sum,message} = await res.json()
             console.log(message)
             //affordable for one movie | episode
@@ -153,7 +101,7 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
             }
         }else{
             user = localStorage.getItem("session")
-            const res = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_paid : process.env.REACT_APP_paid_live}`,{
+            const res = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PAID : process.env.REACT_APP_PAID_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
@@ -186,7 +134,7 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                 })
             }
 
-            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_check_report_credits : process.env.REACT_APP_check_report_credits_live}`,{
+            const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_REPORT_CREDITS : process.env.REACT_APP_CHECK_REPORT_CREDITS_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
@@ -198,7 +146,7 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                 })
             })
             const {sum,message} = await response.json()
-            console.log(message)
+            console.log(sum,"sum",message)
             //affordable for one movie | episode
             if(sum && sum > 49){
                 hasCredits = true
@@ -217,12 +165,6 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
         }
         if (token) {
             setLoading(true)
-            // const HTMLMARK = e.target.innerText
-            // e.target.innerText = "loading..."
-            
-            // console.log(season,"season")
-            //
-            console.log(stream,"stream",id,"id",size,"size")
             index = index.toString()
             .replace("0","a")
             .replace("1","b")
@@ -235,7 +177,7 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
             .replace("8","i")
             .replace("9","j")
 
-            const response = await fetch(`${process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_play : process.env.REACT_APP_play_live}`,{
+            const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAY : process.env.REACT_APP_PLAY_LIVE}`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json",
@@ -253,53 +195,27 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                 })
             })
             const {status, error, message, url, files} = await response.json()
-            console.log(message || error)
             if(status){
-                const video = files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
-                console.log(files,"video")
+                const video = files && files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
                 if(video){
                     const type = video && video.hasOwnProperty("name") && video.name.split(".").pop()
-                    // e.target.innerText = HTMLMARK
-                    // setPlay(null)
                     setLoading(false)
-                    navigate(`/play`,{
+                    navRoute({url:`/play`,
                         state:{
                             id,
                             url,
                             index,
                             type,
-                            background
+                            background,
+                            seasons,
+                            episodes,
+                            serieID,
+                            anime,
+                            serie_name,
+                            season,
+                            episode
                         }
                     })
-                    // if(type === "mp4"){
-                    //     // setPlaying(`${url}/${video.index}`)
-                    //     // router(`/play/${url}/${video.index}/${type}/${background}`)
-                    //     // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
-                    //     window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
-                    //     // setFetchedPlay(() => true)
-                        
-                        
-                    //     return null
-                    // }else{
-                    //     //unless VLC situation changes, we will not use this
-                    //     // setURLS(`/play/${id}/${url}/${video.index}/${type}/${background}`)
-                    //     // //for mkv files open disclaimer
-                    //     // if(open){
-                    //     //     // $(containerRef.current).slideUp(500)
-                    //     //     // $(containerRef.current).addClass("hidden")
-                    //     //     setOpen(false)
-                            
-                    //     // }else{
-                    //     //     // $(containerRef.current).removeClass("hidden")
-                    //     //     // $(containerRef.current).slideDown(500)
-                    //     //     setOpen(true)
-                    //     // }
-
-                    //     // window.location.href = `/play/${id}/${url}/${video.index}/${type}/${background}`
-                    //     window.location.href = `/play/${id}/${url}/${index}/${type}/${background}`
-                    //     return null
-                        
-                    // }
                 }else{
                     Swal.fire({
                         icon: 'error',
@@ -310,18 +226,8 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                     })
                 }
 
-
-                        // mutateUpdatePlay({ variables: {
-                        //     type:stream === "series" ? "tv" : stream === "season" ? "season" : stream === "episode" ? "episode" : "movie",
-                        //     season:season ? parseInt(season) : -1,
-                        //     episode:episode ? parseInt(episode) : -1,
-                        //     id:id?parseInt(id):-1,
-                        //     tokens:getToken
-                        // }})
             }else{
-                // e.target.innerText = HTMLMARK
                 setLoading(false)
-                console.log(index,"index")
                 Swal.fire({
                     icon: 'error',
                     title: 'choose next collection',
@@ -329,63 +235,12 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                     showConfirmButton: false,
                     timer: 1500
                 })
-                // const how_many = collect(index)
-                // if(how_many){
-                //     Swal.fire({
-                //         icon: 'error',
-                //         title: 'reloading',
-                //         text: "a minute",
-                //         showConfirmButton: false,
-                //         timer: 1500
-                //     })
-                // }else{
-                //     Swal.fire({
-                //         icon: 'error',
-                //         title: 'choose next collection',
-                //         text: "was not worth your time",
-                //         showConfirmButton: false,
-                //         timer: 1500
-                //     })
-                // }
 
             }
-                        //in case no video file found -- destroy token
-            // setPlay(null)
+   
             setLoading(false)
-            // e.target.innerText = HTMLMARK
-
-            // console.log(responseDestroyData.message,"destruction")
-            // console.log(responseDestroyData.newToken,"new token")
         }
     }
-
-    // const destroySession = async() => {
-    //     console.log("destroying...")
-    //     // setOpen(false)
-    //     const response = await fetch(`${process.env.REACT_APP_destroy_token}`, {
-    //         method: "POST",
-    //         body:JSON.stringify({
-    //             id,
-    //             index
-    //         }),
-    //         headers: {
-    //             'Content-Type': 'application/json', // Indicates the body is JSON
-    //         },
-    //     });
-    //     const {status, error, message, newToken} = await response.json()
-    //     console.log(newToken,"newToken")
-    //     if(error || !status){
-    //         return null
-    //     }
-    //     Swal.fire({
-    //         icon: 'success',
-    //         title: 'Session destroyed',
-    //         text: "success" + message,
-    //         showConfirmButton: false,
-    //         timer: 2500
-    //     })
-    //     return true
-    // }
 
     return (
         <>
@@ -412,49 +267,6 @@ const COLLECTIONS = ({index,title,season,collect,stream,token,quality,id,backgro
                     </>
                 }        
             </button>
-         {/* {open && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-                    <div className="bg-[#18181c] p-6 rounded-lg shadow-lg w-full max-w-lg relative">
-                        <button
-                            className="absolute top-2 right-2 text-white text-2xl"
-                            onClick={() => destroySession()}
-                        >
-                            &times;
-                        </button>
-                        <img 
-                            src="/image/vlc.webp"
-                            className='w-[15%] h-[auto]'
-                            alt="https://uko-app.com vlc"
-                        />
-                        <h2 className='text-[#ffd800] mb-2'>This file is mkv, follow instructions below</h2>
-                        <ol className="mb-4 list-decimal pl-6">
-                            <li>
-                                <p className='text-[#ffd800]'>Download VLC media player</p>
-                            </li>
-                            <li>
-                                <p className='text-[#ffd800]'>Go to Preferences -- (Click Tools -- Preferences) or (Ctrl + P) </p>
-                            </li>
-                            <li>
-                                <p className='text-[#ffd800]'>Switch to Advanced Settings -- At the bottom left, click "All" under "Show settings"</p>
-                            </li>
-                            <li>
-                                <p className='text-[#ffd800]'>Navigate to -- Interface (Click) -- Main Interfaces (Click) -- Check the box for <i>Web</i> and <b>HTTP remote control interface</b></p>
-                            </li>
-                        </ol>
-                        <h2 className="mb-2">Click the watch button below after following the instructions</h2>
-                        <button
-                            disabled={loading}
-                            type="button"
-                            onClick={() => {
-                                window.location.href = URLS
-                            }}
-                            className="bg-[transparent] m-[1%] border-[2px] text-white w-[48%] h-[auto] text-[20px] font-bold"
-                        >
-                            watch
-                        </button>
-                    </div>
-                </div>
-            )} */}
         </>
     )
 }

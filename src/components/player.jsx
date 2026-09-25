@@ -21,6 +21,7 @@ const PLAYER = () => {
     episodes,
     season,
     episode,
+    eden,
   } = state;
 
   const [windowWidth, setWindowWidth] = useState(0);
@@ -150,6 +151,7 @@ const PLAYER = () => {
                     receipt: "player",
                     "player-type": [type],
                     title: id,
+                    eden: !!eden,
                   },
                 }),
               }
@@ -218,6 +220,7 @@ const PLAYER = () => {
                     receipt: "player",
                     "player-type": [type],
                     title: id,
+                    eden: !!eden,
                   },
                 }),
               }

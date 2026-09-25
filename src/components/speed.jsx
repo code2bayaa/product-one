@@ -31,7 +31,8 @@ const SPEED = () => {
         episodes,
         season,
         episode,
-        anime
+        anime,
+        eden
     } = state;
     console.log(name)
     // const [rating, setRating] = useState(3.2)
@@ -239,7 +240,8 @@ const SPEED = () => {
                                 data:{
                                     "receipt":"player",
                                     "player-type":[type],
-                                    "title":id
+                                    "title":id,
+                                    "eden":!!eden
                                 }
 
                             })
@@ -361,7 +363,8 @@ const SPEED = () => {
                                 data:{
                                     "receipt":"player",
                                     "player-type":[type],
-                                    "title":id
+                                    "title":id,
+                                    "eden":!!eden
                                 }
 
                             })
@@ -642,7 +645,8 @@ const SPEED = () => {
                                 data:{
                                     "receipt":"download",
                                     "player-type":[type],
-                                    "title":id
+                                    "title":id,
+                                    "eden":!!eden
                                 }
 
                             })
@@ -702,7 +706,8 @@ const SPEED = () => {
                                 data:{
                                     "receipt":"download",
                                     "player-type":[type],
-                                    "title":id
+                                    "title":id,
+                                    "eden":!!eden
                                 }
 
                             })

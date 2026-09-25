@@ -94,10 +94,24 @@ const TERMS = () => {
                 </section>
 
                 <section className="mb-8">
-                    <h2 className="text-xl font-semibold mb-2">7. Payments & Monetization</h2>
+                    <h2 className="text-xl font-semibold mb-2">7. Payments, Ads & Monetization</h2>
                     <p>
                     Subscription fees, rental charges, or any paid access is handled securely via third-party payment processors. Creators who monetize content agree to our Creator Terms, which govern payment timelines and revenue shares.
                     </p>
+                    <ul className="list-disc pl-6 mt-2">
+                    <li>
+                        <strong>Credits:</strong> Content is paid for in credits. Watching a movie or episode costs 50 credits and covers that title for the rest of the day. Bought credits are priced at KSh 100 per 1,000 credits.
+                    </li>
+                    <li>
+                        <strong>Earning credits with ads:</strong> On the Earn page you can watch Google ads and UKOshop ads (images and videos). Every 5 ads you genuinely engage with - reading the ad through or watching its video to the end, then pressing Next - earn 50 credits. Ads skipped, closed early, repeated within a day or completed by automated means do not count, and daily earning limits apply. Credits earned this way have no cash value and cannot be withdrawn.
+                    </li>
+                    <li>
+                        <strong>Eden studio revenue:</strong> Views of Eden studio content are shared 3:2 between UKO and the studio. A studio earns KSh 2 for each view paid with bought credits, and KSh 200 per 1,000 ad views (Google or UKOshop) behind a view paid with earned credits. Views paid with free credits earn nothing. Google pays UKO in US dollars; the studio's rate is fixed in shillings and any exchange-rate gain or loss is UKO's. Only monetized studios earn.
+                    </li>
+                    <li>
+                        <strong>Blockbuster content:</strong> UKO's recommendation system measures how many viewers a blockbuster title can reach in East Africa, starting with Kenya. UKO then asks the title's producers for permission for the content - including copies uploaded by studios where the rights are theirs - to be played on UKO, with monetization shared 3:2 between the producer and UKO. Until a producer agrees, the share their title would earn is recorded.
+                    </li>
+                    </ul>
                 </section>
 
                 <section className="mb-8">

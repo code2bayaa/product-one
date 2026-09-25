@@ -1,9 +1,9 @@
 import NAVBAR from "./nav";
 import MOBILE from "./mobileBar";
 import { useEffect, useState, useRef } from "react";
-import SOCKETS from "../midlleware/sockets";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import Swal from "sweetalert2";
+import { newSocketKey, watchMpesaRoom } from "../midlleware/mpesaRoom";
 import {useNavigate} from "react-router-dom"
 import { useKeys } from "./safe";
 const SUBSCRIBE = () => {
@@ -63,11 +63,13 @@ const SUBSCRIBE = () => {
 
         try{
             setLoading({...loading,mpesa:true})
+            const socketKey = newSocketKey()
             const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INIT_MPESA : process.env.REACT_APP_INIT_MPESA_LIVE,{
                 credentials: "include",
                 method:"POST",
                 body : JSON.stringify({
-                    total:Math.ceil(usd * 100)
+                    total:Math.ceil(usd * 100),
+                    socket_key:socketKey
                     // total:1.00 //testing
                 }),
                 headers: {
@@ -75,7 +77,7 @@ const SUBSCRIBE = () => {
                 },
             });
 
-            const {status, data, message} = await res.json()
+            const {status, data, message, sockets_url} = await res.json()
 
             if(!status || data.ResponseCode !== "0"){
                 setLoading({...loading,mpesa:false})
@@ -94,37 +96,49 @@ const SUBSCRIBE = () => {
             setPayment("mpesa")
             //open model to wait for payment success
             modalRef.current?.showModal();
-            SOCKETS.connect()
-            SOCKETS.socketConnect()
-            SOCKETS.socketModule.emit("user", data.MerchantRequestID)
-            SOCKETS.socketModule.on("callback", async({data}) => {
-                //check if payment was cancelled
-                // console.log(data)
-                if(data.ResultCode !== 0){
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: message,
-                        showConfirmButton: false,
-                        timer: 2500
+            //ask the API until Safaricom confirms the payment - it checks with M-PESA itself and credits the
+            //account once (user/payment/purchases.js). The callback relayed to the browser is not trusted any more.
+            const confirmUrl = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CONFIRM_PAYMENT : process.env.REACT_APP_CONFIRM_PAYMENT_LIVE
+            let outcome = null
+            //the signed callback wakes the check early; without it the page just asks every 5s
+            const room = watchMpesaRoom(sockets_url, data.MerchantRequestID, socketKey)
+            for (let attempt = 0; attempt < 30 && !outcome; attempt++) {
+                await room.wait(5000)
+                try {
+                    const check = await fetch(confirmUrl, {
+                        credentials: "include",
+                        method: "POST",
+                        body: JSON.stringify({ ref: data.CheckoutRequestID }),
+                        headers: { 'Content-Type': 'application/json' },
                     })
-                    setLoading({...loading,mpesa:false})
-                    modalRef.current?.close()
-                    SOCKETS.socketModule.emit("destroy", data.MerchantRequestID);
-                    return null
+                    const result = await check.json()
+                    if (result.state === "paid" || result.state === "failed") outcome = result
+                } catch (error) {
+                    console.log(error)
                 }
+            }
+            room.close()
+            if (!outcome || outcome.state !== "paid") {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'confirmed',
-                    text: "success",
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: outcome ? outcome.message : "M-PESA has not confirmed the payment yet. If you paid, your credits will show once it does.",
                     showConfirmButton: false,
-                    timer: 2500
+                    timer: 3500
                 })
-                SOCKETS.socketModule.emit("destroy", data.MerchantRequestID);
-                //include app pay
-                runPurchase({success:data.ResultDesc,payment:"mpesa",data:{...data,app:"uko"}})
-                
+                setLoading({...loading,mpesa:false})
+                modalRef.current?.close()
+                return null
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'confirmed',
+                text: outcome.message,
+                showConfirmButton: false,
+                timer: 2500
             })
+            //record the payment - the credits are already on the account
+            runPurchase({success:"confirmed",payment:"mpesa",data:{CheckoutRequestID:data.CheckoutRequestID,MerchantRequestID:data.MerchantRequestID,app:"uko"}})
             // SOCKETS.connect().then(socket => {
             //     socket.emit("user", data.MerchantRequestID)
             //     socket.on("callback", async({data}) => {

@@ -310,7 +310,7 @@ const NAVBAR = ({fullCover = null,data = null,main = null}) => {
                     anime
                 </NavLink>                  */}
                 <NavLink
-                    to="/credits"
+                    to="/earn"
                     className={({ isActive, isPending }) =>
                         isPending ? "pending flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : isActive ? "active flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]" : "flex items-left text-[15px] border-b-[1px] border-[#2E2E3A] font-bold hover:bg-[#2E2E3A] h-[40px] w-[100%]"
                     }

@@ -46,6 +46,7 @@ import SIGNIN from './components/signin.jsx';
 import NETFLIX from './components/netflix.jsx';
 import DISNEY from './components/disney.jsx';
 import CREDITS from './components/credits.jsx';
+import EARNPAGE from './components/earn.jsx';
 import SUBSCRIBE from './components/subscribe.jsx';
 import SUBSCRIBEAPP from './components/subscribeapp.jsx';
 import TESTSOCKETS from './components/test.jsx';
@@ -341,6 +342,11 @@ const baseRoutes = [
   {
     path:"/credits",
     element:<CREDITS/>,
+    elementError:<ERROR/>
+  },
+  {
+    path:"/earn",
+    element:<EARNPAGE/>,
     elementError:<ERROR/>
   },
   {

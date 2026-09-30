@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
-
+import { useKeys } from '../components/safe';
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
     const [genre, setGenre] = useState(null)
@@ -28,16 +29,10 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
     const [genreName, setGenreName] = useState('')
     const [genreTVName, setGenreTVName] = useState('')
     const [jobName, setJobName] = useState('')
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
+    const {safeKeys} = useKeys()
     // const [extra, setextra] = useState(null)
 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-    },[])
     const fetchGenre = useQuery(gql`
         query Genre {
             genre {
@@ -308,7 +303,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
     const removeGenre = (n) => {
         function runMain(){
-            console.log("remove genre")
+            // console.log("remove genre")
             setGenreId('')
             setGenreName('')
         }
@@ -319,7 +314,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                 runMain()
             }else if(n === "tv"){
                 intitializeMovies({manualMode:type,page:1,genreId:genreTVId,regionId,languageId,yearId,jobId})
-                console.log("remove genre tv")
+                // console.log("remove genre tv")
                 setGenreTVId('')
                 setGenreTVName('')
             }
@@ -386,7 +381,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
     const filterGenre = (id,name) => {
 
         function runMain(){
-            console.log("remove genre movie")
+            // console.log("remove genre movie")
             setGenreId(id.toString())
             setGenreName(name)
         }
@@ -394,7 +389,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
         intitializeMovies({manualMode:type,page:1,genreId:id.toString(),regionId,languageId,yearId})
         runMain()
           
-        console.log("filter genre")
+        // console.log("filter genre")
         setGenre(() => null)
         setSelectedGenre(() => false)
         
@@ -449,7 +444,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             try{
 
                 const fetchFresh = async() => {
-                    const response = await fetch(`${process.env.REACT_APP_movie_db}configuration/languages?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                    const response = await fetch(`${safeKeys.MOVIE_DB}configuration/languages?api_key=${safeKeys.API_KEY}&language=en-US`)
                     const data = await response.json()
                     return data
                 }
@@ -470,14 +465,14 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
                         }else{
                             //every other user --- most fetch
-                            console.log("ordinarily...")
+                            // console.log("ordinarily...")
                             const getLanguage = fetchLanguage.data?.language?.data
                             setLanguage(() => [...getLanguage])
                         } 
                     }else{
                         const getLanguageData = await fetchFresh()
                         setLanguage(() => [...getLanguageData])
-                        console.log("error fetching graph")
+                        // console.log("error fetching graph")
                     }
                 }
                 // else if(fetchLanguage.data.language.date && new Date(fetchLanguage.data.language.date) < date){
@@ -487,8 +482,8 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
                 // }
             }catch(err){
-                console.log(err)
-                fetch(`${process.env.REACT_APP_movie_db}configuration/language?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                // console.log(err)
+                fetch(`${safeKeys.MOVIE_DB}configuration/language?api_key=${safeKeys.API_KEY}&language=en-US`)
                 .then(data => data.json())
                 .then(data => setLanguage(() => [...data]))
             }
@@ -504,7 +499,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             try{
 
                 const fetchFresh = async() => {
-                    const response = await fetch(`${process.env.REACT_APP_movie_db}configuration/countries?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                    const response = await fetch(`${safeKeys.MOVIE_DB}configuration/countries?api_key=${safeKeys.API_KEY}&language=en-US`)
                     const data = await response.json()
                     return data
                 }
@@ -525,14 +520,14 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
                         }else{
                             //every other user --- most fetch
-                            console.log("ordinarily...")
+                            // console.log("ordinarily...")
                             const getRegion = fetchRegion.data?.region?.data
                             setRegion(() => [...getRegion])
                         } 
                     }else{
                         const getRegionData = await fetchFresh()
                         setRegion(() => [...getRegionData])
-                        console.log("error fetching graph")
+                        // console.log("error fetching graph")
                     }
                 }
                 // else if(fetchRegion.data.region.date && new Date(fetchRegion.data.region.date) < date){
@@ -542,8 +537,8 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
 
                 // }
             }catch(err){
-                console.log(err)
-                fetch(`${process.env.REACT_APP_movie_db}configuration/countries?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                // console.log(err)
+                fetch(`${safeKeys.MOVIE_DB}configuration/countries?api_key=${safeKeys.API_KEY}&language=en-US`)
                 .then(data => data.json())
                 .then(data => setRegion(() => [...data]))
             }
@@ -554,13 +549,13 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
     const getGenre = async() => {
         if(selectedGenre){
             // setSelectedGenre(false)
-            console.log("get genre")
+            // console.log("get genre")
             setGenre(null)
         }else{
             try{
 
                 async function fetchFresh(){
-                    const response = await fetch(`${process.env.REACT_APP_movie_db}genre/${type === "movie" ? "movie" : extra === "movie" ? "movie" : "tv"}/list?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                    const response = await fetch(`${safeKeys.MOVIE_DB}genre/${type === "movie" ? "movie" : extra === "movie" ? "movie" : "tv"}/list?api_key=${safeKeys.API_KEY}&language=en-US`)
                     const data = await response.json()
                     // console.log(data,"fresh fetch")
                     return data.genres                        
@@ -570,7 +565,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                 if (fetchGenre.error){
                     // console.log(fetchGenre.error.message)
                     const getGenreData = await fetchFresh()
-                    console.log("error genre")
+                    // console.log("error genre")
                     setGenre(() => [...getGenreData])
                 }else{
                     //insert
@@ -589,28 +584,28 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                             mutateInsertGenre({ variables: { date, data:[...typeGetGenreData] } })
 
                         }else if(!fetchGenre.data.genre.data.find(({mode}) => mode === type)){
-                            console.log("switching...")
+                            // console.log("switching...")
                             //switching from movie to tv 
                             const getGenreData = await fetchFresh()
                             const typeGetGenreData = getGenreData.map((genres) => ({...genres, mode:extra || type}))
 
                             const jointGenre = [...fetchGenre.data.genre.data.map(old => ({...old,__typename:undefined})),...typeGetGenreData]
-                            console.log(jointGenre)
+                            // console.log(jointGenre)
                             setGenre(() => [...jointGenre])
                             mutateUpdateGenre({ variables: { date, data:[...jointGenre] } })
                         }else{
                             //every other user --- most fetch
-                            console.log("ordinarily...")
+                            // console.log("ordinarily...")
                             const new_genre = fetchGenre.data?.genre?.data.filter(({mode}) => mode === extra || mode === type)
-                            // console.log(new_genre,n,type)
-                            console.log("ordinarily genre")
+                            // console.log(new_genre)
+                            // console.log("ordinarily genre")
                             setGenre(() => [...new_genre])
                         } 
                     }else{
                         const getGenreData = await fetchFresh()
-                        console.log("fresh genre")
+                        // console.log("fresh genre")
                         setGenre(() => [...getGenreData])
-                        console.log("error fetching graph")
+                        // console.log("error fetching graph")
                     }
 
                 } 
@@ -626,8 +621,8 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                 // }
 
             }catch(err){
-                console.log(err)
-                fetch(`${process.env.REACT_APP_movie_db}genre/${type === "movie" ? "movie" : extra === "movie" ? "movie" : "tv"}/list?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                // console.log(err)
+                fetch(`${safeKeys.MOVIE_DB}genre/${type === "movie" ? "movie" : extra === "movie" ? "movie" : "tv"}/list?api_key=${safeKeys.API_KEY}&language=en-US`)
                 .then(data => data.json())
                 .then(({genres}) => setGenre(() => [...genres]))
             }
@@ -656,29 +651,29 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
             setJob(null)
         }else{
             try{
-                fetch(`${process.env.REACT_APP_movie_db}configuration/jobs?api_key=${process.env.REACT_APP_api_key}&language=en-US`)
+                fetch(`${safeKeys.MOVIE_DB}configuration/jobs?api_key=${safeKeys.API_KEY}&language=en-US`)
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log(data)
+                    // console.log(data)
                     setJob(() => [...data])
                 })
             }catch(err){
-                console.log(err)
+                // console.log(err)
             }
             setSelectedJob(true)
         }
     }
 
     return (
-        <div className="w-[100%] h-[auto] text-white" style={{background:windowWidth > 800 ? "linear-gradient(25deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)":"transparent"}}>
+        <div className="w-[100%] h-[auto] text-white" style={{background:windowWidth >= DESKTOP_WIDTH ? "linear-gradient(25deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)":"transparent"}}>
             <div className="w-[100%] flex flex-col flex-wrap">
                 <div className="w-[100%] h-[auto] border-r-[3px] border-[#2E2E3A]">
                     {/* <h1 className="text-[30px] font-bold">Controllers</h1> */}
-                    <div className={`${windowWidth > 800 ? "w-[70%] ml-[15%]" : "w-[100%]"} h-[auto] text-white flex flex-row flex-wrap items-center justify-center`}>
+                    <div className={`${windowWidth >= DESKTOP_WIDTH ? "w-[70%] ml-[15%]" : "w-[100%]"} h-[auto] text-white flex flex-row flex-wrap items-center justify-center`}>
                         
                             <button
                                 onClick={() => getGenre()}
-                                className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                                className={windowWidth >= DESKTOP_WIDTH ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedGenre ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                             >
                                 Genre 
                                 {
@@ -691,7 +686,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                         
                         <button
                             onClick={() => getRegion()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                            className={windowWidth >= DESKTOP_WIDTH ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedRegion ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Region 
                             {
@@ -703,7 +698,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                         </button>
                         <button
                             onClick={() => getLanguage()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedLanguage ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                            className={windowWidth >= DESKTOP_WIDTH ? `w-[23%] h-[50px] bg-[transparent] mt-[0.5%] border-[#fff] border-r-[1px] text-white ${selectedLanguage ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Language 
                             {
@@ -715,7 +710,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                         </button>
                         <button
                             onClick={() => getYears()}
-                            className={windowWidth > 800 ? `w-[23%] h-[50px] mt-[0.5%] text-white ${selectedYear ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                            className={windowWidth >= DESKTOP_WIDTH ? `w-[23%] h-[50px] mt-[0.5%] text-white ${selectedYear ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                         >
                             Year 
                             {
@@ -729,7 +724,7 @@ const CONTROLLERS = ({intitializeMovies,type,extra}) => {
                             type === "people" ?
                                 <button
                                     onClick={() => getJobs()}
-                                    className={windowWidth > 800 ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedJob ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
+                                    className={windowWidth >= DESKTOP_WIDTH ? `w-[23%] h-[50px] rounded-md bg-[#000] mt-[0.5%] border-[#fff] border-[2px] text-white ${selectedJob ? "active" : "pending"}` : `min-w-[23%] h-[70px] bg-[transparent] m-[1%] border-[#ffd800] rounded-full border-[2px] text-[#ffd800] ${selectedGenre ? "active" : "pending"}`}
                                 >
                                     Actor Jobs 
                                     {

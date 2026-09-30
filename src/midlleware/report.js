@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
-
-const COLLECT = async(data) => {
+const COLLECT = async(data,geo) => {
 
     try{
+        console.log(geo,"geo")
         const api_url = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_REPORT : process.env.REACT_APP_REPORT_LIVE
 
         let user = localStorage.getItem("session")
@@ -18,45 +18,41 @@ const COLLECT = async(data) => {
             const day = String(now.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         };
-
         // ...inside your /daily route...
         const date = getFormattedDate();
 
         const sendForm = async({url,options}) => {
-
             const response = await fetch(
                 url,
                 options,
                 {credentials:"initial"}
             )
-
-            
             return await response.json()
-
         }
         if (!user_location) {
-        const urls = [
-            "https://ipinfo.io/json",
-            "https://ipapi.co/json/",
-            "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_GEO
-        ];
+            const urls = [
+                "https://ipinfo.io/json",
+                "https://ipapi.co/json/",
+                geo ? "https://api.ipgeolocation.io/ipgeo?apiKey=" + geo : null //no key yet: skip, it only answers 401
+            ];
 
-        const locations = await Promise.all(
-            urls.map(async (url) => {
-            try {
-                return await sendForm({
-                url,
-                options: { method: "GET", headers: { "Content-type": "application/json; charset=UTF-8" } }
-                });
-            } catch (err) {
-                console.warn("location fetch failed", url, err);
-                return null;
-            }
-            })
-        );
+            const locations = await Promise.all(
+                urls.map(async (url) => {
+                    if (!url) return null;
+                    try {
+                        return await sendForm({
+                        url,
+                        options: { method: "GET", headers: { "Content-type": "application/json; charset=UTF-8" } }
+                        });
+                    } catch (err) {
+                        console.warn("location fetch failed", url, err);
+                        return null;
+                    }
+                })
+            );
 
-        localStorage.setItem("location", JSON.stringify(locations));
-        user_location = locations;
+            localStorage.setItem("location", JSON.stringify(locations));
+            user_location = locations;
         } else {
             try {
                 console.log("user location",user_location)
@@ -133,27 +129,27 @@ const COLLECT = async(data) => {
             window.location.href
 
         try {
-        const res = await sendForm({
-            url: api_url,
-            options: {
-            method: "POST",
-            headers: { "Content-type": "application/json; charset=UTF-8" },
-            body: JSON.stringify({
-                wireframe,
-                time,
-                user,
-                date,
-                locations: user_location,
-                device
+            sendForm({
+                url: api_url,
+                options: {
+                method: "POST",
+                headers: { "Content-type": "application/json; charset=UTF-8" },
+                body: JSON.stringify({
+                    wireframe,
+                    time,
+                    user,
+                    date,
+                    locations: user_location,
+                    device
+                })
+                }
             })
-            }
-        });
-
-        console.log(res.status, "status report");
+            .then(res => {
+                // console.log(res.status, "status report");
+            })
         } catch (err) {
-        console.log("report send failed", err);
+            console.log("report send failed", err);
         }
-
 
     }catch(error){
         console.log(error)

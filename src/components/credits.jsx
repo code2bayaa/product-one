@@ -1,24 +1,16 @@
 import NAVBAR from "./nav";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const CREDITS = () => {
 
-    const [windowWidth,setWindowWidth] = useState(0)
+    const windowWidth = useWindowWidth()
     const formRef = useRef();
     const [form, setForm] = useState({name: "", email: "", message: "", subject : ""});
     const [loading, setLoading] = useState(false);
     
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-    },[])
-
-
     const handleChange = ({target:{ name, value }}) => {
       setForm({ ...form, [name]: value });
     };
@@ -36,7 +28,7 @@ const CREDITS = () => {
             session:localStorage.getItem("user") ? localStorage.getItem("user") : false
         }
 
-        fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_feedback : process.env.REACT_APP_feedback_live,{
+        fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_FEEDBACK : process.env.REACT_APP_FEEDBACK_LIVE,{
                 method : "POST",
                 headers : {'Content-type': 'application/json; charset=UTF-8'},
                 body : JSON.stringify(body),
@@ -126,14 +118,14 @@ const CREDITS = () => {
     return (
         <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"transparent"}}>
                         <NAVBAR/>
                     </div>
                 :
                     <MOBILE/>
             }
-            <div className={`${windowWidth > 800 ? "w-[80%] h-[100%] gap-7 justify-center items-center ml-[20%]" : " gap-7 justify-center items-center w-[100%] h-[92%]" }`}>
+            <div className={`${windowWidth >= DESKTOP_WIDTH ? "w-[80%] h-[100%] gap-7 justify-center items-center ml-[20%]" : " gap-7 justify-center items-center w-[100%] h-[92%]" }`}>
                 <h2>Provide feedback for free credits</h2>
                 <form
                     ref={formRef}

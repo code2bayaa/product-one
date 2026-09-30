@@ -1,17 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import { faPlay, faStar, faTvAlt } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import CryptoJS from "crypto-js";
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
 import CONTROLLERS from "../midlleware/controllers"
-import { NavLink, useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
 import MOBILE from "./mobileBar";
 import BAR from "./bar"
 import { useKeys } from "./safe"
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const DISCOVER = () => {
 
     const {state} = useLocation()
@@ -19,21 +20,10 @@ const DISCOVER = () => {
     const {safeKeys} = useKeys()
     const navigate = useNavigate();
     const [movies, setMovies] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const hasFetched = useRef(false)
-    const client = useApolloClient();
+    // const client = useApolloClient();
     let { mode } = state;
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
 
     const FETCH_MOVIES_QUERY = gql`
         query Movie (
@@ -80,26 +70,26 @@ const DISCOVER = () => {
     `
     const [fetchMovies] = useLazyQuery(FETCH_MOVIES_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
-        notifyOnNetworkStatusChange: true,
+        // notifyOnNetworkStatusChange: true,
         fetchPolicy: 'cache-first',
         // variables,
         // skip: !variables.page, // Skip query execution if variables are not set
     });
-    useEffect(() => {
-        const invalidateCache = () => {
-            console.log("Invalidating Apollo Client cache");
-            client.refetchQueries({
-                include: [FETCH_MOVIES_QUERY] // Refetch all queries using this query
-            });
-            // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
-        };
+    // useEffect(() => {
+    //     const invalidateCache = () => {
+    //         console.log("Invalidating Apollo Client cache");
+    //         client.refetchQueries({
+    //             include: [FETCH_MOVIES_QUERY] // Refetch all queries using this query
+    //         });
+    //         // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+    //     };
 
-        // Set up the timer to invalidate the cache after 24 hours
-        const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+    //     // Set up the timer to invalidate the cache after 24 hours
+    //     const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
 
-        // Clear the timer when the component unmounts to prevent memory leaks
-        return () => clearTimeout(timerId);
-    }, [client,FETCH_MOVIES_QUERY]); // A
+    //     // Clear the timer when the component unmounts to prevent memory leaks
+    //     return () => clearTimeout(timerId);
+    // }, [client,FETCH_MOVIES_QUERY]); // A
 
     const INSERT_MOVIES_MUTATION = gql`
         mutation AddMovies(
@@ -152,12 +142,15 @@ const DISCOVER = () => {
     const intitializeMovies = useCallback(async({
         page = 1,
         adjustable = false,
+        manualMode = false,
         genreId = '',
         regionId = '',
         languageId='',
         yearId=0
     }) => {
 
+        if(!safeKeys.MOVIE_DB)
+            return
         // make the work cancellable
         const controller = new AbortController();
         const { signal } = controller;
@@ -165,7 +158,7 @@ const DISCOVER = () => {
 
         const fetchMoviesFromAPI = async () => {
 
-            console.log("mode",mode)
+            // console.log("mode",mode)
             const current_date = new Date().toISOString().split("T")[0]
             const temp = [
                 { index: "discover_movie", actual:"movie", results: [], api: "discover/movie", page: 1, total_pages: 0, type:"movie",people_page:1,total_results:0 },
@@ -269,7 +262,8 @@ const DISCOVER = () => {
                 }
             }
 
-            if(adjustable ){
+            if(adjustable || manualMode){
+                // console.log("adjustable")
                 let fetched = null;
                 try {
                     fetched = await fetchMovies({
@@ -287,20 +281,23 @@ const DISCOVER = () => {
                         hashedKey
                     },
                     context: { fetchOptions: { signal } },
-                    fetchPolicy: 'network-only' // prefer fresh for this call
+                    // fetchPolicy: 'network-only' // prefer fresh for this call
                     });
                 } catch (err) {
+                    console.log(err,"error")
                     if (err && err.name === 'AbortError') {
                         // aborted - bail out quietly
-                        return false;
+                        console.log("abort error")
+                        // return false;
                     }
                     console.error("fetchMovies error", err);
                     // fallback to fresh fetch on other errors
                     return await freshFetch();
                 }
 
+                console.log("fetched")
                 if (cancelled || signal.aborted) return false;
-
+                console.log("signal NOT aborted")
                 if (fetched && fetched.data && fetched.data.movie) {
                     if(fetched.data.movie.success && fetched.data.movie.results &&  fetched.data.movie.results.length < 20){
                         return await freshFetch()
@@ -308,7 +305,9 @@ const DISCOVER = () => {
                         return await freshFetch()
                     }else{
                         // apply cached response to state (guarded)
+                        console.log("ordinary - not cancelled")
                         if (!cancelled) {
+                            console.log("still NOT cancelled")
                             setMovies((prevMovies) => {
                                 prevMovies = prevMovies || [];
                                 const updatedMovies = [...prevMovies]
@@ -354,7 +353,7 @@ const DISCOVER = () => {
             cancelled = true;
             try { controller.abort(); } catch(e) { /* ignore */ }
         };
-    },[fetchMovies,mutateInsertMovies,state]);
+    },[fetchMovies,mutateInsertMovies,safeKeys,mode]);
 
     useEffect(() => {
         if(hasFetched.current){
@@ -383,50 +382,50 @@ const DISCOVER = () => {
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]">
                         <NAVBAR main={true}/>
                     </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 {
-                    windowWidth > 800 && <BAR />
+                    windowWidth >= DESKTOP_WIDTH && <BAR />
                 }
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={mode}/>
                 </div>
                 {
                     movies ? movies.map(({results,page,total_pages,index,people_total_pages,people_page,box,people_next},node) =>
-                        <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                             <div className="w-[40%] h-[30px] flex flex-row my-t-[5%] my-b-[2%]">
                                 <span className="w-[5%] h-[100%] border-r-[10px] border-[#fff] bg-[#5A5A68]"></span>
                                 <span className="gradient-text default-text text-[25px]">{index}</span>
                             </div>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
-                            <div className={windowWidth > 800 ? `w-[100%] h-auto flex flex-row flex-wrap`: "w-[90%] flex flex-row flex-wrap mx-[5%]"}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? `w-[100%] h-auto flex flex-row flex-wrap`: "w-[90%] flex flex-row flex-wrap mx-[5%]"}>
                                 {
                                     results.map(({adult,backdrop_path,first_air_date,genres,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <div 
                                             key={movie_key} 
-                                            className={windowWidth > 800 ? "w-[31%] m-[0.5%] h-[250px] hover:skew-4 hover:contrast-150 flex flex-row":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}
+                                            className={windowWidth >= DESKTOP_WIDTH ? "w-[31%] m-[0.5%] h-[250px] hover:skew-4 hover:contrast-150 flex flex-row":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}
                                         >
                                             <div className={
-                                                windowWidth > 800 ? "w-[45%] m-[1%]" 
+                                                windowWidth >= DESKTOP_WIDTH ? "w-[45%] m-[1%]" 
                                                 : "w-[100%] h-[160px] p-0"
                                                 }
                                             >
                                                 <PICTURE 
                                                     key={id} 
-                                                    classes={`object-cover rounded-lg h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} 
+                                                    classes={`object-cover rounded-lg h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} 
                                                     picture={poster_path || backdrop_path} 
                                                 />
                                             </div>
                                             {
-                                                windowWidth > 800 ?
+                                                windowWidth >= DESKTOP_WIDTH ?
                                                     <div className="w-[50%] h-[100%]">
-                                                        <h2 className={windowWidth > 800 ? "text-[18px] h-[10%] gradient-text font-bold":""}>{title || original_title || name || original_name }</h2>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[18px] h-[10%] gradient-text font-bold":""}>{title || original_title || name || original_name }</h2>
 
                                                         <div className="w-[100%] h-[10%] flex">
                                                             <FontAwesomeIcon icon={faTvAlt}/>

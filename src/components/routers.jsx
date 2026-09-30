@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {RouterProvider, createBrowserRouter} from "react-router-dom"
 import PLAY from './play.jsx';
 import PLAYER from './player.jsx';
@@ -43,7 +43,8 @@ const DynamicRouters = () => {
                 .catch(err => console.error('❌ SW registration failed:', err));
         }
     },[])
-    const moreRouters = [
+    //static, memoized so the online/offline effect can depend on it
+    const moreRouters = useMemo(() => [
     {
         path : "/movies",
         element : <MOVIES/>,
@@ -299,7 +300,7 @@ const DynamicRouters = () => {
         element:<DISCOVER/>,
         elementError:<ERROR/>
     }
-    ]
+    ], [])
 
     useEffect(() => {
         const updateRoutes = () => {
@@ -334,7 +335,7 @@ const DynamicRouters = () => {
             window.removeEventListener('online', updateRoutes);
             window.removeEventListener('offline', updateRoutes);
         };
-    }, []);
+    }, [moreRouters]);
 
     
     return (

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useRef } from "react";
 import Carousel from "../midlleware/carousel";
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import CryptoJS from "crypto-js";
 import { useKeys } from "./safe";
@@ -9,23 +9,12 @@ import { useKeys } from "./safe";
 const LATEST = ({wireframe,api}) => {
 
     const [movies, setMovies] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
     const hasFetched = useRef(false)
     const {safeKeys} = useKeys()
     // const state = useStates("latest")
 
     // const wireframe = state.wireframe
 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
     const FETCH_MOVIES_COLLECTION_QUERY = gql`
         query MovieCollection (
             $data:[COLLECTION_TRACK_DATA_OUTPUT],
@@ -238,7 +227,7 @@ const LATEST = ({wireframe,api}) => {
                 //  return await freshFetch()
                 
             }       
-    },[fetchMoviesCollection,mutateInsertMoviesCollection,wireframe,api])
+    },[fetchMoviesCollection,mutateInsertMoviesCollection,wireframe,api,safeKeys.API_KEY,safeKeys.MOVIE_DB])
 
     useEffect(() => {
         if(hasFetched.current){

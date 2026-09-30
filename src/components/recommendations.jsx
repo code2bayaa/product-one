@@ -1,5 +1,5 @@
 
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useNavigate, useLocation } from "react-router-dom";
@@ -12,10 +12,11 @@ import SWEETPAGE from "../midlleware/pages";
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import { useKeys } from './safe';
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const RECOMMENDATIONS = () => {
     const hasFetched = useRef(false)
     const [recommendations, setRecommendations] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const {safeKeys} = useKeys()
 
     // const router = useRouter()
@@ -27,16 +28,6 @@ const RECOMMENDATIONS = () => {
     const id = state.id
     const stream = state.stream
     const background = state.background
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
     useEffect(() => {
         // Create the inline script
         const inlineScript = document.createElement("script");
@@ -219,7 +210,7 @@ const RECOMMENDATIONS = () => {
             }
 
         }
-    },[fetchMovie, id, mutateInsertMovie, stream, recommendations])
+    },[fetchMovie, id, mutateInsertMovie, stream, recommendations, safeKeys.API_KEY, safeKeys.MOVIE_DB])
 
     useEffect(() => {
         if(hasFetched.current){
@@ -257,28 +248,28 @@ const RECOMMENDATIONS = () => {
     return (
         <>
 
-            <div className={`w-[100%] ${windowWidth > 800 ? "h-[100%]" : "h-[92%]"}  bg-cover bg-no-repeat bg-center text-white`} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${safeKeys.IMG_POSTER + "/" + background + ".jpg" || "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+            <div className={`w-[100%] ${windowWidth >= DESKTOP_WIDTH ? "h-[100%]" : "h-[92%]"}  bg-cover bg-no-repeat bg-center text-white`} style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${safeKeys.IMG_POSTER + "/" + background + ".jpg" || "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] absolute h-[100%]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene duration-100"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[10%] flex flex-col":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene duration-100"}>
                 {
                     recommendations && recommendations.total_results < 2 ? 
                         <h2 className="ml-[15%]">No Recommendations</h2>
                     : recommendations ?
                     <> 
-                    <div className={windowWidth > 800 ? "w-[100%] h-[auto] flex flex-wrap flex-row":"w-[100%] h-[auto]"} style={{boxShadow:"0px 4px 10px #fff"}}>
-                        <div className={windowWidth > 800 ? "w-[60%] h-[50%]": "w-[100%] h-[25%]"}>
+                    <div className={windowWidth >= DESKTOP_WIDTH ? "w-[100%] h-[auto] flex flex-wrap flex-row":"w-[100%] h-[auto]"} style={{boxShadow:"0px 4px 10px #fff"}}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[60%] h-[50%]": "w-[100%] h-[25%]"}>
                             {
                                 recommendations.results.length > 2  &&<Carousel type={stream} images={[...recommendations.results].sort((a,b) => b.vote_average > a.vote_average)}/>                       
                             }                        
                         </div>
-                        <div className={windowWidth > 800 ? "w-[40%] h-[50%]": "w-[100%] h-[auto]"}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[40%] h-[50%]": "w-[100%] h-[auto]"}>
                             <div 
                                 onClick={() => navRoute({
                                     url:`/${stream}/id`,
@@ -289,7 +280,7 @@ const RECOMMENDATIONS = () => {
                                 <PICTURE picture={getPoster(1)} classes={"h-[400px]"} />
                             </div>
                         </div>                        
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + safeKeys.IMG_POSTER + getPoster(2) + ")"}}>                            
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + safeKeys.IMG_POSTER + getPoster(2) + ")"}}>                            
                             <div
                                 className="w-[40%] backdrop-blur-md h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(2)} classes={"h-[65%] mt-[10%] w-[100%] object-contain"} />
@@ -312,7 +303,7 @@ const RECOMMENDATIONS = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className={windowWidth > 800 ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + safeKeys.IMG_POSTER + getPoster(3) + ")"}}>                            
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[50%] h-[50%] flex flex-row": "w-[100%] h-[20%] flex flex-row"} style={{backgroundImage:"url(" + safeKeys.IMG_POSTER + getPoster(3) + ")"}}>                            
                             <div
                                 className="w-[40%] backdrop-blur-md h-[100%] hover:contrast-150">
                                 <PICTURE picture={getPoster(3)} classes={"h-[65%] mt-[10%] w-[100%] object-contain"} />
@@ -346,35 +337,35 @@ const RECOMMENDATIONS = () => {
                             </div>
                         </div>
                     </div>
-                        <div className={windowWidth > 800 ? "w-[90%] movie-scene min-h-[320px] mx-[5%] my-[2%]":"w-[100%] movie-scene min-h-[220px] my-[2%]"}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] movie-scene min-h-[320px] mx-[5%] my-[2%]":"w-[100%] movie-scene min-h-[220px] my-[2%]"}>
 
                             <h1 style={{textAlign:"center",textDecoration:"underline"}}>RECOMMENDED { stream === "movies" ? "MOVIES" : "TV"}</h1>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={recommendations?.page} index={"recommendation"} total_pages={recommendations?.total_pages}/>
 
                             <div className={`w-[100%] h-auto flex flex-row flex-wrap`}>
                                 {
-                            <div className={windowWidth > 800 ? `w-[100%] h-auto flex flex-row flex-wrap`: "w-[90%] flex flex-row flex-wrap mx-[5%]"}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? `w-[100%] h-auto flex flex-row flex-wrap`: "w-[90%] flex flex-row flex-wrap mx-[5%]"}>
                                 {
                                     recommendations.results.map(({adult,first_air_date,backdrop_path,genres,id,original_language,original_name,name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <div 
                                             key={movie_key} 
-                                            className={windowWidth > 800 ? "w-[31%] m-[0.5%] h-[250px] hover:skew-4 hover:contrast-150 flex flex-row":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}
+                                            className={windowWidth >= DESKTOP_WIDTH ? "w-[31%] m-[0.5%] h-[250px] hover:skew-4 hover:contrast-150 flex flex-row":"w-[30%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}
                                         >
                                             <div className={
-                                                windowWidth > 800 ? "w-[45%] m-[1%]" 
+                                                windowWidth >= DESKTOP_WIDTH ? "w-[45%] m-[1%]" 
                                                 : "w-[100%] h-[160px] p-0"
                                                 }
                                             >
                                                 <PICTURE 
                                                     key={id} 
-                                                    classes={`object-cover rounded-lg h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} 
+                                                    classes={`object-cover rounded-lg h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} 
                                                     picture={poster_path || backdrop_path} 
                                                 />
                                             </div>
                                             {
-                                                windowWidth > 800 ?
+                                                windowWidth >= DESKTOP_WIDTH ?
                                                     <div className="w-[50%] h-[100%]">
-                                                        <h2 className={windowWidth > 800 ? "text-[18px] h-[10%] gradient-text font-bold":""}>{title || original_title || name || original_name }</h2>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[18px] h-[10%] gradient-text font-bold":""}>{title || original_title || name || original_name }</h2>
 
                                                         <div className="w-[100%] h-[10%] flex">
                                                             <FontAwesomeIcon icon={faTvAlt}/>

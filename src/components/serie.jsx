@@ -1,29 +1,36 @@
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import REACTIONBUTTON, { reactionNeedsUpload } from "./party/ReactionButton";
+import { shortRow } from "../midlleware/shortRow"
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useRef
-
- } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import PICTURE from "../midlleware/picture";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faAngleDoubleRight, faBasketShopping, faCirclePlus, faStar, faPlayCircle } from "@fortawesome/free-solid-svg-icons";
 import LOAD from "../midlleware/load";
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
 import { useKeys } from './safe';
+import { usePlayGate, PHONEPROMPT } from "./access";
+import COMMENTS from "./comments";
+import { noCreditsAlert } from "../midlleware/noCredits";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const SERIE = () => {
-    const hasFetched = useRef({credits:false,images:false,feedback:false,tv:false})
+    const hasFetched = useRef(null)
     const [serie, setSerie] = useState(null);
+    // PRD #11: "Start a reaction" shows only when the series has its own UKO copy - episode 1's url
+    const [reactionReady, setReactionReady] = useState(false);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
     const [playlist,setPlaylist] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
-    const controller = new AbortController();
-    const aborter = useRef(null);
-    const aborterOne = useRef(null);
-    const aborterTwo = useRef(null);
-    const {safeKeys} = useKeys()
+    const windowWidth = useWindowWidth()
+    // const controller = new AbortController();
+    // const aborter = useRef(null);
+    // const aborterOne = useRef(null);
+    // const aborterTwo = useRef(null);
+    const {safeKeys,loadKeys} = useKeys()
+    const { allowed: layouts, needsPhone } = usePlayGate(safeKeys?.GEO)
     // const params = useSearchParams();
     // const state = JSON.parse(decodeURIComponent(params.get("state")));
     // const state = useStates("tv")
@@ -34,37 +41,28 @@ const SERIE = () => {
     const navigate = useNavigate();
     const id = state.id
     // console.log("state id",id)
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
-    useEffect(() => {
-        // Create the inline script
-        const inlineScript = document.createElement("script");
-        inlineScript.type = "text/javascript";
-        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+    //the play gate (Africa / Australia / Brazil device + phone number) lives in access.jsx usePlayGate
+    // useEffect(() => {
+    //     // Create the inline script
+    //     const inlineScript = document.createElement("script");
+    //     inlineScript.type = "text/javascript";
+    //     inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
 
-        // Create the external script
-        const externalScript = document.createElement("script");
-        externalScript.type = "text/javascript";
-        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+    //     // Create the external script
+    //     const externalScript = document.createElement("script");
+    //     externalScript.type = "text/javascript";
+    //     externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
 
-        // Append both to the body
-        document.body.appendChild(inlineScript);
-        document.body.appendChild(externalScript);
+    //     // Append both to the body
+    //     document.body.appendChild(inlineScript);
+    //     document.body.appendChild(externalScript);
 
-        // Cleanup on unmount
-        return () => {
-            document.body.removeChild(inlineScript);
-            document.body.removeChild(externalScript);
-        };
-    }, []);
+    //     // Cleanup on unmount
+    //     return () => {
+    //         document.body.removeChild(inlineScript);
+    //         document.body.removeChild(externalScript);
+    //     };
+    // }, []);
 
     useEffect(() => {
         // Create the inline script
@@ -88,6 +86,140 @@ const SERIE = () => {
             // document.body.removeChild(externalScript);
         };
     }, []);
+    const FETCH_SEASON_ONE_QUERY = gql`
+        query Season (
+            $id: Int!
+        ){
+            season(
+                id:$id
+            ) {
+                episodes {
+                    episode_number
+                    id
+                    name
+                    season_number
+                    url {
+                        fileName
+                        week
+                        quality
+                    }
+                    player {
+                        type
+                        index
+                        token
+                        quality
+                        size
+                        stream
+                    }
+                    air_date
+                    imdb_id
+                }
+                id
+                name
+                success
+            }
+        }
+    `
+    const [fetchSeasonOne] = useLazyQuery(FETCH_SEASON_ONE_QUERY,{
+        notifyOnNetworkStatusChange: true,
+        // fetchPolicy: 'cache-first',
+        fetchPolicy: 'network-only'
+    });
+
+    const INSERT_SEASON_ONE_MUTATION = gql`
+        mutation AddSeason(
+            $single:COLLECT_SEASON_INPUT
+        ) {
+            addSeason(
+                single:$single
+            ) {
+                success
+                message
+            }
+        }
+    `;
+
+    const [mutateInsertSeasonOne] = useMutation(INSERT_SEASON_ONE_MUTATION, {
+        onCompleted: (data) => {
+            if (data.addSeason.success) {
+                if(data.addSeason.message === "already inserted")
+                    console.log("season inserting already started...")
+                console.log("Season successfully inserted into MySQL:", data.addSeason.message);
+            } else {
+                console.error("Failed to insert seasons into MySQL:", data.addSeason.message, data.addSeason.error);
+            }
+        },
+        onError: (error) => {
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert season Error:", error);
+        },
+    });
+    const FETCH_IMDB_QUERY = gql`
+        query IMDB(
+            $id: Int!
+            $season_number: Int
+            $episode_number: Int
+        ){
+            imdb(
+                id:$id
+                season_number:$season_number
+                episode_number:$episode_number
+            ){
+                id
+                success
+                error
+                message
+            }
+        }
+    `
+    const [fetchIMDBData] = useLazyQuery(FETCH_IMDB_QUERY,{
+        notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-first',
+    });
+
+    const UPDATE_IMDB_MUTATION = gql`
+        mutation UpdateIMDB(
+            $id:Int!
+            $external_ids:EXTERNAL_INPUT
+            $season_number:Int
+            $episode_number:Int
+        ) {
+            updateIMDB(
+                id:$id
+                external_ids:$external_ids
+                season_number:$season_number
+                episode_number:$episode_number
+            ) {
+                success
+                message
+            }
+        }
+    `;
+
+    const [mutateUpdateIMDB] = useMutation(UPDATE_IMDB_MUTATION, {
+        onCompleted: (data) => {
+            if (data && data.updateIMDB.success) {
+            } else {
+                console.error("Failed to insert credits into MySQL:", data.updateIMDB.message, data.updateIMDB.error);
+            }
+        },
+        onError: (error) => {
+            // Ignore abort-related network errors (they are expected when requests are cancelled)
+            const isAbort = error && (
+                error.name === 'AbortError' ||
+                (error.networkError && error.networkError.name === 'AbortError') ||
+                (typeof error.message === 'string' && /abort(ed)?/i.test(error.message))
+            );
+            if (isAbort) return;
+            console.error("insert video Error:", error);
+        },
+    });
     // const FETCH_IMAGE_QUERY = gql`
     //     query Image (
     //         $type: String!
@@ -191,6 +323,7 @@ const SERIE = () => {
                     data {
                         id
                         path
+                        logo
                     }
                     meta_data {
                         type
@@ -517,7 +650,9 @@ const SERIE = () => {
 
     const INSERT_CREDITS_MUTATION = gql`
         mutation AddCredits(
-            $id:ID!
+            $id:Int!
+            $season:Int!
+            $episode:Int!
             $cast:[CAST_INPUT]
             $crew:[CREW_INPUT]
             $chunking:Boolean!
@@ -525,6 +660,8 @@ const SERIE = () => {
         ) {
             addCredits(
                 id:$id
+                season:$season
+                episode:$episode
                 cast:$cast
                 crew:$crew
                 chunking:$chunking
@@ -710,30 +847,30 @@ const SERIE = () => {
 
     // },[fetchSingleTV,id,mutateInsertTV])
 
-    const checkFeedback = (id) => {
-        console.log(id,"id")
-        //authentication
-        fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
-        .then(async res => {
-            const {status, user} = await res.json()
-            if(status){
-                console.log(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`)
-                fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`,{
-                    method:"POST",
-                    headers:{
-                        "Content-Type":"application/json"
-                    },
-                    body:JSON.stringify({id, user, type:"tv"})
-                })
-                .then(res => res.json())
-                .then(({status}) => {
-                    if(status){
-                        setPlaylist(() => true)
-                    }
-                })
-            }
-        })
-    }
+    // const checkFeedback = (id) => {
+    //     console.log(id,"id")
+    //     //authentication
+    //     fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
+    //     .then(async res => {
+    //         const {status, user} = await res.json()
+    //         if(status){
+    //             console.log(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`)
+    //             fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST_SELECT : process.env.REACT_APP_PLAYLIST_SELECT_LIVE}`,{
+    //                 method:"POST",
+    //                 headers:{
+    //                     "Content-Type":"application/json"
+    //                 },
+    //                 body:JSON.stringify({id, user, type:"tv"})
+    //             })
+    //             .then(res => res.json())
+    //             .then(({status}) => {
+    //                 if(status){
+    //                     setPlaylist(() => true)
+    //                 }
+    //             })
+    //         }
+    //     })
+    // }
 
     // useEffect(() => {
     //     if(hasFetched.current.feedback){
@@ -842,80 +979,49 @@ const SERIE = () => {
 
     // },[fetchCreditsData,id,mutateInsertCredits])
 
-    const creditRing = async(payload) => {
-        function freshFetch(){
-            fetch(`${safeKeys.MOVIE_DB}tv/${id}/aggregate_credits?api_key=${safeKeys.API_KEY}`)
-            .then(response => response.json())
-            .then(credits_data => {
-                function chunkArray(array, size) {
-                    const result = [];
-                    for (let i = 0; i < array.length; i += size) {
-                        result.push(array.slice(i, i + size));
-                    }
-                    return result;
+    const creditRing = useCallback(async(payload) => {
+        //it used to return nothing (so credits became {} until the fetch landed) and never stored the crew
+        async function freshFetch(){
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/aggregate_credits?api_key=${safeKeys.API_KEY}`)
+            const credits_data = await response.json()
+            function chunkArray(array, size) {
+                const result = [];
+                for (let i = 0; i < array.length; i += size) {
+                    result.push(array.slice(i, i + size));
                 }
-                setCredit(() => ({...credits_data}));
-                let cast_all_results = [...credits_data.cast]
-                if(cast_all_results.length > 100){
-                    const chunks = chunkArray(cast_all_results, 100);
-                    for (let i = 0; i < chunks.length; i++) {
-                        mutateInsertCredits({
-                            variables: {
-                                cast:chunks[i],
-                                id:id?parseInt(id):0,
-                                chunking:true,
-                                chunking_index:i
-                            },
-                        });
-                    }
-                }else{
+                return result;
+            }
+            const storeCredits = (group, people) => {
+                const all = Array.isArray(people) ? people : []
+                const chunks = all.length > 100 ? chunkArray(all, 100) : [all]
+                chunks.forEach((chunk, index) => {
                     mutateInsertCredits({
                         variables: {
-                            cast:cast_all_results,
+                            [group]:chunk,
                             id:id?parseInt(id):0,
-                            chunking:false,
-                            chunking_index:0
+                            season:-1,
+                            episode:-1,
+                            chunking:chunks.length > 1,
+                            chunking_index:index
                         },
                     });
-                }
-            })
-
-
-            // let crew_all_results = [...credits_data.crew]
-            // if(crew_all_results.length > 100){
-            //     const chunks = chunkArray(crew_all_results, 100);
-            //     for (let i = 0; i < chunks.length; i++) {
-            //         mutateInsertCredits({
-            //             variables: {
-            //                 crew:chunks[i],
-            //                 id:id?parseInt(id):0,
-            //                 chunking:true,
-            //                 chunking_index:i                        
-            //             },
-            //         });
-            //     }
-            // }else{
-            //     mutateInsertCredits({
-            //         variables: {
-            //             crew:crew_all_results,
-            //             id:id?parseInt(id):0,
-            //             chunking:false,
-            //             chunking_index:0                    
-            //         },
-            //     });
-            // }
-            // return {...credits_data}
+                })
+            }
+            storeCredits("cast", credits_data.cast)
+            storeCredits("crew", credits_data.crew)
+            return {...credits_data}
         } 
 
         if(payload && payload.success){
+            console.log("credits cached")
             return setCredit(() => ({...payload}));
         }else {
             const credits = await freshFetch()
             return setCredit(() => ({...credits}));
         }
-    }
+    },[safeKeys, id, mutateInsertCredits])
     
-    const movieRing = async(payload) => {
+    const movieRing = useCallback(async(payload) => {
         function freshSingleFetch(){
             fetch(`${safeKeys.MOVIE_DB}tv/${id}?api_key=${safeKeys.API_KEY}`)
             .then(response => response.json())
@@ -931,16 +1037,17 @@ const SERIE = () => {
         }    
         if(payload && !payload.seasons){
             //first time serie single
-            // console.log("first time")
+            console.log("first time")
             freshSingleFetch()
         }else if(payload && payload.success){
+            console.log("cached serie")
             setSerie(() => ({...payload}))
         }else {
             freshSingleFetch()
         } 
-    }
+    },[safeKeys, id, mutateInsertTV])
     
-    const imageRing = async(payload) => {
+    const imageRing = useCallback(async(payload) => {
         function freshFetch(){
             fetch(`${safeKeys.MOVIE_DB}tv/${id}/images?api_key=${safeKeys.API_KEY}`)
             .then(response => response.json())
@@ -966,22 +1073,25 @@ const SERIE = () => {
                     }
                 }
 
+                let logo = ''
                 if(logos && logos.length > 0){
                     let logos_value = Math.max(...logos.map(({height}) => height))
+                    let key = logos.findIndex(({height}) => height === logos_value)
                     if(logos_value > value){
-                        let key = logos.findIndex(({height}) => height === logos_value)
                         if(key > -1){
                             path = logos[key].file_path
                         }
                     }
+                    let f = logos.findIndex(({iso_639_1}) => iso_639_1 === "en")
+                    logo = logos[f]?.file_path
                 }
-                setImages(() => (path))
+                setImages(() => ({path, logo}))
                 mutateInsertImage({ variables: { meta_data : {
                         type:"tv",
                         season:-1,
                         episode:-1,
                         id:id?parseInt(id):-1
-                    }, data:{id:getImageData.id,path}                  
+                    }, data:{id:getImageData.id,path,logo}                  
                 } });
             })
 
@@ -989,7 +1099,7 @@ const SERIE = () => {
         try{
             if (payload && payload.success) {
                 console.log("image cached data:", payload);
-                setImages(() => (payload.data.path))
+                setImages(() => ({path: payload.data.path, logo: payload.data.logo}))
             }else {
                 freshFetch()
             }
@@ -1000,12 +1110,13 @@ const SERIE = () => {
             freshFetch()            
 
         }
-    }
+    },[safeKeys, id, mutateInsertImage])
 
     const oneRing = useCallback(async() => {
+        let count = 0;
         try{
     
-            console.log("tv id", id)
+            // console.log("tv id", id)
             const fetched = await fetchCombined({
             variables : { 
                     tv: {id},
@@ -1015,14 +1126,18 @@ const SERIE = () => {
                         season:-1,
                         id:id?parseInt(id):-1
                     },
-                    credit: {id:id?parseInt(id):0}
+                    credit: {
+                        id:id?parseInt(id):-1,
+                        season:-1,
+                        episode:-1
+                    }
                 }
             })
             console.log(fetched)
             // if(fetched.data.moviePayload.success){
-                const imagePayload = fetched.data?.moviePayload?.image
-                const moviePayload = fetched.data?.moviePayload?.tv
-                const creditPayload = fetched.data?.moviePayload?.credit
+                const imagePayload = fetched.data?.tvPayload?.image
+                const moviePayload = fetched.data?.tvPayload?.tv
+                const creditPayload = fetched.data?.tvPayload?.credit
 
                 movieRing(moviePayload)
                 imageRing(imagePayload)
@@ -1030,17 +1145,38 @@ const SERIE = () => {
             // }
             
         }catch(error){
-            console.log(error)
+            console.log(error,"combined serie error")
+            count++
+            if(count < 5)
+                window.location.reload()
+            else{
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            }
             
         }
-    },[fetchCombined, id])
+    },[fetchCombined, id, movieRing, imageRing, creditRing])
 
     useEffect(() => {
-        oneRing()
+        if(hasFetched.current){
+            return
+        }
+        if(safeKeys && safeKeys.hasOwnProperty("API_KEY") && safeKeys.API_KEY){
+
+            hasFetched.current = true
+            oneRing()
+        }else{
+            loadKeys()
+        }
+        const controller = new AbortController()
         return () => {
             controller.abort();
         };
-    }, [oneRing]);
+    }, [oneRing,safeKeys,loadKeys]);
 
     // useEffect(() => {
     //     if(hasFetched.current.images){
@@ -1141,13 +1277,336 @@ const SERIE = () => {
             }
         })
     }
-    // console.log(credits,serie)
+
+    const fnSeasonOne = useCallback(async(seasonID) => {
+
+        async function freshFetch(){
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/1?api_key=${safeKeys.API_KEY}`);
+            const data = await response.json();
+            const newData = {...data }
+            newData.episodes = newData?.episodes.map(({crew,guest_stars,cast, ...rest}) => rest) || []
+
+            mutateInsertSeasonOne({
+                variables: {
+                    single : {...newData}
+                },
+            });
+            return {...data}
+        } 
+        try{
+            const fetched = await fetchSeasonOne({
+                variables : { id:seasonID }})
+            if (fetched.data && fetched.data.season && !fetched.data.season.episodes) {
+                console.log("first time...")
+                const tv = await freshFetch()
+                return ({...tv})
+            }else if(fetched.data && fetched.data.season.success){
+                console.log("Using cached data:", fetched.data);
+                return ({...fetched.data.season})
+            }else {
+                const tv = await freshFetch()
+                return ({...tv})
+            }
+        }catch(error){
+            console.log(error,"season one error")
+            // window.location.reload()
+            return false
+        }
+
+
+    },[id, mutateInsertSeasonOne, safeKeys, fetchSeasonOne]);
+    const seasonOneId = serie?.seasons?.find(({season_number}) => 1 === season_number)?.id
+    useEffect(() => {
+        let alive = true
+        setReactionReady(false)
+        if(!seasonOneId) return
+        fnSeasonOne(seasonOneId).then(seasonOne => {
+            const episodeOne = seasonOne?.episodes?.find(({episode_number}) => 1 === episode_number)
+            if(alive) setReactionReady(!!(episodeOne && episodeOne.url))
+        })
+        return () => { alive = false }
+    },[seasonOneId, fnSeasonOne])
+    const fetchID = useCallback(async() => {
+        async function freshFetch(){
+            const response = await fetch(`${safeKeys.MOVIE_DB}tv/${id}/season/1/episode/1/external_ids?api_key=${safeKeys.API_KEY}`);
+            const imdb_data = await response.json();
+            //these are S1E1's ids, so they are stored and read as that episode's (the series' own
+            //external_ids stay untouched); it used to send `external_id`, which the mutation ignores,
+            //so nothing was ever stored and every Play refetched TMDB
+            mutateUpdateIMDB({
+                variables: {
+                    external_ids:{
+                        id:imdb_data.id,
+                        imdb_id:imdb_data.imdb_id,
+                        freebase_mid:imdb_data.freebase_mid,
+                        freebase_id:imdb_data.freebase_id,
+                        tvdb_id:imdb_data.tvdb_id,
+                        tvrage_id:imdb_data.tvrage_id != null ? String(imdb_data.tvrage_id) : null,
+                        wikidata_id:imdb_data.wikidata_id
+                    },
+                    id:id?parseInt(id):0,
+                    season_number:1,
+                    episode_number:1
+                },
+            });
+            return {...imdb_data}
+        }
+        try{
+            const fetched = await fetchIMDBData({
+                variables : { id:id?parseInt(id):0, season_number:1, episode_number:1 }})
+            if(fetched.data && fetched.data.imdb.success){
+                return ({...fetched.data.imdb})
+            }else {
+                const imdb = await freshFetch()
+                return ({...imdb})
+            }
+        }catch(error){
+            console.log(error,"imdb error")
+            return false
+        }
+    },[id, safeKeys, mutateUpdateIMDB, fetchIMDBData])
+
+    // reaction: from "Start a reaction" - the player then opens the reaction set-up (speed.jsx startParty)
+    const openPlay = async(reaction = false) => {
+
+        const season = serie.seasons.find(({season_number}) => 1 === season_number)
+
+        if(!season)
+            Swal.fire({
+                icon: 'error',
+                title: 'No episodes',
+                text: "episodes for this serie are not available yet",
+            })
+        
+        const seasonOne = await fnSeasonOne(season.id)
+        const episodeOne = seasonOne.episodes.find(({episode_number}) => 1 === episode_number)
+        const episodeID = episodeOne.id
+        if(reaction && !(episodeOne && episodeOne.url)) return reactionNeedsUpload()
+        const imdb = await fetchID()
+
+        async function goTOSPEED(){
+            function getCurrentWeek() {
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const pastDaysOfYear = (now - startOfYear) / 86400000;
+                return Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+            }
+
+            const currentWeek = getCurrentWeek();            
+            if(episodeID && episodeID.url && episodeID.url.quality && episodeID.url.quality === "CAM" && currentWeek > episodeID.url.week){
+                navRoute({
+                    ref:"episode",
+                    url:`/video/episode`,
+                    state:{
+                        stream:"episode",
+                        id:episodeID,
+                        serieID:id,
+                        name:serie.name || serie.original_name,
+                        season:1,
+                        episode:1,
+                        background:images,
+                        date:episodeID.air_date,
+                        imdbId:imdb?.imdb_id,
+                        anime:serie.genres ? serie.genres.find(({id}) => id === 16):serie.genre_ids?serie.genre_ids.includes(16):false,
+                }})
+            }else{
+                async function authentication(){
+                    const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
+                    const {status,user} = await res.json()
+                    // console.log(message)
+                    return ({status,user})
+                }
+                const isLoggedIn = await authentication()
+                let hasCredits = false
+                let hasPaid = false
+                let user;
+                if(isLoggedIn.status){
+                    user = isLoggedIn.user
+
+                    const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_USER_PAID : process.env.REACT_APP_USER_PAID_LIVE}`,{
+                        credentials: "include",
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json",
+                            "Accept":"application/json"
+                        },
+                        body:JSON.stringify({
+                            id:episodeID
+                        })
+                    })
+
+                    const response_data = await response.json()
+                    // console.log(response_data.message)
+
+                    if(response_data.status){
+                        hasPaid = true
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'rent paid',
+                            text: response_data.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        })
+                    }else if(response_data.message === "day for movie credits ended"){
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'rent elapsed',
+                            text: response_data.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                    }
+
+                    const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_USER_CREDITS : process.env.REACT_APP_CHECK_USER_CREDITS_LIVE,{credentials: "include"})
+                    const {sum,message} = await res.json()
+                    console.log(message)
+                    //affordable for one movie | episode
+                    if(sum && sum > 49){
+                        hasCredits = true
+                    }
+                }else{
+                    user = localStorage.getItem("session")
+                    console.log("id",episodeID)
+                    const res = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PAID : process.env.REACT_APP_PAID_LIVE}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json",
+                            "Accept":"application/json"
+                        },
+                        body:JSON.stringify({
+                            user,
+                            id:episodeID
+                        })
+                    })
+
+                    const res_data = await res.json()
+                    console.log(res_data.message)
+                    if(res_data.status){
+                        hasPaid = true
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'rent paid',
+                            text: res_data.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        })
+                    }else if(res_data.message === "day for movie credits ended"){
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'rent elapsed',
+                            text: res_data.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                    }
+
+                    const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_REPORT_CREDITS : process.env.REACT_APP_CHECK_REPORT_CREDITS_LIVE}`,{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json",
+                            "Accept":"application/json"
+                        },
+                        body:JSON.stringify({
+                            user
+
+                        })
+                    })
+                    const {sum} = await response.json()
+                    // console.log(message)
+                    //affordable for one movie | episode
+                    if(sum && sum > 49){
+                        hasCredits = true
+                    }
+                }
+
+                if(!hasCredits && !hasPaid){
+                    noCreditsAlert(isLoggedIn.status)
+                    return 
+                }                                
+                navRoute({
+                    ref:"speed",
+                    url:`/speed`,
+                    state:{
+                        stream:"tv",
+                        id:episodeID,
+                        name:serie.name || serie.original_name,
+                        season:1,
+                        episode:1,
+                        background:images,
+                        serieID:id,
+                        serie_name:serie.name || serie.original_name,
+                        startParty:reaction
+                }}) 
+            }
+        }
+
+        if(episodeOne && episodeOne.hasOwnProperty("url") && episodeOne.url){
+            await goTOSPEED()
+        }else{
+            if(episodeOne && episodeOne.hasOwnProperty("player") && episodeOne.player){
+                
+                const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAY : process.env.REACT_APP_PLAY_LIVE}`,{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json",
+                        "Accept":"application/json"
+                    },
+                    
+                    body:JSON.stringify({
+                        token:episodeOne.player.token,
+                        id:episodeID,
+                        index:episodeOne.player.index,
+                        quality:episodeOne.player.quality,
+                        stream:episodeOne.player.stream,
+                        size:episodeOne.player.size,
+                    })
+                })
+                const {status} = await response.json()
+                if(status){
+                    console.log("ready to play")
+                    navRoute({
+                        url:`/play`,
+                        state:{
+                            id:episodeID,
+                            index:episodeOne.player.index,
+                            background:images,
+                            player:true,
+                            type:episodeOne.player.type,
+                            serieID:id,
+                            serie_name:serie.name || serie.original_name,
+                            season:1,
+                            episode:1,
+                            date:episodeOne.air_date,
+                            year:episodeOne.air_date.substring(0,4),
+                            imdbId:episodeOne.imdb_id,
+                        }})
+                }                
+                
+            }else{
+                navRoute({
+                    url:`/video/episode`,
+                    state:{
+                        stream:"episode",
+                        id:episodeID,
+                        serieID:id,
+                        name:serie.name || serie.original_name,
+                        season:1,
+                        episode:1,
+                        background:images,
+                        date:episodeOne.air_date,
+                        year:episodeOne.air_date.substring(0,4),
+                        imdbId:imdb?.imdb_id,
+                        anime:serie.genres ? serie.genres.find(({id}) => id === 16):serie.genre_ids?serie.genre_ids.includes(16):false
+                }})
+            }
+        }
+    }
     return (
         
     credits && serie ? 
-        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+        <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images.path : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] h-[100%] absolute" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
@@ -1155,22 +1614,27 @@ const SERIE = () => {
                 <MOBILE/>
             }
 
-                    <div className={windowWidth > 800 ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
-                        <div className={windowWidth > 800 ? "w-[100%] min-h-[90%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
+                    <div className={windowWidth >= DESKTOP_WIDTH ? "duration-150 w-[80%] h-[100%] ml-[20%] overflow-y-auto movie-scene flex flex-col":"w-[98%] duration-100 mx-[1%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[100%] min-h-[90%] shrink-0 flex flex-row flex-wrap":"w-[100%] h-[auto] shrink-0 flow-root"}>
                             <div 
-                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[40%] m-[0.5%] h-[auto] float-left"} 
+                                className={windowWidth >= DESKTOP_WIDTH ? "w-[37%] min-h-[100%] shadow background":"w-[40%] m-[0.5%] h-[auto] float-left"} 
                                 style={{
                                     backgroundImage:"url(" + safeKeys.IMG_POSTER + serie?.poster_path + ")",
                                     boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
                                 }}
                             >
                                 {
-                                    windowWidth < 800 && <PICTURE picture={serie?.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] w-[50%] m-[0.5%] shadow-blue-500/50 object-contain"} />
+                                    windowWidth < DESKTOP_WIDTH && <PICTURE picture={serie?.poster_path} classes={windowWidth >= DESKTOP_WIDTH ? "shadow-lg h-[70%] shadow-blue-500/50" : "shadow-lg h-[200px] w-[50%] m-[0.5%] shadow-blue-500/50 object-contain"} />
 
                                 }
                             </div>
-                            <div className={windowWidth > 800 ? "w-[61%] m-[1%] h-[auto] justify-center items-center":"w-[100%] h-[auto]"}>
-                                <h1 className="text-[30px] gradient-text">{serie.name}</h1>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[61%] m-[1%] h-[auto] justify-center items-center":"w-[100%] h-[auto]"}>
+                                {
+                                    images && images.hasOwnProperty("logo") && images.logo ? 
+                                        <PICTURE picture={images.logo} logo={serie.name} classes={"object-contain w-[70%] h-[150px]"} />
+                                    :
+                                        <h1 className="text-[30px] gradient-text">{serie.name}</h1>
+                                }
                                 <p style={{fontStyle:"italic",color:"#ffd800"}}>"{serie.tagline}"</p>
                                 <h3>{serie.first_air_date} <FontAwesomeIcon icon={faAngleDoubleRight} /> {serie.last_air_date}</h3>
                                 <h3>{serie.revenue}</h3>
@@ -1207,11 +1671,11 @@ const SERIE = () => {
                                                 id:serie.id,
                                                 background:images
                                             }})} 
-                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
+                                        className={windowWidth >= DESKTOP_WIDTH ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center min-h-[30px] m-1":"w-[48%] ml-1 bg-red-950 border-2 border-[#fff] active text-[10px] text-center min-h-[30px] underline"}
 
                                     >
                                         {/* <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/> */}
-                                        <h2>trailors</h2>
+                                        <h2>trailers</h2>
                                     </button>
                                     <button
                                         onClick={() => navRoute({
@@ -1221,7 +1685,7 @@ const SERIE = () => {
                                                 id:serie.id,
                                                 background:images
                                             }})} 
-                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
+                                        className={windowWidth >= DESKTOP_WIDTH ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center min-h-[30px] m-1":"w-[48%] m-1 bg-red-950 border-2 border-[#fff] active text-[10px] text-center min-h-[30px] underline"}
                                     >
                                         <h2>similar tv</h2>
                                     </button>
@@ -1234,12 +1698,30 @@ const SERIE = () => {
                                                 id:serie.id,
                                                 background:images
                                             }})} 
-                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
+                                        className={windowWidth >= DESKTOP_WIDTH ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center min-h-[30px] m-1":"w-[48%] m-1 bg-red-950 border-2 border-[#fff] active text-[10px] text-center min-h-[30px] underline"}
                                     >
                                         <h2>recommended tv</h2>
                                     </button>
+                                    {needsPhone && <PHONEPROMPT className="m-[1%]" />}
+                                    {
+                                        layouts && serie?.seasons && 
+                                        (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openPlay()}
+                                                    className={windowWidth >= DESKTOP_WIDTH ? "text-[#ffd800] text-[30px] w-[15%] underline text-center min-h-[40px] m-[1%]":"text-[#ffd800] text-[30px] w-[48%] mt-[1%] ml-[1%] text-center justify-center h-[40px] rounded-full"}
+                                                >
+                                                    {/* <h3>play</h3>  */}
+                                                    <FontAwesomeIcon icon={faPlayCircle} fontSize={50}/>
+                                                </button>
+                                                {/* PRD #11: starts at S1E1 like Play; the player opens the reaction set-up */}
+                                                {reactionReady && <REACTIONBUTTON desktop={windowWidth >= DESKTOP_WIDTH} onClick={() => openPlay(true)} />}
+                                            </>                                            
+                                        )
+                                    }
                                 </div>
-                                <div className="w-[100%] h-[100px] duration-50 movie-scene overflow-x-auto flex flex-col flex-wrap">
+                                <div className={`w-[100%] h-[100px] duration-50 movie-scene overflow-x-auto flex flex-col flex-wrap${shortRow(serie?.seasons)}`}>
                                     {
                                         serie?.seasons && serie?.seasons.map(({episode_count,id,name,season_number,vote_average},node) => 
                                             <button
@@ -1251,12 +1733,12 @@ const SERIE = () => {
                                                         seasonID:id,
                                                         season:season_number,
                                                         name:serie.name,
-                                                        seasons:serie.seasons,
+                                                        // seasons:serie.seasons,
                                                         background:images,
                                                         anime:serie.genres ? serie.genres.find(({id}) => id === 16):serie.genre_ids?serie.genre_ids.includes(16):false,
                                                     }})}                                                
                                                 key={node}
-                                                className={windowWidth > 800 ? "min-w-[24%] h-[100%] border-[2px] m-[0.5%] hover:contrast-150":"min-w-[60%] border-[2px] h-[100%] m-[0.5%] hover:contrast-150"}
+                                                className={windowWidth >= DESKTOP_WIDTH ? "min-w-[24%] h-[100%] border-[2px] rounded-md m-[0.5%] hover:contrast-150":"min-w-[60%] border-[2px] h-[100%] m-[0.5%] hover:contrast-150"}
                                             >
                                                 <p>{name}</p>
                                                 <p>season {season_number} || episode(s) ({episode_count})</p>
@@ -1290,10 +1772,10 @@ const SERIE = () => {
                         </div>
                         {
                             credits.cast && credits.cast.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[auto] mx-[5%] my-[5%]":"w-[100%] h-[220px] my-[2%]"}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] shrink-0 mx-[5%] mt-[2%] mb-[5%]":"w-[100%] h-[220px] shrink-0 mt-[2%] mb-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(credits.cast)}`}>
                                     
                                     {
                                         credits.cast.map(({profile_path,roles,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -1304,11 +1786,11 @@ const SERIE = () => {
                                                     state:{
                                                         id
                                                     }})}  
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[48%] h-[100%] m-[0.5%] hover:scale-115 duration-700 hover:contrast-150"}>
+                                                className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[48%] h-[100%] m-[0.5%] hover:scale-115 duration-700 hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={windowWidth >= DESKTOP_WIDTH ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name}</h2>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
                                                         {
                                                             roles && roles.map(({character,episode_count},node) => 
@@ -1328,10 +1810,10 @@ const SERIE = () => {
                         }
                         {/* {
                             credits.crew && credits.crew.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[420px] my-[2%]"}>
 
                                 <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(credits.crew)}`}>
                                     
                                     {
                                         credits.crew.map(({profile_path,jobs,popularity,original_name,name,media_type,known_for_department,id,gender,adult},serie_key) => 
@@ -1342,9 +1824,9 @@ const SERIE = () => {
                                                     state:{
                                                         id
                                                     }})} 
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150":"cursor-pointer w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
+                                                className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150":"cursor-pointer w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE key={id} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} picture={profile_path} />
+                                                    <PICTURE key={id} classes={windowWidth >= DESKTOP_WIDTH ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} picture={profile_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
                                                         <h2 className="text-[15px] font-bold">{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(1)}</p>
@@ -1376,12 +1858,13 @@ const SERIE = () => {
                             }
 
                         </div> */}
+                        <COMMENTS type="tv" id={id} windowWidth={windowWidth} />
                     </div>
 
-                
+
                 </div>
                     :
-                    <LOAD/>                
+                    <LOAD/>              
 
     )
 }

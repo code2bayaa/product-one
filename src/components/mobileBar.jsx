@@ -1,6 +1,7 @@
+import { shortRow } from "../midlleware/shortRow"
 import { faBars, faBarsStaggered } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import NAVBAR from "./nav"
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
@@ -9,25 +10,15 @@ import PICTURE from "../midlleware/picture";
 import CryptoJS from "crypto-js";
 import { useNavigate } from "react-router-dom"
 import { useKeys } from "./safe";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const MOBILE = () => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
     const [search_content, setSearchContent] = useState([]);
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const navigate = useNavigate();
     const {safeKeys} = useKeys()
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
 
     const intitializeSearch = ({runContent,search}) => {
         if(search){
@@ -183,9 +174,9 @@ const MOBILE = () => {
         const searchValue = e.target.value.toLowerCase().trim();
         setSearch(() => searchValue);
         intitializeSearch({runContent:[
-            {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search : process.env.REACT_APP_search_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert : process.env.REACT_APP_search_insert_live,"type":"tv"},
-            {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search : process.env.REACT_APP_search_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert : process.env.REACT_APP_search_insert_live,"type":"movie"},
-            {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_person : process.env.REACT_APP_search_person_live,"insert":process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_search_insert_person : process.env.REACT_APP_search_insert_person_live,"type":"person"}
+            {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT : process.env.REACT_APP_SEARCH_INSERT_LIVE,"type":"tv"},
+            {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT : process.env.REACT_APP_SEARCH_INSERT_LIVE,"type":"movie"},
+            {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_PERSON : process.env.REACT_APP_SEARCH_PERSON_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT_PERSON : process.env.REACT_APP_SEARCH_INSERT_PERSON_LIVE,"type":"person"}
         ],search:searchValue})
     }
   const navRoute = ({state,url}) => {
@@ -206,7 +197,7 @@ const MOBILE = () => {
                                     <h1 className="my-t-[5%]">{index}</h1>
                                     <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                     <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages || 0}/>
-                                    <div className="w -[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]">
+                                    <div className={`w -[100%] movie-scene h-[200px] flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(results)}`}>
                                         {
                                             results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) => 
                                                 <div 
@@ -217,7 +208,7 @@ const MOBILE = () => {
                                                             id
                                                         }
                                                     })}
-                                                    className={windowWidth > 800 ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}
+                                                    className={windowWidth >= DESKTOP_WIDTH ? "w-[24%] h-[100%] m-[0.5%] hover:contrast-150":"w-[48%] h-[100%] m-[0.5%] hover:contrast-150"}
                                                 >
                                                     <div key={search_key} className="w-[100%] h-[100%]">
                                                         <PICTURE classes={'object-cover h-[100%] w-[100%]'} picture={poster_path || backdrop_path || profile_path} />
@@ -245,7 +236,7 @@ const MOBILE = () => {
             }
             {
                 open &&
-                    <div className="w-[100%] h-[92%] z-[50] overflow-y-auto absolute" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
+                    <div className="w-[100%] h-[92%] z-[50] overflow-y-auto no-scrollbar absolute" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                         <NAVBAR/>
                     </div>
             }
@@ -258,7 +249,7 @@ const MOBILE = () => {
                             type="text"
                             placeholder="type to search..."
                             onInput={(e) => editMachine(e)}
-                            className="w-[100%] h-[95%] bg-[transparent] border-b-[3px] border-[#fff] text-white"
+                            className="w-[100%] h-[95%] px-3 bg-[transparent] border-b-[3px] border-[#fff] text-white"
                             // style={{boxShadow:"0px 4px 10px #ffd600"}}
                         />
                     </form>

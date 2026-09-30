@@ -1,4 +1,5 @@
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { shortRow } from "../midlleware/shortRow"
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import { useEffect, useState, useCallback, useRef } from "react"
 import NAVBAR from "./nav"
@@ -12,27 +13,18 @@ import CryptoJS from "crypto-js";
 import BAR from "./bar"
 // import POPSTAR from "../midlleware/popstar"
 import CELEBRATIES from "../midlleware/celebraties"
+import WATCHED from "./watched"
 import { useKeys } from './safe';
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const SERIES = () => {
 
     const hasFetched = useRef(false)
     const [movies, setMovies] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const navigate = useNavigate(); 
     // const router = useRouter();  
-    const client = useApolloClient();
-    const {safeKeys} = useKeys()
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
+    // const client = useApolloClient();
+    const {safeKeys,loadKeys} = useKeys()
 
     const FETCH_MOVIES_COLLECTION_QUERY = gql`
         query MovieCollection (
@@ -50,12 +42,12 @@ const SERIES = () => {
                         genre_ids
                         id
                         original_language
-                        original_title
+                        original_name
                         overview
                         popularity
                         poster_path
                         release_date
-                        title
+                        name
                         video 
                         vote_average
                         vote_count
@@ -95,14 +87,14 @@ const SERIES = () => {
     const [mutateInsertMoviesCollection] = useMutation(INSERT_MOVIES_COLLECTION_MUTATION, {
         onCompleted: (data) => {
             console.log(data)
-            if (data.addMovies.success) {
-                // if(data.addMovies.message === "already inserted")
+            if (data?.addCollectionMovies?.success) {
+                // if(data?.addCollectionMovies?.message === "already inserted")
                 //     console.log("movie inserting already started...")
-                console.log("Movies successfully inserted into MySQL:", data.addMovies.message);
+                console.log("Movies successfully inserted into MySQL:", data?.addCollectionMovies?.message);
                 // fetchedMoviesData.refetch()
                 // .then(status => console.log(status,"status"))
             } else {
-                console.error("Failed to insert movies into MySQL:", data.addMovies.message, data.addMovies.error);
+                console.error("Failed to insert movies into MySQL:", data?.addCollectionMovies?.message, data?.addCollectionMovies?.error);
             }
         },
         onError: (error) => {
@@ -262,7 +254,7 @@ const SERIES = () => {
                 temp_movies[key].page = page;
             }
 
-            const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "tv"
+            const hashed = temp_movies[key].page + genreId + regionId + languageId + yearId + actual_index + "tv" + current_date
             const hashedKey = CryptoJS.SHA256(hashed).toString();
 
             async function freshFetch(){
@@ -392,7 +384,7 @@ const SERIES = () => {
                 }
             })
         })
-    },[fetchMovies,mutateInsertMovies])
+    },[fetchMovies,mutateInsertMovies,safeKeys])
 
     // const intitializeMoviesInit = useCallback(async({
     //     runContent,
@@ -664,10 +656,10 @@ const SERIES = () => {
 
                 const fetched = await fetchMoviesCollection({
                     variables : {
-                        data:movieWrap,
+                        data:movieWrap.map(({page,index,...rest}) => ({index,page,date:current_date,type:"tv"})),
                         hashedKey
                 }})
-                // console.log(fetched)
+                // console.log(fetched,"fetched")
 
                 if (fetched.data) {
                     if(fetched.data?.movieCollection?.message === "not initialized" || fetched.data?.movieCollection?.error){
@@ -686,26 +678,31 @@ const SERIES = () => {
                 //  return await freshFetch()
                 
             }       
-    },[fetchMoviesCollection,mutateInsertMoviesCollection])
+    },[fetchMoviesCollection,mutateInsertMoviesCollection,safeKeys])
 
     useEffect(() => { 
         if(hasFetched.current){
             return
         }
-        hasFetched.current = true
-        intitializeMoviesInit(
-            {runContent:[
-            // "latest",
-                "airing","trending",
-                "popular",
-                "top rated",
-                "on air"
-            ],
-            page:1,
-            adjustable:true
-        })
+        if(safeKeys && safeKeys.hasOwnProperty("MOVIE_DB") && safeKeys.MOVIE_DB){
+            console.log("initializing movies...")
+            hasFetched.current = true
+            intitializeMoviesInit(
+                {runContent:[
+                // "latest",
+                    "airing","trending",
+                    "popular",
+                    "top rated",
+                    "on air"
+                ],
+                page:1,
+                adjustable:true
+            })
+        }else{
+            loadKeys()
+        }
 
-    },[intitializeMoviesInit])
+    },[intitializeMoviesInit,safeKeys,loadKeys])
 
     const navRoute = ({state,url}) => {
         navigate(url,{
@@ -722,13 +719,26 @@ const SERIES = () => {
                 <div className="relative top-[-2%] w-[100%] min-h-[100%]">
                     {/* <COUNTRIES fetchMovies={fetchMovies} mutateInsertMovies={mutateInsertMovies} mode={'movie'}/> */}
                     <CELEBRATIES actedMovies={movies} mode={"tv"} />
-                    <h3 className="mt-[5%] ml-[2%]">click to watch</h3>
+                    <h3 className="mt-[0.2%] ml-[0.2%]">click to watch</h3>
                     <div className="w-[100%] flex flex-row flex-wrap">
+                        <div 
+                            onClick={() => navRoute({
+                                url:'/eden/series',
+                            })} 
+                            className="cursor-pointer rounded-lg eden-nav w-[19%] h-[150px] m-[0.2%]"
+                        >
+                            <div 
+                                className="w-[100%] rounded-lg h-[100%] justify-center"
+                                style={{zIndex:2,background:"linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 1))"}}
+                            >
+                                <h2 className="top-[80%] relative">eden</h2>
+                            </div>
+                        </div>                        
                         <div 
                             onClick={() => navRoute({
                                 url:'/anime',
                             })} 
-                            className="cursor-pointer rounded-lg anime-nav w-[23%] h-[150px] m-[1%]"
+                            className="cursor-pointer rounded-lg anime-nav w-[19%] h-[150px] m-[0.2%]"
                         >
                             <div 
                                 className="w-[100%] rounded-lg h-[100%] justify-center"
@@ -741,7 +751,7 @@ const SERIES = () => {
                             onClick={() => navRoute({
                                 url:'/korea',
                             })} 
-                            className="cursor-pointer rounded-lg korea-nav w-[23%] h-[150px] m-[1%]"
+                            className="cursor-pointer rounded-lg korea-nav w-[19%] h-[150px] m-[0.2%]"
                         >
                             <div 
                                 className="w-[100%] rounded-lg h-[100%] justify-center"
@@ -754,7 +764,7 @@ const SERIES = () => {
                             onClick={() => navRoute({
                                 url:'/hindu',
                             })} 
-                            className="cursor-pointer rounded-lg bollywood-nav w-[23%] h-[150px] m-[1%]"
+                            className="cursor-pointer rounded-lg bollywood-nav w-[19%] h-[150px] m-[0.2%]"
                         >
                             <div 
                                 className="w-[100%] rounded-lg h-[100%] justify-center"
@@ -767,7 +777,7 @@ const SERIES = () => {
                             onClick={() => navRoute({
                                 url:'/china',
                             })} 
-                            className="cursor-pointer rounded-lg china-nav w-[23%] h-[150px] m-[1%]"
+                            className="cursor-pointer rounded-lg china-nav w-[19%] h-[150px] m-[0.2%]"
                         >
                             <div 
                                 className="w-[100%] rounded-lg h-[100%] justify-center"
@@ -777,15 +787,16 @@ const SERIES = () => {
                             </div>
                         </div>
                     </div>
+                    <WATCHED kind="tv" windowWidth={windowWidth} />
                     {
                         movies && movies.map(({index,results,page,total_pages},node) =>
-                            <div className={windowWidth > 800 ? "w-[95%] mx-[2.5%] h-[auto] flex flex-wrap flex-col" : "w-[100%] h-[auto] flex flex-wrap flex-col mt-[10%]"} key={node}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[95%] ml-[1%] h-[auto] flex flex-wrap flex-col" : "w-[100%] h-[auto] flex flex-wrap flex-col mt-[10%]"} key={node}>
                                 <div className="w-[40%] h-[40px] flex flex-row my-t-[5%] my-b-[2%]">
                                     <span className="w-[5%] h-[100%] border-r-[10px] border-[#fff] bg-[#5A5A68]"></span>
                                     <span className="gradient-text default-text text-[25px]">{index}</span>
                                 </div>
                                 <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(results)}`}>
                                     {
                                         results.map(({adult,backdrop_path,genre_ids,id,original_language,original_name,name,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                             <div 
@@ -796,12 +807,12 @@ const SERIES = () => {
                                                         id
                                                     }
                                                 })}
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-110 duration-150":`${index === "upcoming" || index === "trending" ? "w-[50%]" :"cursor-pointer w-[45%]"} h-[100%] hover:scale-110 duration-400`}
+                                                className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-110 duration-150":`${index === "upcoming" || index === "trending" ? "w-[50%]" :"cursor-pointer w-[45%]"} h-[100%] hover:scale-110 duration-400`}
                                             >
                                                 <div 
                                                     className="w-[100%] h-[100%] background"
                                                     style={{
-                                                        // boxShadow:windowWidth > 800 ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "",
+                                                        // boxShadow:windowWidth >= DESKTOP_WIDTH ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "",
 
                                                         backgroundImage: `
                                                             linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%),
@@ -810,8 +821,8 @@ const SERIES = () => {
                                                     }}
                                                 >
                                                     {/* <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path} /> */}
-                                                    <div className={`relative ${windowWidth > 800 ? "top-[50%]" : "top-[50%]"} left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10`}>
-                                                        <h2 className={windowWidth > 800 ? "text-[15px]  font-bold":"text-[12px]"}>{original_name || name}</h2>
+                                                    <div className={`relative backdrop-blur-md ${windowWidth >= DESKTOP_WIDTH ? "top-[50%]" : "top-[50%]"} left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10`}>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px]  font-bold":"text-[12px]"}>{original_name || name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                         {/* <article className="text-[15px]">{overview}</article>
                                                         <p className="text-[15px]">Release Date: {release_date}</p>
@@ -840,21 +851,21 @@ const SERIES = () => {
         }
     }   
     return (
-        <div className={`w-[100%] ${windowWidth > 800 ? "h-[100%]" : "h-[92%]"} overflow-x-hidden  bg-cover bg-no-repeat bg-center text-white`} style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
+        <div className={`w-[100%] ${windowWidth >= DESKTOP_WIDTH ? "h-[100%]" : "h-[92%]"} overflow-x-hidden  bg-cover bg-no-repeat bg-center text-white`} style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] h-[100%] nav-wall absolute">
                     <NAVBAR main={true}/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] overflow-x-hidden component-wall duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] overflow-y-auto movie-scene duration-150 h-[100%] flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] overflow-x-hidden component-wall duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] overflow-y-auto movie-scene duration-150 h-[100%] flex flex-col"}>
                 {/* <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"tv"}/>
                 </div> */}
                 {
-                    windowWidth > 800 && <BAR />
+                    windowWidth >= DESKTOP_WIDTH && <BAR />
                 }
                 {loadComponent()}
             </div>

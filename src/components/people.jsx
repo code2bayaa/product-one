@@ -1,37 +1,35 @@
+import { shortRow } from "../midlleware/shortRow"
 import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import { useEffect, useState, useCallback, useRef } from "react"
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
-import { faStar } from "@fortawesome/free-solid-svg-icons"
+import { faStar, faUserFriends } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import CONTROLLERS from "../midlleware/controllers"
 import { useNavigate } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages"
-import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 import CryptoJS from "crypto-js";
 import BAR from "./bar"
 import { useKeys } from './safe';
+import { EDENIMAGE } from './eden/shared';
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
+
+//Eden studios' own cast & crew, most followed first - POST /database/people/eden beside /database/videos
+const VIDEO_PAGE = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_VIDEO_PAGE : process.env.REACT_APP_VIDEO_PAGE_LIVE
+const EDEN_PEOPLE = VIDEO_PAGE ? VIDEO_PAGE.replace(/\/videos$/, "/people/eden") : ""
+
 const PEOPLE = () => {
 
     const [people, setPeople] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    //kept apart from `people` - the TMDB rows replace that array wholesale as they load
+    const [eden, setEden] = useState(null)
+    const windowWidth = useWindowWidth()
     const navigate = useNavigate();
     const hasFetched = useRef(false)
     const client = useApolloClient();
-    const {safeKeys} = useKeys()
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        // window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        // return () => {
-        //     window.removeEventListener("resize", handleResize);
-        // };
-    },[])
+    const {safeKeys,loadKeys} = useKeys()
 
     const FETCH_PEOPLE_COLLECTION_QUERY = gql`
         query PeopleCollection (
@@ -402,7 +400,7 @@ const PEOPLE = () => {
             //     }
             // })
         })
-    },[mutateInsertPerson,fetchPerson])
+    },[mutateInsertPerson,fetchPerson,safeKeys.API_KEY,safeKeys.MOVIE_DB])
 
     const intitPeople = useCallback(async({
             runContent,
@@ -419,7 +417,7 @@ const PEOPLE = () => {
                 ];
                 
                 const key = temp_people.findIndex(({ index }) => index === actual_index);
-                console.log(page,"page",key,"key")
+                // console.log(page,"page",key,"key")
 
                 if (page) {
                     temp_people[key].page = page;
@@ -495,6 +493,7 @@ const PEOPLE = () => {
                     }))).filter(Boolean)
                     const hashedKey = CryptoJS.SHA256(hashed).toString();
 
+                    console.log(insertContent,"insert content")
                     // Less than or equal to 20, insert all at once
                     mutateInsertPeopleCollection({
                         variables: {
@@ -507,7 +506,7 @@ const PEOPLE = () => {
 
                 const fetched = await fetchPeopleCollection({
                     variables : {
-                        data:peopleWrap,
+                        data:peopleWrap.map(({index,page,...rest}) => ({index,page,date:current_date})),
                         hashedKey
                 }})
 
@@ -527,23 +526,56 @@ const PEOPLE = () => {
                     return await freshFetch()
                 }                    
             }       
-    },[fetchPeopleCollection,mutateInsertPeopleCollection])
+    },[fetchPeopleCollection,mutateInsertPeopleCollection,safeKeys.API_KEY,safeKeys.MOVIE_DB])
 
     useEffect(() => {
         if(hasFetched.current){
             return
         }
-        hasFetched.current = true
 
-        intitPeople(
-            {runContent:[
-            // "latest",
-            "trending","popular"],
-            adjustable:true,
-            page:1
-        })
+        if(safeKeys && safeKeys.hasOwnProperty("MOVIE_DB") && safeKeys.MOVIE_DB){
+            hasFetched.current = true
 
-    },[intitPeople])
+            intitPeople(
+                {runContent:[
+                // "latest",
+                "trending","popular"],
+                adjustable:true,
+                page:1
+            })
+        }else{
+            loadKeys()
+        }
+
+    },[intitPeople,safeKeys,loadKeys])
+
+    //one page (20) of Eden people - SWEETPAGE calls this with {page}
+    const loadEden = useCallback(async({page = 1}) => {
+        if(!EDEN_PEOPLE) return
+        try{
+            const res = await fetch(EDEN_PEOPLE, {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({page})
+            })
+            const data = await res.json()
+            if(!data || !data.success) return
+            //no Eden people yet - keep the row off the page
+            if(page === 1 && (!data.results || data.results.length === 0)) return
+            setEden({
+                index:"eden studios",
+                results:data.results || [],
+                page:data.page || page,
+                total_pages:data.total_pages || 1,
+            })
+        }catch(error){
+            console.error("eden people error:", error)
+        }
+    },[])
+
+    useEffect(() => {
+        loadEden({page:1})
+    },[loadEden])
     const navRoute = ({url,state}) => {
         navigate(url,{
             state : {
@@ -554,46 +586,55 @@ const PEOPLE = () => {
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] nav-wall absolute h-[100%]" >
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] component-wall movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] component-wall movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 {
-                    windowWidth > 800 && <BAR />
+                    windowWidth >= DESKTOP_WIDTH && <BAR />
                 }
             {
-                people ?
+                people || eden ?
                 <>
                     {
-                        people.map(({index,results,page,total_pages,people_total_pages,people_page,box,people_next},node) =>
+                        [...(eden ? [{...eden, isEden:true}] : []), ...(people || [])].map(({index,results,page,total_pages,people_total_pages,people_page,box,people_next,isEden},node) =>
                         
-                            <div className={windowWidth > 800 ? "w-[90%] mx-[5%] h-[auto] flex flex-wrap flex-col":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] mx-[5%] h-[auto] flex flex-wrap flex-col":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={isEden ? "eden" : index || node}>
                                 <div className="w-[40%] h-[40px] flex flex-row my-t-[5%] my-b-[2%]">
                                     <span className="w-[5%] h-[100%] border-r-[10px] border-[#fff] bg-[#5A5A68]"></span>
                                     <span className="gradient-text default-text text-[25px]">{index}</span>
                                 </div>
-                                <SWEETPAGE intitializeMovies={intitializePeople} page={page} index={index} total_pages={total_pages}/>                                
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <SWEETPAGE intitializeMovies={isEden ? loadEden : intitializePeople} page={page} index={index} total_pages={total_pages}/>                                
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(results)}`}>
                                     {
-                                        results.map(({profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <div 
-                                                key={people_key} 
+                                        results.map(({profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult,followers,person_id},people_key) =>
+                                            <div
+                                                key={people_key}
                                                 onClick={() => navRoute({
-                                                    url:"/people/id",
-                                                    state:{
-                                                        id
-                                                    }
+                                                    //Eden people have their own page, read from the database by row id - never TMDB
+                                                    url:isEden ? "/eden/people/id" : "/people/id",
+                                                    state:isEden ? {id, person_id, eden:true} : {id}
                                                 })}
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-110 duration-700":"cursor-pointer w-[40%] hover:scale-110 duration-700 h-[100%]"}>
+                                                className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-110 duration-700":"cursor-pointer w-[40%] hover:scale-110 duration-700 h-[100%]"}>
                                                 <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
+                                                    {
+                                                        isEden ?
+                                                        <EDENIMAGE path={profile_path} alt={name} className={"w-[100%] object-cover h-[100%]"} />
+                                                        :
+                                                        <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
+                                                    }
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name ? name : original_name ? original_name : name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{name ? name : original_name ? original_name : name}</h2>
+                                                        {
+                                                            isEden ?
+                                                            <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faUserFriends} /> {followers || 0} followers</p>
+                                                            :
+                                                            <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {parseFloat(popularity).toFixed(2)}</p>
+                                                        }
                                                     </div>
                                                 </div>
                                             </div>

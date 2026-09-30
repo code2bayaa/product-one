@@ -11,9 +11,10 @@ import {
     // faArrowAltCircleDown, faArrowAltCircleUp, 
     faEye } from "@fortawesome/free-solid-svg-icons"
 import CryptoJS from "crypto-js";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const POPSTAR = ({actedMovies, mode}) => {
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const [themes, setThemes] = useState(null)
     const navigate = useNavigate();
     // const client = useApolloClient();
@@ -24,17 +25,6 @@ const POPSTAR = ({actedMovies, mode}) => {
             }
         })
     } 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
-
     const FETCH_PERSON_QUERYTV = gql`
         query People (
             $page: Int!,
@@ -433,7 +423,7 @@ const POPSTAR = ({actedMovies, mode}) => {
             themes ? 
                 <>
                     {
-                        windowWidth > 800 ? 
+                        windowWidth >= DESKTOP_WIDTH ? 
                             <div className="w-[100%] h-[60%] overflow-hidden shadow" style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}}>
                                 <Slider {...settings}>
                                 {
@@ -450,7 +440,7 @@ const POPSTAR = ({actedMovies, mode}) => {
                                         <div key={celebKey} className="w-[25%] h-[100%] hover:skew-4 contrast-150">
                                             <PICTURE key={id} classes={"object-cover float-left h-[100%]"} picture={profile_path} />
                                             <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[60px] bg-[#000000]/30 bg-opacity-30 text-white flex flex-col items-center justify-center z-10">
-                                                <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{name}</h2>
+                                                <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{name}</h2>
                                                 <h3 style={{fontStyle:"italic"}}>{character}</h3>
                                                 <button 
                                                     onClick={() => navRoute({

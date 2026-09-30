@@ -11,6 +11,7 @@ import LOAD from "../midlleware/load"
 import MOBILE from "./mobileBar";
 import CryptoJS from "crypto-js";
 import Swal from "sweetalert2"
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const TALENT = () => {
 
@@ -20,18 +21,7 @@ const TALENT = () => {
         let { mode, extra } = state;
         const navigate = useNavigate();
     const [people, setPeople] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
+    const windowWidth = useWindowWidth()
 
     const FETCH_PERSON_QUERY = gql`
         query People (
@@ -446,20 +436,20 @@ const TALENT = () => {
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]">
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"people"} extra={extra}/>
                 </div>
                 {
                     people ? people.map(({results,page,total_pages,index,people_total_pages,people_page,box,people_next},node) =>
-                        <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                             <h1 className="my-t-[5%]">{index}</h1>
                             <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
@@ -474,11 +464,11 @@ const TALENT = () => {
                                                     id
                                                 }
                                             })}
-                                            className={windowWidth > 800 ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[33%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
+                                            className={windowWidth >= DESKTOP_WIDTH ? "w-[24%] m-[0.5%] h-[400px] hover:skew-4 hover:contrast-150":"w-[33%] m-[0.5%] hover:skew-4 h-[200px] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
-                                                <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path || backdrop_path || profile_path} />
+                                                <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} picture={poster_path || backdrop_path || profile_path} />
                                                 <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{title || original_title || name || original_name }</h2>
+                                                    <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{title || original_title || name || original_name }</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(popularity).toFixed(2)}</p>
                                                 </div>
                                             </div>

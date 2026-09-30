@@ -9,8 +9,9 @@ import { useNavigate } from "react-router-dom"
 import { faEye } from "@fortawesome/free-solid-svg-icons"
 import CryptoJS from "crypto-js";
 import { useKeys } from '../components/safe';
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const CELEBRATIES = ({actedMovies, mode}) => {
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const [themes, setThemes] = useState(null)
     const navigate = useNavigate();
     const {safeKeys} = useKeys()
@@ -23,17 +24,6 @@ const CELEBRATIES = ({actedMovies, mode}) => {
             }
         })
     } 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
-
     const FETCH_PERSON_QUERY = gql`
         query People (
             $page: Int!,
@@ -43,7 +33,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
             $language : String!,
             $index : String!,
             $date:String!,
-            $hashedKey:String!
+            $hashedArray:[String!]
         ){
             people(
                 page:$page,
@@ -53,7 +43,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
                 language:$language,
                 index:$index,
                 date:$date,
-                hashedKey:$hashedKey
+                hashedArray:$hashedArray
             ) {
                 results {
                     adult
@@ -80,7 +70,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
     `
     const [fetchPerson] = useLazyQuery(FETCH_PERSON_QUERY,{
         notifyOnNetworkStatusChange: true,
-        fetchPolicy: 'no-cache',
+        fetchPolicy: 'cache-first',
     });
   
     const INSERT_PERSON_MUTATION = gql`
@@ -260,10 +250,9 @@ const CELEBRATIES = ({actedMovies, mode}) => {
         let cancelled = false;
 
         const startCelebrityFetch = async () => {
-            const chunked = page - 1
             const current_date = new Date().toISOString().split("T")[0]
-            const hashed = page + "person" + jobId + chunked + mode
-            const hashedKey = CryptoJS.SHA256(hashed).toString();
+            // const hashed = page + "person" + jobId + chunked + mode
+            // const hashedKey = CryptoJS.SHA256(hashed).toString();
 
             async function freshFetch(){
                 if (actedMovies.length > 0) {
@@ -313,7 +302,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
 
                         for (let i = 0; i < peopleArray.length; i++) {
                             if(cancelled || signal.aborted) break;
-                            const hashed = page + "person" + jobId + i.toString()
+                            const hashed = page + "person" + jobId + i.toString() + current_date + mode
                             const hashedKey = CryptoJS.SHA256(hashed).toString();
                             try{
                                 await mutateInsertPerson({
@@ -333,7 +322,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
                                             index: mode,
                                             date: current_date,
                                         },
-                                        type: "person",
+                                        type: "cast",
                                         hashedKey
                                     },
                                 });   
@@ -349,7 +338,12 @@ const CELEBRATIES = ({actedMovies, mode}) => {
                 }
                 return false
             }
-
+            const hashedArray = []
+            for (let i = 0; i < 6; i++) {
+                const hashed = page + "person" + jobId + i.toString() + current_date + mode
+                const hashedKey = CryptoJS.SHA256(hashed).toString();
+                hashedArray.push(hashedKey)
+            }
             // run the lazy query with try/catch and handle aborts
             let fetched = null;
             try{
@@ -362,7 +356,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
                         year: 0,
                         index: mode,
                         date: current_date, 
-                        hashedKey 
+                        hashedArray 
                     }
                 });
             }catch(err){
@@ -377,11 +371,11 @@ const CELEBRATIES = ({actedMovies, mode}) => {
 
             if (fetched && fetched.data) {
                 console.log(fetched.data,"fetched celeb")
-                if(fetched.data.people.results.length < 7 || fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
+                if((fetched.data.people && fetched.data.people.results && fetched.data.people.results.length < 7) || fetched.data.people.error === "insert person" || fetched.data.people.error === "no records found"){
                     return await freshFetch()
                 }else{
                     console.log("ordinary celeb")
-                    if(!cancelled) setThemes(() => [...fetched.data.people.results].sort((a,b) => b.order - a.order).slice(0,20))
+                    setThemes(() => [...fetched.data?.people?.results].sort((a,b) => b.order - a.order).slice(0,20))
                     return true
                 }
 
@@ -397,7 +391,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
             cancelled = true;
             try { controller.abort(); } catch(e){ /* ignore */ }
         }
-    },[actedMovies, fetchPerson, mutateInsertPerson,mode]);
+    },[actedMovies, fetchPerson, mutateInsertPerson,mode, safeKeys]);
     
     useEffect(() => {
         const cancel = initializeCelebrities({
@@ -450,7 +444,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
             themes ? 
                 <>
                     {
-                        windowWidth > 800 ? 
+                        windowWidth >= DESKTOP_WIDTH ? 
                             <div className="w-[100%] h-[60%] overflow-hidden shadow" style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}}>
                                 <Slider {...settings}>
                                 {
@@ -467,7 +461,7 @@ const CELEBRATIES = ({actedMovies, mode}) => {
                                         <div key={celebKey} className="w-[100%] h-[100%] hover:skew-4 contrast-150">
                                             <PICTURE key={id} classes={"object-cover float-left h-[100%]"} picture={profile_path} />
                                             <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[60px] bg-[#000000]/30 bg-opacity-30 text-white flex flex-col items-center justify-center z-10">
-                                                <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{name}</h2>
+                                                <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{name}</h2>
                                                 <h3 style={{fontStyle:"italic"}}>{character}</h3>
                                                 <button 
                                                     onClick={() => navRoute({

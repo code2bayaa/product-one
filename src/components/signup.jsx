@@ -3,33 +3,21 @@ import { NavLink, useNavigate  } from "react-router-dom"
 import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import gsap from "gsap"
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import NAVBAR from "./nav";
+import LOCATIONFIELDS, { EMPTY_PLACE, placeProblem } from "./locationFields";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const SIGNUP = () => {
     const [form, setForm] = useState({name:"",email:"",password:"",repeat_password:"",telephone:""});
-    const [confirming, setConfirming] = useState(false)
-    const [check_password, setCheckPassword] = useState(false)
+    //PRD #6 / #21: phone number + country / county / ward, required by /signup/account
+    const [place, setPlace] = useState(EMPTY_PLACE)
     const [code, setCode] = useState(null)
-    const [view, setView] = useState(true)
     const [loading, setLoading] = useState(false)
-    const [passwordType, setPasswordType] = useState("password")
     const [verifyLoading, setVerifyLoading] = useState(false)
-    const repeatPasswordRef = useRef()
     const registerRef = useRef()
     const verifyRef = useRef()
     const router = useNavigate()
-    const [windowWidth, setWindowWidth] = useState(0)
-
-    useEffect(() => {
-      const handleResize = () => {
-          setWindowWidth(window.screen.width);
-      };
-      window.addEventListener("resize", handleResize);
-      handleResize(); // Call it once to set the initial value      
-    })
+    const windowWidth = useWindowWidth()
     // Bot detection / prevention states
     const [honeypot, setHoneypot] = useState("")               // should remain empty
     const formStartRef = useRef(Date.now())                    // measure time-to-submit
@@ -100,75 +88,29 @@ const SIGNUP = () => {
         // telephone:tel, password:pass
      } }
     }
-    const letters = [
-        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
-    ]
-    const providers = [
-        "gmail",
-        "outlook",
-        "yahoo mail",
-        "icloud mail",
-        "proton mail",
-        "zoho mail",
-        "aol mail",
-        "gmx mail",
-        "yandex mail",
-        "fastmail",
-        "tutanota",
-        "mail.com",
-        "hey",
-        "rediffmail",
-        "inbox.lv"
-    ];
-    const convertAccount = (email) => {
-        const Phase = email.split("@")
-        const firstPhase = Phase[0]
-        const secondPhase = Phase[1]
-
-        let security = ""
-        firstPhase.split("").map(l => {
-            const index = letters.findIndex(a => a === l)
-            if (index > -1)
-            security += index
-            else
-            security += l
-        })
-
-        const p = providers.findIndex(m => m === secondPhase.toLowerCase())
-
-        if (p > -1)
-            security += p
-
-        return security
-    }
-    const sendMail = async(email,account) => {
-        try{
-            const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_EMAIL : process.env.REACT_APP_EMAIL_LIVE , {
-            cache: "no-store",
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                    RECEIVER: email,
-                    SUBJECT: 'SAVE YOUR ACCOUNT NUMBER',
-                    MSG:`
-                        <div style='width:100%'>
-                            <div style='width:80%;margin-left:10%;'>
-                                <h1>Welcome</h1>
-                                <p>Use this account number to login || ${account}</p>
-                            </div>
-                        </div>`
-
-                    // MSG:`<div style='width:100%'><div style='width:80%;margin-left:10%;'><h1>Welcome</h1><p>Use the following code to verify ${randomCode}</p></div></div>`
-                }),
-            });
-            const {status} = await res.json();
-            return status
-        }catch(error){
-            console.log("error sending mail", error)
-            console.log("trying again after 2 sec...")
-            setTimeout(() => sendMail(email,account), 2000)  
-        }
-
+    //the account number is made on the server and emailed; PRD #22: it also comes back once, in the
+    //signup reply, to be saved as a .txt (sign-in still needs the code emailed to the account)
+    const downloadAccountNumber = (email, account) => {
+        const grouped = String(account).replace(/(\d{4})(?=\d)/g, "$1 ")
+        const text = [
+            "UKO account number",
+            "",
+            `Email:          ${email}`,
+            `Account number: ${grouped}`,
+            `Created:        ${new Date().toLocaleString()}`,
+            "",
+            "Sign in with this number; a code is then emailed to you to finish signing in.",
+            "Keep this file private. If someone else gets it, use Change Account No in the app.",
+            "",
+        ].join("\r\n")
+        const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }))
+        const link = document.createElement("a")
+        link.href = url
+        link.download = "UKO-account-number.txt"
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
     }
     const handleSubmit = async(e) => {
         try {
@@ -191,6 +133,18 @@ const SIGNUP = () => {
                 // if lockout message, keep lock state
                 return
             }
+            const placeError = placeProblem(place)
+            if(placeError){
+                Swal.fire("Oops", placeError, "error")
+                setLoading(false)
+                return
+            }
+            Object.assign(payload, {
+                telephone: place.telephone.trim(),
+                country: place.country,
+                county: place.county.trim(),
+                ward: place.ward.trim(),
+            })
 
             // include navigator/browser signals to help server-side heuristics
             const clientSignals = {
@@ -234,23 +188,14 @@ const SIGNUP = () => {
                 return;
             }
 
-            const account = convertAccount(payload.email)
-            //sending mail
-            let sent = await sendMail(payload.email,account);
-            let retryCount = 0;
-            while(!sent && retryCount < 4){
-                console.log("retrying sending mail")
-                sent = await sendMail(payload.email,account)
-                retryCount++;
-            }
-
             const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SIGNUP : process.env.REACT_APP_SIGNUP_LIVE, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({...payload,account})
+                body: JSON.stringify(payload)
             });
 
-            const {status, message} = await response.json();
+            const {status, message, account} = await response.json();
+            if(status && account) downloadAccountNumber(payload.email, account);
             if(!status){
                 Swal.fire("oops", message || "Registration failed", "error");
                 setLoading(false);
@@ -267,7 +212,7 @@ const SIGNUP = () => {
             // verifyDiv.to(verifyRef.current,{ onEnter:() => { verifyRef.current.classList.remove("hidden") }, duration:1 });
             // verifyDiv.to(verifyRef.current,{ x:-500, duration:2 });
 
-            // const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_signup : process.env.REACT_APP_signup_LIVE, {
+            // const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SIGNUP : process.env.REACT_APP_SIGNUP_LIVE, {
             //     method: "POST",
             //     headers: { 'Content-Type': 'application/json' },
             //     body: JSON.stringify(payload),
@@ -292,7 +237,7 @@ const SIGNUP = () => {
                 return
             }
 
-            Swal.fire("Success", `Account number sent to your email`, "success")
+            Swal.fire("Success", message || "Your account number is in your email", "success")
             // success -> clear attempts, proceed to verification UI
             resetAttempts()
             setLoading(false)
@@ -311,19 +256,6 @@ const SIGNUP = () => {
             setLoading(false)
         }
     }
-    const repeatPassword = (e) => {
-      
-      repeatPasswordRef.current.classList.add("border-b-[red]")
-      setConfirming(true)
-      console.log(repeatPasswordRef.current.value)
-      if(form.password === repeatPasswordRef.current.value){
-          setConfirming(false)
-          setForm(() => ({...form, [e.target.name]:e.target.value}))
-          repeatPasswordRef.current.classList.remove("border-b-[red]")
-      }
-
-    }
-
     const verifyEmail = async(e) => {
       e.preventDefault()
       setVerifyLoading(true)
@@ -352,71 +284,24 @@ const SIGNUP = () => {
       router("/signin")
     }
 
-    const toggleVision = () => {
-      if(view){
-          setPasswordType("text")
-      }else{
-          setPasswordType("password")
-      }
-      setView(!view)
-    }
-
-    const checkTelephone = (e) => {
-      const value = e.target.value;
-      const telephoneData = localStorage.getItem("location")
-      let telephonePass = false;
-      if(value.length > 3 && telephoneData){
-          const [one, two] = JSON.parse(telephoneData);
-          console.log(one)
-          const { country_calling_code } = two
-          const proper_calling = country_calling_code.replace("+", "")
-          if(value.startsWith(proper_calling)){
-              telephonePass = true;
-          }else{
-              Swal.fire("oops","telephone must start with "+proper_calling,"error")
-          }
-      }
-      
-      const regex = /^[0-9]{0,15}$/; // Allow only numbers and limit to 15 digits
-      if (regex.test(value) && telephonePass) {
-          setForm(() => ({...form, [e.target.name]:value}));
-      }
-  }
-
-  const checkPassword = (e) => {
-      setCheckPassword(false)
-      const value = e.target.value;
-      console.log(value)
-      const regex = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}/; // At least 8 characters, one uppercase, one lowercase, and one number
-      if (regex.test(value)) {
-          console.log("valid password")
-          setForm(() => ({...form, [e.target.name]:value}));
-          e.currentTarget.classList.remove("border-b-[red]")
-          setCheckPassword(false)
-      }else {
-          e.currentTarget.classList.add("border-b-[red]")
-          setCheckPassword(true)
-      }
-  }
-
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                         <NAVBAR fullCover={true}/>
                     </div>
                 :
                 <MOBILE/>
             }
-            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[80%] ml-[20%] overflow-y-auto movie-scene" : "w-[100%] h-[92%]"} justify-center min-h-screen`}>
-              <div className={`w-[100%] h-[auto] text-[#000] flex ${windowWidth > 800 ? "flex-row" : "flex-col"} justify-center bg-[linear-gradient(#fdfcfb,#e2d1c3,#e2d1c3)]`}>
+            <div className={`flex flex-1 items-center ${windowWidth >= DESKTOP_WIDTH ? "w-[80%] ml-[20%] overflow-y-auto movie-scene" : "w-[100%] h-[92%]"} justify-center min-h-screen`}>
+              <div className={`w-[100%] h-[auto] text-[#000] flex ${windowWidth >= DESKTOP_WIDTH ? "flex-row" : "flex-col"} justify-center bg-[linear-gradient(#fdfcfb,#e2d1c3,#e2d1c3)]`}>
                 <h1 style={{textAlign:"center",fontSize:"200%"}}>Create an Account</h1>
-                <div className={windowWidth > 800 ? "w-[100%] h-[60%] flex flex-row" : "w-[100%] h-[auto]" }>
-                    {/* <div className={windowWidth > 800 ? "w-[44%] mx-[5%] bg-[linear-gradient(#900C3F,#900c85bd,#900c85bd)]":"w-[100%] bg-[linear-gradient(#900C3F,#900c85bd,#900c85bd)]"}>
+                <div className={windowWidth >= DESKTOP_WIDTH ? "w-[100%] h-[60%] flex flex-row" : "w-[100%] h-[auto]" }>
+                    {/* <div className={windowWidth >= DESKTOP_WIDTH ? "w-[44%] mx-[5%] bg-[linear-gradient(#900C3F,#900c85bd,#900c85bd)]":"w-[100%] bg-[linear-gradient(#900C3F,#900c85bd,#900c85bd)]"}>
                       <Image src = {sign_up} alt="late-developers" className="w-[80%] p-0 m-[-1%] z-[2] object-contain"/>
                     </div> */}
-                    <div ref={registerRef} className={windowWidth > 800 ? "w-[45%] grid items-center justify-items-center" : "w-[100%] grid items-center justify-items-center"}>
+                    <div ref={registerRef} className={windowWidth >= DESKTOP_WIDTH ? "w-[45%] grid items-center justify-items-center" : "w-[100%] grid items-center justify-items-center"}>
                       <form onSubmit={handleSubmit} className="w-[80%]">
                             <input
                                 name="hp"
@@ -448,6 +333,7 @@ const SIGNUP = () => {
                                   onChange={(e) => setForm(() => ({...form, [e.target.name] : e.target.value}))}
                               />
                           </fieldset>
+                          <LOCATIONFIELDS value={place} onChange={setPlace} />
                           {/* <fieldset>
                               <legend>Telephone</legend>
                               <input

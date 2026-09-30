@@ -1,23 +1,21 @@
-import NAVBAR from "./nav";
-import MOBILE from "./mobileBar";
-import { useEffect, useState, useRef } from "react";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+// import NAVBAR from "./nav";
+// import MOBILE from "./mobileBar";
+import { useState, useRef } from "react";
 import Swal from "sweetalert2";
 import { newSocketKey, watchMpesaRoom } from "../midlleware/mpesaRoom";
-import {useNavigate, useLocation, useParams} from "react-router-dom"
-import { useKeys } from "./safe";
+import {useNavigate, useParams} from "react-router-dom"
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const SUBSCRIBEAPP = () => {
 
-    const [windowWidth,setWindowWidth] = useState(0)
+    const windowWidth = useWindowWidth()
     const [payment, setPayment] = useState(null)
-    const [loading, setLoading] = useState({paypal:false,mpesa:false})
+    const [loading, setLoading] = useState({mpesa:false})
     const [credits, setCredits] = useState(1000);
     const modalRef = useRef(null);
     const [usd, setUsd] = useState(1);
     const router = useNavigate()
     // const {state} = useLocation()
     const { user } = useParams();
-    const {safeKeys} = useKeys()
 
     // const user = state.user
 
@@ -42,33 +40,6 @@ const SUBSCRIBEAPP = () => {
 
     //     runLogin()
     // },[user])
-
-    const initialOptions = {
-
-        "client-id":process.env.REACT_APP_ENVIRONMENT === "development" ? safeKeys.PAYPAL_SANDBOX_CLIENT: safeKeys.PAYPAL_LIVE_CLIENT,
-
-        // "enable-funding": "venmo",
-
-        "disable-funding": "",
-
-        "buyer-country": "US",
-
-        currency: "USD",
-
-        "data-page-type": "product-details",
-
-        components: "buttons",
-
-        "data-sdk-integration-source": "developer-studio",
-
-    };
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-    },[])
 
     // Update USD when credits change and vice versa
     const handleCreditsChange = (e) => {
@@ -230,28 +201,22 @@ const SUBSCRIBEAPP = () => {
             })
         }
 
-        setLoading({...loading,mpesa:false,paypal:false})
+        setLoading({...loading,mpesa:false})
         modalRef.current?.close()
         router("/")
-    }
-    const payWithPayPal = async() => {
-        setLoading({...loading,paypal:true})
-        setPayment("paypal")
-        modalRef.current?.showModal();
-
     }
     //1000 === $1
     return (
         <div className="w-[100%] h-[100%] overflow-hidden text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {/* {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                     <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                         <NAVBAR/>
                     </div>
                 :
                     <MOBILE/>
             } */}
-            <div className={`flex text-center justify-center items-center ${windowWidth > 800 ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%]" }`}>
+            <div className={`flex text-center justify-center items-center ${windowWidth >= DESKTOP_WIDTH ? "w-[80%] h-[100%]  ml-[20%]" : "w-[100%] h-[92%]" }`}>
                 <div className="bg-[#18181c] rounded-lg shadow-lg p-8 max-w-md w-full flex flex-col items-center">
                     <h2 className="text-2xl font-bold mb-4 text-[#ffd800]">Subscribe 30 days Credits</h2>
                     <p className="mb-4 text-center">1 USD = <span className="font-bold">1000 credits</span></p>
@@ -288,14 +253,6 @@ const SUBSCRIBEAPP = () => {
                         >
                             Pay via Mpesa
                         </button>
-                        <button
-                            type="button"
-                            disabled={loading.paypal}
-                            onClick={() => payWithPayPal()}
-                            className="w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
-                        >
-                            Pay via Paypal
-                        </button>
                     </div>
                 </div>
                 <dialog ref={modalRef} className="rounded-lg p-6 bg-white shadow-xl w-[80%] text-center">
@@ -311,150 +268,6 @@ const SUBSCRIBEAPP = () => {
                     <p className="mb-4">Enter PIN number</p>
                     <p className="mb-4">Then wait for confirmation</p>
                 </>
-            :
-                payment === "paypal" ?
-                    <>
-                        <div className="flex justify-between items-center border-b pb-2 mb-4 w-[100%]">
-                            <h2 className="text-lg font-semibold text-center">PAYPAL PAYMENT</h2>
-                            <button
-                                className="text-gray-700 text-2xl font-bold ml-auto"
-                                onClick={() => {
-                                    modalRef.current?.close();
-                                    setPayment(null);
-                                    setLoading({...loading,paypal:false})
-                                }}
-                                aria-label="Close"
-                                type="button"
-                            >
-                                &times;
-                            </button>
-                        </div>
-                        <PayPalScriptProvider options={initialOptions}>
-
-                            <PayPalButtons
-
-                                style={{
-
-                                    shape: "pill",
-
-                                    layout: "vertical",
-
-                                    color: "gold",
-
-                                    label: "pay",
-
-                                }} 
-
-                                createOrder={async () => {
-
-                                    try {
-
-                                        const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INIT_PAYPAL_ORDERS_MOBILE : process.env.REACT_APP_INIT_PAYPAL_ORDERS_MOBILE_LIVE, {
-                                            method: "POST",
-                                            // credentials: "include",
-                                            headers: {
-                                                "Content-Type": "application/json",
-                                            },
-                                            body: JSON.stringify({
-                                                amount:usd.toString(),
-                                                user,
-                                                cart: [
-                                                    {
-                                                        id: "uko_credits",
-                                                        quantity: credits,
-                                                    },
-                                                ],
-                                            }),
-
-                                        });
-                                        const orderData = await response.json();
-                                        // console.log(orderData,"orderData")
-                                        if (orderData && orderData.id) {
-                                            return orderData.id;
-                                        } else {
-                                            const errorDetail = orderData?.details?.[0];
-                                            const errorMessage = errorDetail
-                                                ? `${errorDetail.issue} ${errorDetail.description} (${orderData.debug_id})`
-
-                                                : JSON.stringify(orderData);
-                                            Swal.fire({
-                                                icon: 'error',
-                                                title: 'Oops...',
-                                                text: errorMessage,
-                                                showConfirmButton: false,
-                                                timer: 2500
-                                            })
-                                            throw new Error(errorMessage);
-
-                                        }
-
-                                    } catch (error) {
-
-                                        console.error(error);
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Oops...',
-                                            text: error,
-                                            showConfirmButton: false,
-                                            timer: 2500
-                                        })
-                                        throw error;
-                                    }
-
-                                }} 
-                                onApprove={async (data, actions) => {
-                                    try {
-                                        // console.log(data,"approve data")
-                                        const response = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_INIT_PAYPAL_CAPTURE_MOBILE : process.env.REACT_APP_INIT_PAYPAL_CAPTURE_MOBILE_LIVE,
-                                            {
-                                                method: "POST",
-                                                // credentials: "include",
-                                                headers: {
-                                                    "Content-Type": "application/json",
-                                                },
-                                                body : JSON.stringify({
-                                                    orderID:data.orderID,
-                                                    user
-                                                })
-
-                                            });
-                                            
-                                        const orderData = await response.json();
-                                        // console.log(orderData,"approve order data")
-
-                                        const errorDetail = orderData?.details?.[0];
-                                        if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
-                                            return actions.restart();
-                                        } else if (errorDetail) {
-                                            throw new Error(
-                                                `${errorDetail.description} (${orderData.debug_id})`
-                                            );
-
-                                        } else {
-                                            const transaction = orderData.jsonResponse.purchase_units[0].payments.captures[0];
-                                                    
-                                            runPurchase({success:`Transaction ${transaction.status}: ${transaction.id}`,payment:"paypal", data:{...orderData,app:"uko"}})
-
-                                        }
-
-                                    } catch (error) {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Oops...',
-                                            text: `Sorry, your transaction could not be processed...${error.message}`,
-                                            showConfirmButton: false,
-                                            timer: 2500
-                                        })
-                                        console.error(error);
-
-                                    }
-
-                                }} 
-
-                            />
-
-                            </PayPalScriptProvider>
-                        </>
                     :
                         ""
                         

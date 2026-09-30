@@ -1,7 +1,8 @@
 // ...existing code...
+import { shortRow } from "../midlleware/shortRow"
 import NAVBAR from "./nav";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { faSearch, faStar } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom"
 import SWEETPAGE from "../midlleware/pages";
@@ -10,24 +11,52 @@ import Swal from "sweetalert2";
 import CryptoJS from "crypto-js";
 import MOBILE from "./mobileBar";
 import { useKeys } from "./safe";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
+import { EDENIMAGE } from "./eden/shared";
+
+const SEARCH_URL = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE
+//PRD #20: Eden titles are only in our DB - the database service LIKE-searches them next to the TMDB cache routes
+const EDEN_SEARCH_URL = (SEARCH_URL || "").replace(/\/search\/fetch\/?$/, "/search/eden")
+const EDEN_ROWS = [
+    {key:"movies", index:"eden movies", route:"/eden/movies/id"},
+    {key:"tv", index:"eden series", route:"/eden/series/id"}
+]
 const SEARCH = () => {
 
     const {safeKeys} = useKeys()
     const [search_content, setSearchContent] = useState([]);
     const [search, setSearch] = useState()
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const navigate = useNavigate();
+    const typingTimer = useRef(null)
 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
+    //replaces (or drops, when empty) one titled row without touching the others
+    const putRow = (row) => setSearchContent((prevSearch) => {
+        const updatedSearch = (prevSearch || []).filter((item) => item.index !== row.index && item.index !== "not found")
+        return row.results && row.results.length > 0 ? [...updatedSearch, row] : updatedSearch
+    })
+
+    const searchEden = async(search) => {
+        try{
+            const response = await fetch(EDEN_SEARCH_URL, {
+                method:"POST",
+                headers:{ 'Content-Type': 'application/json' },
+                body:JSON.stringify({ search })
+            })
+            const data = await response.json()
+            EDEN_ROWS.forEach(({key, index, route}) => putRow({
+                index,
+                route,
+                eden:true,
+                results:(data && data[key]) || [],
+                page:1,
+                total_pages:1,
+                name:search
+            }))
+        }catch(error){
+            console.log(error,"eden search")
+        }
+    }
 
     const intitializeSearch = ({runContent,search}) => {
         if(search){
@@ -42,13 +71,16 @@ const SEARCH = () => {
             const currentWeek = getCurrentWeek();
             // console.log(currentWeek,typeof currentWeek);
             // console.log("searching for...",search)
+            //a page change (SWEETPAGE) re-runs one TMDB row only; a new search also looks in Eden
+            if(runContent.length > 1)
+                searchEden(search)
             runContent.forEach(async({index, api, page, type, select, insert}) => {
                 // console.log("running")
                 const hashed = page + search + type
                 const hashedKey = CryptoJS.SHA256(hashed).toString();
                 // console.log("hashedKey",hashedKey)
                 async function freshFetch(){
-                    const response = await fetch(`${safeKeys.MOVIE_DB}${api}?api_key=${safeKeys.API_KEY}&language=en-US&query=${search}&page=${page}`);
+                    const response = await fetch(`${safeKeys.MOVIE_DB}${api}?api_key=${safeKeys.API_KEY}&language=en-US&query=${encodeURIComponent(search)}&page=${page}`);
                     const data = await response.json();
 
                     // console.log(data,"fresh")
@@ -81,7 +113,7 @@ const SEARCH = () => {
                             return updatedSearch;
                         });
                     } else {
-                        setSearchContent([{index:"not found", results: [], name: search}]);
+                        putRow({index, results: [], name: search});
                     }
 
                     const responseInsert = await fetch(`${insert}`,{
@@ -183,6 +215,7 @@ const SEARCH = () => {
         try{
             console.log("search name: " + search)
             e.preventDefault();
+            clearTimeout(typingTimer.current)
             intitializeSearch({runContent:[
                 {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT : process.env.REACT_APP_SEARCH_INSERT_LIVE,"type":"tv"},
                 {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT : process.env.REACT_APP_SEARCH_INSERT_LIVE,"type":"movie"},
@@ -209,15 +242,16 @@ const SEARCH = () => {
             return;
         }
 
-        // safe-ish payload for downstream calls (encode for URLs)
-        const searchValue = encodeURIComponent(normalized);
-
         setSearch(normalized);
-        intitializeSearch({runContent:[
+        //wait for a pause in typing - every keystroke used to hit TMDB three times
+        clearTimeout(typingTimer.current)
+        if(normalized.length < 2)
+            return
+        typingTimer.current = setTimeout(() => intitializeSearch({runContent:[
                 {"index":"series","api":"search/tv",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT : process.env.REACT_APP_SEARCH_INSERT_LIVE,"type":"tv"},
                 {"index":"movies","api":"search/movie",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH : process.env.REACT_APP_SEARCH_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT : process.env.REACT_APP_SEARCH_INSERT_LIVE,"type":"movie"},
                 {"index":"people","api":"search/person",page:1,"select":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_PERSON : process.env.REACT_APP_SEARCH_PERSON_LIVE,"insert":process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SEARCH_INSERT_PERSON : process.env.REACT_APP_SEARCH_INSERT_PERSON_LIVE,"type":"person"}
-        ],search:searchValue})
+        ],search:normalized}), 500)
     }
     const navRoute = ({state,url}) => {
         navigate(url,{
@@ -229,14 +263,14 @@ const SEARCH = () => {
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
             {
-                windowWidth > 800 ?
+                windowWidth >= DESKTOP_WIDTH ?
                     <div className="w-[15%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                         <NAVBAR/>
                     </div>
                 :
                     <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[85%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[15%] text-justify justify-center items-center":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[85%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[15%] text-justify justify-center items-center":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
                 <div className="w-[100%] h-[60px] mt-[1%] grid justify-items-center">
                     <form
                         className="w-[90%] h-[50px] flex flex-row items-center justify-between"
@@ -261,28 +295,37 @@ const SEARCH = () => {
                 </div>
                 <div className="w-[100%] h-[auto] flex flex-col-reverse items-center justify-center">
                     {
-                        search_content ? search_content.map(({index,results,page,total_pages,api},node) =>
-                            <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
+                        search_content ? search_content.map(({index,results,page,total_pages,api,route,eden},node) =>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                                 <h1 className="my-t-[5%]">{index}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
-                                <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages || 0}/>
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                {!eden && <SWEETPAGE intitializeMovies={intitializeSearch} page={page} index={{index,api,page}} total_pages={total_pages || 0}/>}
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(results)}`}>
                                     {
                                         results.map(({title, original_title, vote_count, vote_average, poster_path, overview, original_language, origin_country, backdrop_path, first_air_date, genre_ids, adult, gender, id, known_for, known_for_department, name, original_name, popularity, profile_path},search_key) =>
                                             <div
                                                 key={search_key}
                                                 onClick={() => navRoute({
-                                                    url:`/${index}/id`,
+                                                    url:route || `/${index}/id`,
                                                     state:{
                                                         id
                                                     }
                                                 })}
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150" : "cursor-pointer w-[45%] h-[100%] hover:contrast-150"}
+                                                className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150" : "cursor-pointer w-[45%] h-[100%] hover:contrast-150"}
                                             >
+                                                {eden ?
+                                                <div className="relative w-[100%] h-[100%]">
+                                                    <EDENIMAGE path={poster_path || backdrop_path} alt={title || name || ""} className="w-[100%] h-[100%] object-cover"/>
+                                                    <div className="absolute bottom-0 w-[100%] min-h-[60px] text-white flex flex-col items-center justify-center" style={{background:"linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.85))"}}>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
+                                                        <p className="text-[11px] text-[#ffd800]">Eden</p>
+                                                    </div>
+                                                </div>
+                                                :
                                                 <div
                                                     className="w-[100%] h-[100%] background"
                                                     style={{
-                                                        boxShadow:windowWidth > 800 ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
+                                                        boxShadow:windowWidth >= DESKTOP_WIDTH ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
 
                                                         backgroundImage: `
                                                             linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%),
@@ -291,10 +334,11 @@ const SEARCH = () => {
                                                     }}
                                                 >
                                                     <div className="relative top-[50%] left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
-                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
+                                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
                                                         <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                     </div>
                                                 </div>
+                                                }
                                             </div>
                                         )
                                     }

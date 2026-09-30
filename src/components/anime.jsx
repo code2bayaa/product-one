@@ -1,9 +1,10 @@
+import { shortRow } from "../midlleware/shortRow"
 import { useEffect, useState, useCallback, useRef } from "react"
 import NAVBAR from "./nav"
 import { faStar } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate } from "react-router-dom"
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import CryptoJS from "crypto-js";
 import BAR from "./bar"
@@ -12,28 +13,16 @@ import LATEST from "./latest"
 import SWEETPAGE from "../midlleware/pages"
 import MOBILE from "./mobileBar";
 import { useKeys } from "./safe"
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const ANIME = () => {
 
     // const [people, setPeople] = useState(null)
     const [movies, setMovies] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const hasFetched = useRef(false)
     const {safeKeys} = useKeys()
     const navigate = useNavigate();
     // const router = useRouter();
-    const client = useApolloClient();
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
-
-
         const FETCH_MOVIES_QUERY = gql`
         query Movie (
             $page: Int!,
@@ -308,7 +297,7 @@ const ANIME = () => {
 
             })
         })
-    },[fetchMovies,mutateInsertMovies]);
+    },[fetchMovies,mutateInsertMovies,safeKeys.API_KEY,safeKeys.MOVIE_DB]);
 
     const FETCH_MOVIES_COLLECTION_QUERY = gql`
         query MovieCollection (
@@ -527,7 +516,7 @@ const ANIME = () => {
                 //  return await freshFetch()
                 
             }       
-    },[fetchMoviesCollection,mutateInsertMoviesCollection])
+    },[fetchMoviesCollection,mutateInsertMoviesCollection,safeKeys.API_KEY,safeKeys.MOVIE_DB])
 
     useEffect(() => {
         if(hasFetched.current){
@@ -554,19 +543,19 @@ const ANIME = () => {
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] nav-wall absolute h-[100%]" >
                     <NAVBAR main={true} />
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] component-wall movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] component-wall movie-scene h-[100%] ml-[20%] overflow-y-auto flex flex-col":"w-[100%] movie-scene overflow-y-auto h-[92%] flex flex-col"}>
                 {/* <div className="w-[100%]">
                     <CONTROLLERS intitializeMovies={intitializeMovies} type={"movie"}/>
                 </div> */}
                 {
-                    windowWidth > 800 && <BAR />
+                    windowWidth >= DESKTOP_WIDTH && <BAR />
                 }
                 <div className="w-[100%] h-auto">
                     <LATEST api={"&with_genres=16&with_keywords=210024"} wireframe={"anime"}/>
@@ -574,24 +563,24 @@ const ANIME = () => {
                 
                 {
                     movies ? movies.map(({index,results,page,total_pages},node) =>
-                        <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                             <div className="w-[40%] h-[40px] flex flex-row my-t-[5%] my-b-[2%]">
                                 <span className="w-[5%] h-[100%] border-r-[10px] border-[#fff] bg-[#5A5A68]"></span>
                                 <span className="gradient-text default-text text-[25px]">{index}</span>
                             </div>
                             <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={index} total_pages={total_pages}/>
-                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(results)}`}>
                                 {
                                     results.map(({adult,backdrop_path,genre_ids,id,original_language,original_title,original_name,name,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                         <div 
                                             key={movie_key} 
                                             onClick={() => navMovie(id,name || original_name ? `/series/id` : `/movies/id`,name || original_name ? "tv":"movies")} 
-                                            className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150 hover:scale-115 duration-700":`${index === "popular" || index === "airing" ? "w-[50%]" :"cursor-pointer w-[40%]"} h-[100%] hover:contrast-150 scale-115 duration-700`}
+                                            className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:contrast-150 hover:scale-115 duration-700":`${index === "popular" || index === "airing" ? "w-[50%]" :"cursor-pointer w-[40%]"} h-[100%] hover:contrast-150 scale-115 duration-700`}
                                         >
                                             <div 
                                                 className="w-[100%] h-[100%] background"
                                                 style={{
-                                                    // boxShadow:windowWidth > 800 ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
+                                                    // boxShadow:windowWidth >= DESKTOP_WIDTH ? "rgba(0,0,0,0.8) -20px -150px 130px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px" : "rgba(0, 0, 0, 0.9) -50px -70px 180px inset, rgba(0, 0, 0, 0.7) 0px 100px 10px, rgba(0, 0, 0, 0.8) 100px 50px 10px",
 
                                                     backgroundImage: `
                                                         linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85) 100%),
@@ -599,8 +588,8 @@ const ANIME = () => {
                                                     `
                                                 }}
                                             >
-                                                <div className="relative top-[50%] left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
-                                                    <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name }</h2>
+                                                <div className="relative backdrop-blur-md top-[50%] left-1/2 transform -translate-x-1/2 w-[100%] min-h-[60px] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
+                                                    <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name }</h2>
                                                     <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                 </div>
                                             </div>

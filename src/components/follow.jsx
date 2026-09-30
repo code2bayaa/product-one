@@ -1,20 +1,25 @@
+import { shortRow } from "../midlleware/shortRow"
 import { useCallback, useEffect, useState, useRef } from "react";
 import MOBILE from "./mobileBar";
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
-import { faStar } from "@fortawesome/free-solid-svg-icons"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import { gql, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2";
 import SWEETPAGE from "../midlleware/pages";
 import { useNavigate } from "react-router-dom";
-import { useKeys } from "./safe";
+import { EDENIMAGE } from "./eden/shared";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 // import LOAD from "../midlleware/load";
+
+//Eden unfollow lives on the user service beside /user/authentication (session cookie names the viewer)
+const AUTH_URL = (process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE) || ""
+const EDEN_UNFOLLOW = AUTH_URL.replace(/\/authentication$/, "/eden/unfollow")
 
 const FOLLOW = () => {
 
     // const {safeKeys} = useKeys()
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
+    const hasChecked = useRef(false)
     // const [people, setPeople] = useState({
     //     count: 0,
     //     data: [],
@@ -27,27 +32,13 @@ const FOLLOW = () => {
         page: 1,
     })
     const [page, setPage] = useState(1)
+    //Eden studio people the viewer follows (person_followers) - their own row, opened at /eden/people/id
+    const [eden, setEden] = useState([])
     const hasFetched = useRef(false)
     const [total_pages, setTotalPages] = useState(0)
     const navigate = useNavigate();
     // const client = useApolloClient();
 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-
-        // Set initial width
-        handleResize();
-
-        // Add event listener for window resize
-        window.addEventListener('resize', handleResize);
-
-        // Cleanup event listener on component unmount
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
-    }, []);
     
     // const FETCH_FOLLOWERS_QUERY = gql`
     //     query Followers (
@@ -94,7 +85,36 @@ const FOLLOW = () => {
     //     // Clear the timer when the component unmounts to prevent memory leaks
     //     return () => clearTimeout(timerId);
     // }, [client,FETCH_FOLLOWERS_QUERY]); // 
+    useEffect(() => {
+        if (hasChecked.current) return;
+        hasChecked.current = true;
 
+        try {
+            async function authentication() {
+                const res = await fetch(
+                process.env.REACT_APP_ENVIRONMENT === "development"
+                    ? process.env.REACT_APP_API_URL
+                    : process.env.REACT_APP_API_URL_LIVE,
+                { credentials: "include" }
+                );
+                return await res.json();
+            }
+
+            authentication().then(async (isLoggedIn) => {
+
+                if (isLoggedIn.status) {
+                    console.log("logged in")
+                } else {
+                    let user = localStorage.getItem("session");
+                    console.log(user)
+                    navigate("/signin")
+                }
+
+            })
+        } catch (error) {
+            console.log(error);
+        }
+    }, [navigate]);
     const intitializePeople = useCallback(async({page}) => {
 
         if(page > 1)
@@ -114,6 +134,7 @@ const FOLLOW = () => {
       .then(res => res.json())
         .then((data) => {
             console.log(data)
+            if (data && data.success) setEden(() => data.eden || [])
             if (data && data.success && data.results.length > 0) {
                 setTotalPages(() => data.count)
                 setPeople(prev => (
@@ -130,7 +151,7 @@ const FOLLOW = () => {
                     text: data.error,
                     confirmButtonText: 'OK'
                 });
-            } else if (data && data.results === 0) {
+            } else if (data && data.success && data.results.length === 0 && !(data.eden && data.eden.length)) {
                 Swal.fire({
                     icon: 'Empty',
                     title: 'Error',
@@ -215,6 +236,22 @@ const FOLLOW = () => {
             }
         })
     } 
+    const removeEden = useCallback(async (person_id) => {
+        const res = await fetch(EDEN_UNFOLLOW, {
+            credentials: "include",
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ person_id })
+        }).catch(() => null)
+        const data = res ? await res.json().catch(() => ({})) : {}
+        if (data.status) {
+            setEden(current => current.filter(person => person.person_id !== person_id))
+            Swal.fire({ icon: 'success', title: 'Unfollowed', showConfirmButton: false, timer: 1500 })
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: "could not remove, try later", confirmButtonText: 'OK' })
+        }
+    }, [])
+
     const removeFollowing = useCallback(async (id) => {
         fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_REMOVE_FOLLOWING : process.env.REACT_APP_REMOVE_FOLLOWING_LIVE}`, {
             credentials: "include",
@@ -230,10 +267,12 @@ const FOLLOW = () => {
         .then(res => res.json())
         .then((data) => {
             if (data.status) {
+                //drop the card - the server deleted the follow by this person's id
+                setPeople(current => ({...current, results: current.results.filter(person => person.id !== id)}))
                 Swal.fire({
                     icon: 'success',
                     title: 'success',
-                    text: 'success',
+                    text: 'Unfollowed',
                     confirmButtonText: 'OK'
                 });
             } else if (data && data.error) {
@@ -256,27 +295,59 @@ const FOLLOW = () => {
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+                {
+                    eden.length > 0 &&
+                    <section className="w-[100%] my-[1%]">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="w-[6px] h-6 bg-[#5A5A68] border-r-[4px] border-white" />
+                            <h2 className="gradient-text font-bold text-lg md:text-2xl">Eden Studios</h2>
+                            <span className="text-[#808C8C]">{eden.length}</span>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto pb-2 movie-scene">
+                            {eden.map(person => (
+                                <div key={person.person_id} className={windowWidth >= DESKTOP_WIDTH ? "shrink-0 w-[18%]" : "shrink-0 w-[45%]"}>
+                                    <button
+                                        type="button"
+                                        className="w-[100%] text-left hover:contrast-125 duration-200"
+                                        onClick={() => navigate("/eden/people/id", { state: { id: person.id, person_id: person.person_id, eden: true } })}>
+                                        <EDENIMAGE path={person.profile_path} alt={person.name} className="w-full aspect-[2/3] object-cover rounded-xl" />
+                                        <h3 className="text-[14px] font-bold mt-1 truncate">{person.name || person.original_name}</h3>
+                                        <p className="text-[12px] text-[#808C8C] truncate">{person.followers} followers · {person.known_for_department}</p>
+                                    </button>
+                                    <div className="w-[100%] flex flex-row">
+                                        <button className="w-[48%] m-[1%] bg-[#22C55E]" onClick={() => navigate("/eden/people/id", { state: { id: person.id, person_id: person.person_id, eden: true } })}>
+                                            read
+                                        </button>
+                                        <button className="w-[48%] m-[1%] bg-[#E50914]" onClick={() => removeEden(person.person_id)}>
+                                            unfollow
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                }
                 {
                     people && people.results.length > 0 ?
                         <>
                             <h3>following : {people.count}</h3>
                             <SWEETPAGE intitializeMovies={intitializePeople} page={page} total_pages={total_pages}/>                                
-                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(people.results)}`}>
                                 {
                                     people.results.map(({profile_path,popularity,original_name,name,known_for_department,id},people_key) => 
                                         <div 
                                             key={people_key} 
                                             // to={`/people/`}
                                             // onClick={} 
-                                            className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                            className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                             <div className="w-[100%] h-[100%]">
                                                 <PICTURE picture={profile_path} classes={"object-cover h-[100%]"} />
                                                 {/* <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -292,7 +363,7 @@ const FOLLOW = () => {
                                                     </button>
                                                     <button
                                                         className="w-[48%] m-[1%] bg-[#E50914]"
-                                                        onClick={() => removeFollowing()}
+                                                        onClick={() => removeFollowing(id)}
                                                     >
                                                         unfollow
                                                     </button>
@@ -305,7 +376,7 @@ const FOLLOW = () => {
                         </>
                 
                     :
-                     <img src="/image/followers.svg" width={200} height={200} className="w-[80%] ml-[10%] h-[80%]" alt="late developers https://late-developers.com" />
+                     eden.length === 0 && <img src="/image/followers.svg" width={200} height={200} className="w-[80%] ml-[10%] h-[80%]" alt="late developers https://late-developers.com" />
                 }            
             </div>
         </div>

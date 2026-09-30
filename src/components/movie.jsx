@@ -1,5 +1,7 @@
 
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import REACTIONBUTTON, { reactionNeedsUpload } from "./party/ReactionButton";
+import { shortRow } from "../midlleware/shortRow"
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useLocation, useNavigate  } from "react-router-dom";
@@ -12,19 +14,23 @@ import MOBILE from "./mobileBar";
 // import { Rating } from 'react-simple-star-rating'
 import Swal from "sweetalert2";
 import { useKeys } from './safe';
+import { usePlayGate, PHONEPROMPT } from "./access";
+import COMMENTS from "./comments";
+import { noCreditsAlert } from "../midlleware/noCredits";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const MOVIE = () => {
     // const { id } = useParams();
-    const hasFetched = useRef({credits:false,images:false,feedback:false,movie:false})
+    const hasFetched = useRef(null)
     const [movie, setMovie] = useState(null);
     const [images,setImages] = useState(null)
     const [credits,setCredit] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const [playlist,setPlaylist] = useState(null)
     const [generateGenre, setGenerateGenre] = useState([])
-    const [layouts, setLayouts] = useState(false)
     const [checkURL, setCheckURL] = useState(null)
     
-    const {safeKeys} = useKeys()
+    const {safeKeys,loadKeys} = useKeys()
+    const { allowed: layouts, needsPhone } = usePlayGate(safeKeys?.GEO)
     // const params = useSearchParams();
     // const state = JSON.parse(decodeURIComponent(params.get("state")));
     // console.log(state,"open state")
@@ -38,14 +44,6 @@ const MOVIE = () => {
     // const navigate = useNavigate();
     // const id = state.id
     // const [fetchedImage, setFetchedImage] = useState(null)
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-    },[])
-
     // useEffect(() => {
     //     //for maintenance
     //     // const historyState = window.history.state;
@@ -53,27 +51,27 @@ const MOVIE = () => {
         
     // }, []);
 
-    useEffect(() => {
-        // Create the inline script
-        const inlineScript = document.createElement("script");
-        inlineScript.type = "text/javascript";
-        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+    // useEffect(() => {
+    //     // Create the inline script
+    //     const inlineScript = document.createElement("script");
+    //     inlineScript.type = "text/javascript";
+    //     inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
 
-        // Create the external script
-        const externalScript = document.createElement("script");
-        externalScript.type = "text/javascript";
-        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+    //     // Create the external script
+    //     const externalScript = document.createElement("script");
+    //     externalScript.type = "text/javascript";
+    //     externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
 
-        // Append both to the body
-        document.body.appendChild(inlineScript);
-        document.body.appendChild(externalScript);
+    //     // Append both to the body
+    //     document.body.appendChild(inlineScript);
+    //     document.body.appendChild(externalScript);
 
-        // Cleanup on unmount
-        return () => {
-            document.body.removeChild(inlineScript);
-            document.body.removeChild(externalScript);
-        };
-    }, []);
+    //     // Cleanup on unmount
+    //     return () => {
+    //         document.body.removeChild(inlineScript);
+    //         document.body.removeChild(externalScript);
+    //     };
+    // }, []);
 
     useEffect(() => {
         // Create the inline script
@@ -98,62 +96,7 @@ const MOVIE = () => {
         };
     }, []);
 
-    useEffect(() => {
-
-        const sendForm = async({url,options}) => {
-            const response = await fetch(
-                url,
-                options,
-            )
-            return await response.json()
-        }
-
-        async function runLocale(){
-            const controller = new AbortController();
-            const signal = controller.signal;
-            try {
-                let user_location = localStorage.getItem("location") || null;
-                if(!user_location){
-                    const urls = [
-                        "https://ipinfo.io/json",
-                        "https://ipapi.co/json/",
-                        "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_GEO
-                    ]
-
-                    const locations = await Promise.all(urls.map(async(url) => {
-                        try{
-                            return await sendForm({url, options : {
-                                method:"GET",
-                                headers : {'Content-type': 'application/json; charset=UTF-8'},
-                                signal
-                            }})
-                        }catch(err){
-                            if (err.name === 'AbortError') return null;
-                            console.warn("location fetch failed", err);
-                            return null;
-                        }
-                    }))
-                    user_location = locations
-                }else{
-                    user_location = JSON.parse(user_location);
-                }
-
-                const continent = user_location && user_location.length > 1 && user_location[2].continent_name && user_location[2].continent_name
-                const continents = ["Africa","Australia","Oceania"]
-                if(continents.includes(continent)){
-                    setLayouts(true)
-                }
-                console.log(user_location,"user location")
-            } catch(err){
-                if (err.name === 'AbortError') return;
-                console.error("runLocale error", err);
-            } finally {
-                // nothing
-            }
-         }
-
-        runLocale()
-    },[])
+    //the play gate (Africa / Australia / Brazil device + phone number) lives in access.jsx usePlayGate
 
     const FETCH_GENRE_QUERY = gql`
         query Genre {
@@ -193,6 +136,7 @@ const MOVIE = () => {
                     data {
                         id
                         path
+                        logo
                     }
                     meta_data {
                         type
@@ -233,6 +177,14 @@ const MOVIE = () => {
                     vote_count   
                     url {
                         fileName
+                    }
+                    player {
+                        type
+                        index
+                        quality
+                        stream
+                        size
+                        token
                     }             
                     success
                     error
@@ -279,7 +231,8 @@ const MOVIE = () => {
     const [fetchCombined] = useLazyQuery(FETCH_COMINED_QUERY,{
         // pollInterval: 500, // fetches new data at that interval
         notifyOnNetworkStatusChange: true,
-        fetchPolicy: 'cache-first',
+        // fetchPolicy: 'cache-first',
+        fetchPolicy: 'network-only'
         // variables,
         // skip: !variables.page, // Skip query execution if variables are not set
     });
@@ -291,12 +244,13 @@ const MOVIE = () => {
                 $data: DATA_INPUT!
             ) {
                 addImage(
-                 meta_data: $meta_data
-                 data: $data
+                    meta_data: $meta_data
+                    data: $data
                 ){
                     data {
                         id
                         path
+                        logo
                     }
                     meta_data {
                         id
@@ -396,7 +350,7 @@ const MOVIE = () => {
             mutation AddMovie(
                 $adult:Boolean!
                 $backdrop_path:String
-                $id:ID!
+                $id:Int!
                 $original_language:String!
                 $original_title:String!
                 $overview:String!
@@ -411,8 +365,15 @@ const MOVIE = () => {
                 $production_companies:[PRODUCTION_COMPANIES_INPUT]
                 $production_countries:[PRODUCTION_COUNTRIES_INPUT]
                 $spoken_languages:[SPOKEN_LANGUAGES_INPUT]
-                $runtime:Int!
+                $runtime:Int
                 $genres:[GENRES_IDS_INPUT]
+                $budget:Float
+                $revenue:Float
+                $tagline:String
+                $status:String
+                $imdb_id:String
+                $homepage:String
+                $origin_country:[String]
             ) {
                 addMovie(
                     adult:$adult
@@ -434,6 +395,13 @@ const MOVIE = () => {
                     production_countries:$production_countries
                     runtime:$runtime
                     spoken_languages:$spoken_languages
+                    budget:$budget
+                    revenue:$revenue
+                    tagline:$tagline
+                    status:$status
+                    imdb_id:$imdb_id
+                    homepage:$homepage
+                    origin_country:$origin_country
                 ) {
                     success
                     message
@@ -516,7 +484,7 @@ const MOVIE = () => {
 
     const INSERT_CREDITS_MUTATION = gql`
         mutation AddCredits(
-            $id:ID
+            $id:Int!
             $cast:[CAST_INPUT]
             $crew:[CREW_INPUT]
             $chunking:Boolean!
@@ -714,8 +682,8 @@ const MOVIE = () => {
             setGenerateGenre(() => [])
         }
         
-    },[fetchGenre]
-)
+    },[fetchGenre])
+
     useEffect(() => {
         // if(hasFetched.current.feedback){
         //     return
@@ -859,78 +827,57 @@ const MOVIE = () => {
     //         addRecommendations()
     // },[movie])
 
-    const creditRing = async(payload) => {
-        
-        async function freshFetch(){
-            const response = await fetch(`${safeKeys.MOVIE_DB}movie/${id}/credits?api_key=${safeKeys.API_KEY}`);
-            const credits_data = await response.json();
-            // console.log(credits_data)
-            function chunkArray(array, size) {
-                const result = [];
-                for (let i = 0; i < array.length; i = size) {
-                    result.push(array.slice(i, i + size));
+    const creditRing = useCallback(async(payload) => {
+        try{
+            async function freshFetch(){
+                const response = await fetch(`${safeKeys.MOVIE_DB}movie/${id}/credits?api_key=${safeKeys.API_KEY}`);
+                const credits_data = await response.json();
+                // console.log(credits_data)
+                //both loops used to never advance (i = size, and no i++), freezing the tab for any
+                //title with more than 100 cast; crew was never stored, so it vanished on a cache hit
+                function chunkArray(array, size) {
+                    const result = [];
+                    for (let i = 0; i < array.length; i += size) {
+                        result.push(array.slice(i, i + size));
+                    }
+                    return result;
                 }
-                return result;
-            }
-            let cast_all_results = [...credits_data.cast]
-            if(cast_all_results.length > 100){
-                const chunks = chunkArray(cast_all_results, 100);
-                for (let i = 0; i < chunks.length; i) {
-                    mutateInsertCredits({
-                        variables: {
-                            cast:chunks[i],
-                            id:id?parseInt(id):0,
-                            chunking:true,
-                            chunking_index:i
-                        },
-                    });
+                const storeCredits = (group, people) => {
+                    const all = Array.isArray(people) ? people : []
+                    const chunks = all.length > 100 ? chunkArray(all, 100) : [all]
+                    chunks.forEach((chunk, index) => {
+                        mutateInsertCredits({
+                            variables: {
+                                [group]:chunk,
+                                id:id?parseInt(id):0,
+                                chunking:chunks.length > 1,
+                                chunking_index:index
+                            },
+                        });
+                    })
                 }
-            }else{
-                mutateInsertCredits({
-                    variables: {
-                        cast:cast_all_results,
-                        id:id?parseInt(id):0,
-                        chunking:false,
-                        chunking_index:0
-                    },
-                });
-            }
-            // let crew_all_results = [...credits_data.crew]
-            // if(crew_all_results.length > 100){
-            //     const chunks = chunkArray(crew_all_results, 100);
-            //     for (let i = 0; i < chunks.length; i) {
-            //         mutateInsertCredits({
-            //             variables: {
-            //                 crew:chunks[i],
-            //                 id:id?parseInt(id):0,
-            //                 chunking:true,
-            //                 chunking_index:i                        
-            //             },
-            //         });
-            //     }
-            // }else{
-            //     mutateInsertCredits({
-            //         variables: {
-            //             crew:crew_all_results,
-            //             id:id?parseInt(id):0,
-            //             chunking:false,
-            //             chunking_index:0                    
-            //         },
-            //     });
-            // }
-            return {...credits_data}
-        } 
+                storeCredits("cast", credits_data.cast)
+                storeCredits("crew", credits_data.crew)
+                return {...credits_data}
+            } 
 
-        if(payload && payload.success){
-            console.log("Using cached data:", payload);
-            return setCredit(() => ({...payload}));
-        }else {
-            const credits = await freshFetch()
-            return setCredit(() => ({...credits}));
+            console.log(payload,"payload: credits")
+            if(payload && payload.success){
+                console.log("credits cached data:", payload);
+                return setCredit(() => ({...payload}));
+            }else {
+                console.log("fetching credits from API...")
+                const credits = await freshFetch()
+                return setCredit(() => ({...credits}));
+            }
+        }catch(error){
+            console.log("credi error:",error)
         }
-    }
 
-    const movieRing = async(payload) => {
+    },[safeKeys, id, mutateInsertCredits])
+
+    
+    const movieRing = useCallback(async(payload) => {
         async function freshFetch(){
             const response = await fetch(`${safeKeys.MOVIE_DB}movie/${id}?api_key=${safeKeys.API_KEY}`);
             const data = await response.json();
@@ -941,21 +888,22 @@ const MOVIE = () => {
             return {...data}
         } 
         
-        if(payload && !payload.runtime){
+        //runtime null = not stored yet or stale (the server nulls it); 0 is a real runtime, not a miss
+        if(payload && (payload.runtime === null || payload.runtime === undefined)){
             //first time
             console.log("first time...")
             const movie = await freshFetch()
             setMovie(() => ({...payload,...movie}));
-        }else if(payload.success){
+        }else if(payload && payload.success){
             console.log("Using cached data:", payload);
             setMovie(() => ({...payload}));
         }else {
             const movie = await freshFetch()
             setMovie(() => ({...movie}));
         }
-    }
+    },[safeKeys, id, mutateInsertMovie])
 
-    const imageRing = async(payload) => {
+    const imageRing = useCallback(async(payload) => {
         async function freshFetch(){
             const response = await fetch(`${safeKeys.MOVIE_DB}movie/${id}/images?api_key=${safeKeys.API_KEY}`);
             const getImageData = await response.json();
@@ -963,6 +911,7 @@ const MOVIE = () => {
             let value = 0
             const {backdrops, posters, logos} = getImageData
             let path = ''
+            let logo = ''
             if(backdrops && backdrops.length > 0){
                 value = Math.max(...backdrops.map(({height}) => height))
                 let key = backdrops.findIndex(({height}) => height === value)
@@ -982,12 +931,14 @@ const MOVIE = () => {
             }
             if(logos && logos.length > 0){
                 let logos_value = Math.max(...logos.map(({height}) => height))
+                let key = logos.findIndex(({height}) => height === logos_value)
                 if(logos_value > value){
-                    let key = logos.findIndex(({height}) => height === logos_value)
                     if(key > -1){
                         path = logos[key].file_path
                     }
                 }
+                let f = logos.findIndex(({iso_639_1}) => iso_639_1 === "en")
+                logo = logos[f]?.file_path
             }
 
             mutateInsertImage({ variables: { meta_data : {
@@ -995,35 +946,40 @@ const MOVIE = () => {
                     season:-1,
                     episode:-1,
                     id:id?parseInt(id):-1
-                }, data:{id:getImageData.id,path}                  
+                }, data:{id:getImageData.id,path,logo}                  
             } });
-            return path
+            return {
+                path,
+                logo
+            }
         }         
         try{
             if (payload && payload.success) {
                 console.log("image cached data:", payload);
-                setImages(() => (payload.data.path))
+                setImages(() => ({path: payload.data.path, logo:payload.data.logo}))
 
             }else {
-                const path = await freshFetch()
-                console.log(path,"path")
-                setImages(path)
+                const imagesObj = await freshFetch()
+                // console.log(path,"path")
+                setImages(imagesObj)
             }
         
             
         }catch(error){
             console.log(error)
-            const path = await freshFetch()
-            setImages(path)            
+            // const path = await freshFetch()
+            // setImages(path)            
         
 
         }
-    }
-    const oneRing = useCallback(async(signal) => {
+    },[safeKeys, id, mutateInsertImage])
+    const oneRing = useCallback(async() => {
+        let count = 0;
         try{
     
+            // console.log("movie id", id)
             const fetched = await fetchCombined({
-                variables : { 
+            variables : { 
                     movie: {id},
                     image: {
                         type:"movie",
@@ -1031,10 +987,14 @@ const MOVIE = () => {
                         season:-1,
                         id:id?parseInt(id):-1
                     },
-                    credit: {id:id?parseInt(id):0}
-                },
-                context: { fetchOptions: { signal } } // allow network abortion
+                    credit: {
+                        id:id?parseInt(id):-1,
+                        season:-1,
+                        episode:-1
+                    }
+                }
             })
+            console.log(fetched)
             // if(fetched.data.moviePayload.success){
                 const imagePayload = fetched.data?.moviePayload?.image
                 const moviePayload = fetched.data?.moviePayload?.movie
@@ -1047,28 +1007,102 @@ const MOVIE = () => {
             
         }catch(error){
             console.log(error)
+            console.log("reloading...")
+            // navigate(0)
+            count++
+            if(count < 5)
+                window.location.reload()
+            else{
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            }
             
         }
-    },[fetchCombined, id])
+    },[fetchCombined, id, movieRing, imageRing, creditRing])
 
     useEffect(() => {
-        // const controller = new AbortController();
-        // oneRing(controller.signal).catch(err => {
-        //     if (err && err.name === 'AbortError') return;
-        //     console.error("oneRing outer error", err);
-        // });
-        // return () => {
-        //     controller.abort();
-        // };
+
+        if(hasFetched.current)
+            return 
+        function runID(){
+            // console.log(safeKeys,"safe keys")
+            if(safeKeys && safeKeys.hasOwnProperty("MOVIE_DB") && safeKeys.MOVIE_DB){
+                console.log("running one Ring")
+                
+                oneRing()
+                hasFetched.current = true
+
+            }else{
+                console.log("not one ring...")
+                console.log("loading keys")
+                loadKeys()
+                
+
+            }
+        }
+
+        runID()
         const controller = new AbortController();
-        oneRing(controller.signal).catch(err => {
-            if (err && err.name === 'AbortError') return;
-            console.error("oneRing outer error", err);
-        });
         return () => {
-            try { controller.abort(); } catch(e) { /* ignore */ }
+            controller.abort();
         };
-    }, [oneRing]);
+    }, [oneRing,safeKeys,loadKeys]);
+    // const oneRing = useCallback(async(signal) => {
+    //     try{
+    
+    //         const fetched = await fetchCombined({
+    //             variables : { 
+    //                 movie: {id},
+    //                 image: {
+    //                     type:"movie",
+    //                     episode:-1,
+    //                     season:-1,
+    //                     id:id?parseInt(id):-1
+    //                 },
+    //                 credit: {id:id?parseInt(id):0}
+    //             },
+    //             context: { fetchOptions: { signal } } // allow network abortion
+    //         })
+    //         // if(fetched.data.moviePayload.success){
+    //             const imagePayload = fetched.data?.moviePayload?.image
+    //             const moviePayload = fetched.data?.moviePayload?.movie
+    //             const creditPayload = fetched.data?.moviePayload?.credit
+
+    //             movieRing(moviePayload)
+    //             imageRing(imagePayload)
+    //             creditRing(creditPayload)
+    //         // }
+            
+    //     }catch(error){
+    //         console.log(error)
+            
+    //     }
+    // },[fetchCombined, id])
+
+    // useEffect(() => {
+    //     // const controller = new AbortController();
+    //     // oneRing(controller.signal).catch(err => {
+    //     //     if (err && err.name === 'AbortError') return;
+    //     //     console.error("oneRing outer error", err);
+    //     // });
+    //     // return () => {
+    //     //     controller.abort();
+    //     // };
+    //     if(!safeKeys.MOVIE_DB)
+    //         return 
+    //     const controller = new AbortController();
+    //     oneRing(controller.signal).catch(err => {
+    //         if (err && err.name === 'AbortError') return;
+    //         console.error("oneRing outer error", err);
+    //     });
+    //     return () => {
+    //         try { controller.abort(); } catch(e) { /* ignore */ }
+    //     };
+    // }, [oneRing]);
 
     const addToPlayList = async() => {
 
@@ -1118,7 +1152,10 @@ const MOVIE = () => {
 
     }
 
-    const openPlay = async() => {
+    // reaction: from "Start a reaction" - the player then opens the reaction set-up (speed.jsx startParty)
+    const openPlay = async(reaction = false) => {
+        //PRD #11: a reaction plays the title's own UKO copy - movie.url - never a stream found elsewhere
+        if(reaction && !(movie && movie.url)) return reactionNeedsUpload()
 
         async function goTOSPEED(){
             function getCurrentWeek() {
@@ -1133,7 +1170,7 @@ const MOVIE = () => {
             if(movie && movie.url && movie.url.quality === "CAM" && currentWeek > movie.url.week){
                 // document.location.href = `/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}${images}`;
                 navRoute({
-                    ref:"movie",
+                    // ref:"movie",
                 url:`/video/movie`,
                 state:{
                     stream:"movie",
@@ -1147,7 +1184,7 @@ const MOVIE = () => {
                 }})
             }else if(checkURL && checkURL.quality === "CAM" && currentWeek > checkURL.week){
                 navRoute({
-                    ref:"movie",
+                    // ref:"movie",
                 url:`/video/movie`,
                 state:{
                     stream:"movie",
@@ -1162,8 +1199,8 @@ const MOVIE = () => {
             }else{
                 async function authentication(){
                     const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
-                    const {status,message,user} = await res.json()
-                    console.log(message)
+                    const {status,user} = await res.json()
+                    // console.log(message)
                     return ({status,user})
                 }
                 const isLoggedIn = await authentication()
@@ -1209,8 +1246,8 @@ const MOVIE = () => {
                     }
 
                     const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_CHECK_USER_CREDITS : process.env.REACT_APP_CHECK_USER_CREDITS_LIVE,{credentials: "include"})
-                    const {sum,message} = await res.json()
-                    console.log(message)
+                    const {sum} = await res.json()
+                    // console.log(message)
                     //affordable for one movie | episode
                     if(sum && sum > 49){
                         hasCredits = true
@@ -1272,13 +1309,7 @@ const MOVIE = () => {
                 }
 
                 if(!hasCredits && !hasPaid){
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'NO CREDITS',
-                        text: "add more credits",
-                        showConfirmButton: false,
-                        timer: 1500
-                    })
+                    noCreditsAlert(isLoggedIn.status)
                     return 
                 }
                 // document.location.href = `/speed/${movie.url.fileName}${images}/${movie.id}/movie`
@@ -1292,7 +1323,10 @@ const MOVIE = () => {
                     background:images,
                     dash:movie.url.hasOwnProperty("dash")?true:false,
                     anime:movie.genres ? movie.genres.find(({id}) => id === 16):movie.genre_ids?movie.genre_ids.includes(16):false,
-
+                    year:movie.release_date.substring(0,4),
+                    date:movie.release_date,
+                    imdbId:movie.imdb_id,
+                    startParty:reaction
                 }})                
             }            
         }
@@ -1301,12 +1335,57 @@ const MOVIE = () => {
             
         }else if(checkURL){
             await goTOSPEED()
+        }else if(movie && movie.hasOwnProperty("player") && movie.player){
+            const response = await fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAY : process.env.REACT_APP_PLAY_LIVE}`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                    "Accept":"application/json"
+                },
+                
+                body:JSON.stringify({
+                    token:movie.player.token,
+                    id:movie.id,
+                    index:movie.player.index,
+                    quality:movie.player.quality,
+                    stream:movie.player.stream,
+                    size:movie.player.size,
+                })
+            })
+            const {status} = await response.json()
+            if(status){
+                console.log("ready to play")
+                navRoute({url:`/play`,
+                    state:{
+                        id:movie.id,
+                        // url,
+                        index:movie.player.index,
+                        type:movie.player.type,
+                        // token:movie.player.token,
+                        // quality:movie.player.quality,
+                        // size:movie.player.size,
+                        // stream:movie.player.stream,
+                        background:images,
+                        player:true,
+                        year:movie.release_date.substring(0,4),
+                        date:movie.release_date,
+                        imdbId:movie.imdb_id,
+                        // seasons,
+                        // episodes,
+                        // serieID,
+                        anime:movie.genres ? movie.genres.find(({id}) => id === 16):movie.genre_ids?movie.genre_ids.includes(16):false,
+                        serie_name:movie.title || movie.original_title,
+                        // season,
+                        // episode
+                    }
+                })
+            }
         }else{
             // document.location.href = `/video/movie/${movie.id}/${movie.title || movie.original_title}/${movie.release_date.substring(0,4)}/${movie.release_date}/${movie.imdb_id}${images}`
             // console.log("year",)
             // console.log(movie)
             navRoute({
-                ref:"movie",
+                // ref:"movie",
                 url:`/video/movie`,
                 state:{
                     stream:"movie",
@@ -1370,9 +1449,9 @@ const MOVIE = () => {
         {
             credits && movie  ?
         
-            <div className="w-[100%] duration-150 h-[100%] text-white  bg-cover bg-no-repeat bg-center" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
+            <div className="w-[100%] duration-150 h-[100%] text-white  bg-cover bg-no-repeat bg-center" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images.path : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
                 {
-                    windowWidth > 800 ? 
+                    windowWidth >= DESKTOP_WIDTH ? 
                     <div className="w-[20%] absolute h-[100%]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                         <NAVBAR data = {movie.original_title || movie.title}/>
                     </div>
@@ -1380,260 +1459,276 @@ const MOVIE = () => {
                     <MOBILE/>
                 }
         
-                    <div className={windowWidth > 800 ? "w-[80%] relative h-[100%] ml-[20%] overflow-y-auto movie-scene":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene"}>
-                        <div className={windowWidth > 800 ? "w-[100%] min-h-[90%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
-                            <div 
-                                className={windowWidth > 800 ? "w-[37%] min-h-[100%] shadow background":"w-[40%] h-[auto] float-left m-[0.5%] shadow-lg"} 
-                                style={{
-                                    backgroundImage:"url(" + safeKeys.IMG_POSTER + movie.poster_path + ")",
-                                    boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
-                                }}
-                            >
+                <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] relative h-[100%] ml-[20%] overflow-y-auto movie-scene":"w-[98%] mx-[1%] h-[100%] overflow-y-auto movie-scene"}>
+                    <div className={windowWidth >= DESKTOP_WIDTH ? "w-[100%] min-h-[90%] flex flex-row flex-wrap":"w-[100%] h-[auto]"}>
+                        <div 
+                            className={windowWidth >= DESKTOP_WIDTH ? "w-[37%] min-h-[100%] shadow background":"w-[100%] h-[auto] m-[0.5%]"} 
+                            style={{
+                                backgroundImage:"url(" + safeKeys.IMG_POSTER + movie.poster_path + ")",
+                                boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(0, 0, 0, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
+                                // boxShadow:"rgba(0, 0, 0, 0.97) -180px -200px 130px inset, rgba(6, 4, 4, 0.9) 0px 100px 10px, rgba(0, 0, 0, 0.9) 100px 50px 10px"
+                            }}
+                        >
+                            <div className="backdrop-blur-md w-[100%]">
                                 {
-                                    windowWidth < 800 && <PICTURE picture={movie.poster_path} classes={windowWidth > 800 ? "shadow-lg h-[70%] shadow-[#ffd800]" : "shadow-lg h-[200px] shadow-[#ffd800] object-contain"} />
+                                    windowWidth < DESKTOP_WIDTH && <PICTURE picture={movie?.poster_path} classes={windowWidth >= DESKTOP_WIDTH ? "shadow-lg h-[70%] shadow-[#ffd800]" : "shadow-lg h-[200px] shadow-[#ffd800] object-contain"} />
 
                                 }
-                            </div>
-                            <div 
-                                style={{
-                                    boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
-                                    //   overflow: "hidden",
-                                }}
-                                className={windowWidth > 800 ? "w-[61%] m-[1%] h-[60%] justify-center items-center shadow":"w-[100%] h-[auto]"}>
-                                <h1 className="text-[30px] gradient-text">{movie.original_title || movie.title}</h1>
-                                <p style={{fontStyle:"italic",color:"#ffd800"}}>"{movie.tagline}"</p>
-                                <div className={windowWidth > 800 ? "" : "w-[50%] gap-2 flex flex-col flex-wrap items-left justify-items-center"}>
-                                    <h3>{movie.release_date}</h3>
-                                    {
-                                        movie?.revenue && (
-                                            <>
-                                                <h2>Revenue</h2>
-                                                <p>${movie.revenue}</p>                                            
-                                            </>
-
-                                        )
-                                    }
-                                    {
-                                        movie?.budget && (
-                                            <>
-                                                <h2>Budget</h2>
-                                                <p>${movie.budget}</p>                                            
-                                            </>
-                                        )
-                                    }
-                                    <p style={{fontStyle:"italic"}}>{movie?.status}</p>
-                                    {/* <h3>{movie.video ? "available":"CAM"}</h3> */}
-                                    <p className="text-[#ffd800]"><FontAwesomeIcon icon={faStar} style={{ fontSize: '30px' }} /> {movie.vote_average.toFixed(1)}/10</p>
-                                </div>
-                                <div className="w-[100%]">
-                                    <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + " h " + (movie.runtime % 60) + " min" : movie.runtime + " min" }</h4>
-                                    {
-                                        generateGenre && generateGenre.length > 0 ?
-                                            generateGenre.map(({name}) => name).join(" || ")
-                                        :
-                                        movie.genres.map(({name},index) => (
-                                            <span className="gradient-text" key={index}>
-                                                {name}{index < movie.genres.length -1 ? " || " : ""}
-                                            </span>
-                                        ))
-                                    }
-                                    {
-                                        movie && movie.hasOwnProperty("url") && movie.url && movie.url.hasOwnProperty("quality") && movie.url.quality && <h3 className="text-[#ffd800]">{movie.url.quality}</h3>
-                                    }
-                                    {
-                                        checkURL && checkURL.hasOwnProperty("quality") && checkURL.quality && <h3 className="text-[#ffd800]">{checkURL.quality}</h3>
-                                    }
-                                    {
-                                       ((movie && movie.hasOwnProperty("url") && movie.url) || checkURL) ? <p>fast stream</p> : <p>slow stream</p>
-                                    }
-                                </div>
-                                <article>
-                                    {movie.overview || "waiting for more content"}
-                                    <div style={{overflow:"hidden",margin:"5px"}}>
-                                        <ins
-                                            className="adsbygoogle"
-                                            style={{display:"block",width:"100%",height:"auto"}}
-                                            data-ad-client="ca-pub-8036256488117651"
-                                            data-ad-slot="1234567890"
-                                            data-ad-format="auto"
-                                            data-full-width-responsive="true"
-                                        ></ins>
-                                    </div>
-                                </article>
-                                <h2>{movie.origin_country && movie.origin_country[0]} || {movie.original_language}</h2>
-                                {
-                                    movie.production_companies && movie.production_companies.length > 0 &&
-                                    <div>
-                                        <h3>Production Companies</h3>
-                                        <div className="flex flex-row gap-3 flex-wrap">
-                                            {
-                                                movie.production_companies.map(({name,id},index) => (
-                                                    <div key={index} className='bg-gray-600 text-white p-1 rounded-md text-[9px]'>{name}</div>
-                                                ))
-                                            }
-                                        </div>
-                                    </div>
-                                }
-                                <h1 className="gradient-text">{movie.status}</h1>
-                                <div className="w-[100%]">
-                                    
-                                    <button
-                                        onClick={() => navRoute({
-                                            url:`/movies/trailer/`,
-                                            state:{
-                                                stream:"movie",
-                                                id:movie.id,
-                                                background:images
-                                            }})}
-                                        // style={{background:"radial-gradient(circle,#FFD800 0%, #005B6E 100%)"}} 
-                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center min-h-[30px] ":"w-[48%] bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
-                                    >
-                                        {/* <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/> */}
-                                        <h2>trailors</h2>
-                                    </button>
-                                    {
-                                        layouts && 
-                                        (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openPlay()}
-                                                    className={windowWidth > 800 ? "text-[#ffd800] text-[20px] w-[15%] underline text-center min-h-[30px]  ml-2":"text-[#ffd800] text-[20px] w-[48%]  ml-2 text-center justify-center h-[30px] rounded-full"}
-                                                >
-                                                    <span className="default-text">play <FontAwesomeIcon icon={faPlayCircle} /></span>
-                                                </button>
-                                            </>                                            
-                                        )
-                                    }
-                                    
-                                    <button
-                                        onClick={() => navRoute({
-                                            url:`/movies/similar`,
-                                            state:{
-                                                stream:"movies",
-                                                id:movie.id,
-                                                background:images
-                                            }})}
-                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px] ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
-                                    >
-                                        <h2>similar movies</h2>
-                                    </button>
-                                    
-                                    <button
-                                        onClick={() => navRoute({
-                                            url:`/movies/recommendations`,
-                                            state:{
-                                                stream:"movies",
-                                                id:movie.id,
-                                                background:images
-                                            }})}
-                                        className={windowWidth > 800 ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-1 border-[#fff] text-center min-h-[30px]  ml-2":"w-[48%] ml-2 bg-red-950 border-1 border-[#fff] active text-[10px] mt-[1%] ml-[1%] text-center min-h-[30px] underline"}
-                                    >
-                                        <h2>recommended movies</h2>
-                                    </button>
-                                    <div className="w-[100%]">
-                                        <button
-                                            type="button"
-                                            className="w-[98%] rounded-md mt-[1%] ml-[1%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
-                                            onClick={() => addToPlayList()}
-                                        >
-                                            {
-                                                playlist ? 
-                                                    <>
-                                                        <FontAwesomeIcon icon={faBasketShopping} /> <span>Added to Playlist</span>
-                                                    </>
-                                                :
-                                                    <>
-                                                        <FontAwesomeIcon icon={faCirclePlus} /> Add to Playlist
-                                                    </>
-                                                    
-                                            }
-                                            
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>                          
+                            </div> 
                         </div>
-                        {
-                            credits.cast && credits.cast.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[auto] my-[2%]"}>
+                        <div 
+                            style={{
+                                boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
+                                //   overflow: "hidden",
+                            }}
+                            className={windowWidth >= DESKTOP_WIDTH ? "w-[61%] m-[1%] h-[60%] justify-center items-center shadow":"w-[100%] h-[auto]"}>
+                                {
+                                    images && images.hasOwnProperty("logo") && images.logo ? 
+                                        <PICTURE picture={images.logo} classes={"object-contain w-[70%] h-[150px]"} />
+                                    :
+                                        <h1 className="text-[30px] gradient-text">{movie.original_title || movie.title}</h1>
+                                }
+                            <p style={{fontStyle:"italic",color:"#ffd800"}}>"{movie.tagline}"</p>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "" : "w-[50%] gap-2 flex flex-col flex-wrap items-left justify-items-center"}>
+                                <h3>{movie.release_date}</h3>
+                                {
+                                    movie?.revenue && (
+                                        <>
+                                            <h2>Revenue</h2>
+                                            <p>${movie.revenue}</p>                                            
+                                        </>
 
-                                <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
-                                {/* <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/> */}
-
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
-                                    
-                                    {
-                                        credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <div 
-                                                key={people_key} 
-                                                onClick={() => navRoute({
-                                                    url:`/people/id`,
-                                                    state:{
-                                                        id
-                                                    }})}  
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[40%] hover:scale-115 duration-700 h-[100%] m-[0.5%] hover:contrast-150"}>
-                                                <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px] font-bold"}>{name ? name : original_name ? original_name : name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
-                                                        <h3 style={{fontStyle:"italic"}}>{character}</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    }
-                                </div>
+                                    )
+                                }
+                                {
+                                    movie?.budget && (
+                                        <>
+                                            <h2>Budget</h2>
+                                            <p>${movie.budget}</p>                                            
+                                        </>
+                                    )
+                                }
+                                <p style={{fontStyle:"italic"}}>{movie?.status}</p>
+                                {/* <h3>{movie.video ? "available":"CAM"}</h3> */}
+                                <p className="text-[#ffd800]"><FontAwesomeIcon icon={faStar} style={{ fontSize: '30px' }} /> {movie.vote_average.toFixed(1)}/10</p>
                             </div>
-                        }
-                        {/* {
-                            credits.crew && credits.crew.length > 0 &&
-                            <div className={windowWidth > 800 ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[220px] my-[2%]"}>
-
-                                <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
-
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
-                                    
-                                    {
-                                        credits.crew.map(({job,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
-                                            <div 
-                                                key={people_key} 
-                                                onClick={() => navRoute({
-                                                    url:`/movies/person`,
-                                                    state:{
-                                                        id
-                                                    }})} 
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[40%] hover:scale-115 duration-700 h-[100%] m-[0.5%] hover:contrast-150"}>
-                                                <div className="w-[100%] h-[100%]">
-                                                    <PICTURE picture={profile_path} classes={windowWidth > 800 ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
-                                                    <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                        <h2 className="text-[15px] font-bold">{name ? name : original_name ? original_name : name}</h2>
-                                                        <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
-                                                        <h3>{job}</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    }
-                                </div>
+                            <div className="w-[100%]">
+                                <h4>{ (movie.runtime > 60) ? (Math.floor(movie.runtime / 60)) + " h " + (movie.runtime % 60) + " min" : movie.runtime + " min" }</h4>
+                                {
+                                    generateGenre && generateGenre.length > 0 ?
+                                        generateGenre.map(({name}) => name).join(" || ")
+                                    :
+                                    movie.genres.map(({name},index) => (
+                                        <span className="gradient-text" key={index}>
+                                            {name}{index < movie.genres.length -1 ? " || " : ""}
+                                        </span>
+                                    ))
+                                }
+                                {
+                                    movie && movie.hasOwnProperty("url") && movie.url && movie.url.hasOwnProperty("quality") && movie.url.quality && <h3 className="text-[#ffd800]">{movie.url.quality}</h3>
+                                }
+                                {
+                                    checkURL && checkURL.hasOwnProperty("quality") && checkURL.quality && <h3 className="text-[#ffd800]">{checkURL.quality}</h3>
+                                }
+                                {
+                                    ((movie && movie.hasOwnProperty("url") && movie.url) || checkURL) ? <p>fast stream</p> : <p>slow stream</p>
+                                }
                             </div>
-                        } */}
-                        {/* <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
+                            <article>
+                                {movie.overview || "waiting for more content"}
+                                <div style={{overflow:"hidden",margin:"5px"}}>
+                                    <ins
+                                        className="adsbygoogle"
+                                        style={{display:"block",width:"100%",height:"auto"}}
+                                        data-ad-client="ca-pub-8036256488117651"
+                                        data-ad-slot="1234567890"
+                                        data-ad-format="auto"
+                                        data-full-width-responsive="true"
+                                    ></ins>
+                                </div>
+                            </article>
+                            <h2>{movie.origin_country && movie.origin_country[0]} || {movie.original_language}</h2>
                             {
-                                Object.entries(images).map(([key,value],node) => 
-                                    value && typeof(value) === "object" && value.map(({file_path},index) => 
-                                        <div className="m-[0.5%] w-[48%] h-[50%]" key={node  index}>
-                                            <PICTURE picture={file_path} classes={"object-contain h-[100%]"} />
+                                movie.production_companies && movie.production_companies.length > 0 &&
+                                <div>
+                                    <h3>Production Companies</h3>
+                                    <div className="flex flex-row gap-3 flex-wrap">
+                                        {
+                                            movie.production_companies.map(({name,id},index) => (
+                                                <div key={index} className='bg-gray-600 text-white p-1 rounded-md text-[9px]'>{name}</div>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            <h1 className="gradient-text">{movie.status}</h1>
+                            <div className="w-[100%]">
+                                
+                                <button
+                                    onClick={() => navRoute({
+                                        url:`/movies/trailer/`,
+                                        state:{
+                                            stream:"movie",
+                                            title:movie.title,
+                                            id:movie.id,
+                                            background:images
+                                        }})}
+                                    // style={{background:"radial-gradient(circle,#FFD800 0%, #005B6E 100%)"}} 
+                                    className={windowWidth >= DESKTOP_WIDTH ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center h-[40px] ":"w-[48%] bg-red-950 border-2 border-[#fff] active text-[10px] mt-1 ml-1 text-center h-[40px] underline"}
+                                >
+                                    {/* <img src="/image/2503508.png" alt="UKOapp" className="w-[50%]"/> */}
+                                    <h2>trailers</h2>
+                                </button>
+                                {needsPhone && <PHONEPROMPT className="m-[1%]" />}
+                                {
+                                    layouts && 
+                                    (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => openPlay()}
+                                                className={windowWidth >= DESKTOP_WIDTH ? "text-[#ffd800] text-[20px] w-[15%] underline text-center min-h-[30px]  ml-2":"text-[#ffd800] text-[20px] w-[48%]  ml-2 text-center justify-center h-[30px] rounded-full"}
+                                            >
+                                                <span className="default-text">
+                                                    {/* play  */}
+                                                    <FontAwesomeIcon icon={faPlayCircle} />
+                                                </span>
+                                            </button>
+                                            {/* PRD #11: the player opens with the reaction set-up showing */}
+                                            {movie && movie.url && <REACTIONBUTTON desktop={windowWidth >= DESKTOP_WIDTH} onClick={() => openPlay(true)} />}
+                                        </>                                            
+                                    )
+                                }
+                                
+                                <button
+                                    onClick={() => navRoute({
+                                        url:`/movies/similar`,
+                                        state:{
+                                            stream:"movies",
+                                            id:movie.id,
+                                            background:images
+                                        }})}
+                                    className={windowWidth >= DESKTOP_WIDTH ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center h-[40px]  ml-1":"w-[48%] ml-1 bg-red-950 border-2 border-[#fff] active text-[10px] mt-1 text-center h-[40px] underline"}
+                                >
+                                    <h2>similar movies</h2>
+                                </button>
+                                
+                                <button
+                                    onClick={() => navRoute({
+                                        url:`/movies/recommendations`,
+                                        state:{
+                                            stream:"movies",
+                                            id:movie.id,
+                                            background:images
+                                        }})}
+                                    className={windowWidth >= DESKTOP_WIDTH ? "w-[23%] text-[#fff] text-[12px] active rounded-md bg-red-950 border-2 border-[#fff] text-center h-[40px]  ml-1":"w-[48%] ml-1 bg-red-950 border-2 border-[#fff] active text-[10px] mt-1 text-center h-[40px] underline"}
+                                >
+                                    <h2>recommended movies</h2>
+                                </button>
+                                <div className="w-[100%]">
+                                    <button
+                                        type="button"
+                                        className="w-[98%] rounded-md mt-[1%] ml-[1%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
+                                        onClick={() => addToPlayList()}
+                                    >
+                                        {
+                                            playlist ? 
+                                                <>
+                                                    <FontAwesomeIcon icon={faBasketShopping} /> <span>Added to Playlist</span>
+                                                </>
+                                            :
+                                                <>
+                                                    <FontAwesomeIcon icon={faCirclePlus} /> Add to Playlist
+                                                </>
+                                                
+                                        }
+                                        
+                                    </button>
+                                </div>
+                            </div>
+                        </div>                          
+                    </div>
+                    {
+                        credits.cast && credits.cast.length > 0 &&
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[auto] my-[2%]"}>
+
+                            <h1 style={{textAlign:"left",textDecoration:"underline"}}>CASTS</h1>
+                            {/* <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={{index,api,page}} total_pages={total_pages}/> */}
+
+                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(credits.cast)}`}>
+                                
+                                {
+                                    credits.cast.map(({character,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
+                                        <div 
+                                            key={people_key} 
+                                            onClick={() => navRoute({
+                                                url:`/people/id`,
+                                                state:{
+                                                    id
+                                                }})}  
+                                            className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[40%] hover:scale-115 duration-700 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <div className="w-[100%] h-[100%]">
+                                                <PICTURE picture={profile_path} classes={windowWidth >= DESKTOP_WIDTH ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
+                                                <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                    <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px] font-bold"}>{name ? name : original_name ? original_name : name}</h2>
+                                                    <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
+                                                    <h3 style={{fontStyle:"italic"}}>{character}</h3>
+                                                </div>
+                                            </div>
                                         </div>
                                     )
+                                }
+                            </div>
+                        </div>
+                    }
+                    {/* {
+                        credits.crew && credits.crew.length > 0 &&
+                        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[420px] mx-[5%] my-[2%]":"w-[100%] h-[220px] my-[2%]"}>
+
+                            <h1 style={{textAlign:"left",textDecoration:"underline"}}>CREW</h1>
+
+                            <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(credits.crew)}`}>
+                                
+                                {
+                                    credits.crew.map(({job,profile_path,popularity,original_name,name,media_type,known_for_department,id,gender,adult},people_key) => 
+                                        <div 
+                                            key={people_key} 
+                                            onClick={() => navRoute({
+                                                url:`/movies/person`,
+                                                state:{
+                                                    id
+                                                }})} 
+                                            className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-115 duration-700 hover:contrast-150":"cursor-pointer w-[40%] hover:scale-115 duration-700 h-[100%] m-[0.5%] hover:contrast-150"}>
+                                            <div className="w-[100%] h-[100%]">
+                                                <PICTURE picture={profile_path} classes={windowWidth >= DESKTOP_WIDTH ? "object-cover h-[100%]":"object-cover h-[100%] rounded-xl"} />
+                                                <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
+                                                    <h2 className="text-[15px] font-bold">{name ? name : original_name ? original_name : name}</h2>
+                                                    <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> {popularity && parseFloat(popularity).toFixed(2)}</p>
+                                                    <h3>{job}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                }
+                            </div>
+                        </div>
+                    } */}
+                    {/* <div className="w-[90%] duration-50 mx-[5%] mt-[1%] movie-scene flex flex-row min-h-[100%] flex-wrap">
+                        {
+                            Object.entries(images).map(([key,value],node) => 
+                                value && typeof(value) === "object" && value.map(({file_path},index) => 
+                                    <div className="m-[0.5%] w-[48%] h-[50%]" key={node  index}>
+                                        <PICTURE picture={file_path} classes={"object-contain h-[100%]"} />
+                                    </div>
                                 )
-                            }
+                            )
+                        }
 
-                        </div> */}
-                    </div>
+                    </div> */}
+                    <COMMENTS type="movie" id={id} windowWidth={windowWidth} />
+                </div>
 
-        </div>
+            </div>
             :
         <LOAD/>
         }       

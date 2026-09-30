@@ -11,19 +11,13 @@ export async function getDB() {
   });
 }
 
+//throws when the browser can't store it (e.g. QuotaExceededError) - the caller must not report success
 export async function saveVideo(blob, subtitle, image, data, name) {
-  try{
-    console.log("Saving..")
-    console.log(name)
-    const db = await getDB();
-    await db.put("videos", { 
-      id:name,
-      video:blob, name, subtitle, image, data, downloadedAt: Date.now() 
-    });
-  }catch(error){
-    console.log({error})
-  }
-
+  const db = await getDB();
+  await db.put("videos", {
+    id:name,
+    video:blob, name, subtitle, image, data, downloadedAt: Date.now()
+  });
 }
 
 export async function getVideoRecord(key) {

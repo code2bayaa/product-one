@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import PlatformCard from "../midlleware/platformcard";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash, faMobileAlt, faPhone, faTv, faTvAlt } from "@fortawesome/free-solid-svg-icons";
+import { faMobileAlt, faPhone, faTv, faTvAlt } from "@fortawesome/free-solid-svg-icons";
 
 const container = {
   hidden: { opacity: 0 },

@@ -8,4 +8,5 @@ export const client = new ApolloClient({
         process.env.REACT_APP_GRAPHQL_LIVE
   }),
   cache: new InMemoryCache(),
+  queryDeduplication: false,
 });

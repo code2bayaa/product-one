@@ -4,9 +4,24 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
+import { noCreditsAlert } from "./noCredits";
+import { DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 // import { useRouter } from "next/navigation";
 
-const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,season,episode,collect,stream,token,quality,id,background,maxRate,seeders,size,windowWidth}) => {
+const COLLECTIONS = ({
+    anime, 
+    serieID, 
+    serie_name,
+    index,
+    title,
+    season,
+    episode,
+    collect,
+    stream,token,quality,id,background,maxRate,seeders,size,windowWidth,
+    imdbId,
+    date,
+    year
+}) => {
 
     const [loading, setLoading] = useState(false);
     const [rate,setRate] = useState(0);
@@ -17,7 +32,7 @@ const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,se
         // Check if the rate is a number and set it
         const index = (Number(seeders)/Number(maxRate)) * 10
         setRate(index);
-        localStorage.setItem("type",stream)
+        // localStorage.setItem("type",stream)
     }, [maxRate,seeders,stream]);
 
     // useEffect(() => {
@@ -154,13 +169,7 @@ const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,se
         }
 
         if(!hasCredits && !hasPaid){
-            Swal.fire({
-                icon: 'error',
-                title: 'NO CREDITS',
-                text: "add more credits",
-                showConfirmButton: false,
-                timer: 1500
-            })
+            noCreditsAlert(isLoggedIn.status)
             return 
         }
         if (token) {
@@ -188,13 +197,14 @@ const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,se
                     token,
                     id,
                     index,
-                    user,
+                    // user,
                     quality,
                     stream,
                     size,
                 })
             })
-            const {status, error, message, url, files} = await response.json()
+            const {status, error, files} = await response.json()
+            // console.log(message,"message")
             if(status){
                 const video = files && files.find(({name}) => name.endsWith('.mp4') || name.endsWith('.mkv'));
                 if(video){
@@ -202,18 +212,26 @@ const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,se
                     setLoading(false)
                     navRoute({url:`/play`,
                         state:{
+                            token,
+                            quality,
+                            stream,
+                            size,
                             id,
-                            url,
+                            // url,
                             index,
                             type,
                             background,
-                            seasons,
-                            episodes,
+                            // player,
+                            // seasons,
+                            // episodes,
                             serieID,
                             anime,
                             serie_name,
                             season,
-                            episode
+                            episode,
+                            imdbId,
+                            date,
+                            year
                         }
                     })
                 }else{
@@ -249,7 +267,7 @@ const COLLECTIONS = ({anime, serieID, serie_name,index,seasons,episodes,title,se
                 onClick={() => runStream({token})}
                 type="button"
                 key={index}
-                className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth > 800 ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
+                className={`bg-[transparent] m-[1%] border-[2px] text-white ${windowWidth >= DESKTOP_WIDTH ? "w-[48%]" : "w-[98%]"} h-[auto] text-[20px] font-bold`}
             >
                 {
                     loading ? "loading..."

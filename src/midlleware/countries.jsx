@@ -7,9 +7,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate } from "react-router-dom"
 import { faArrowAltCircleDown, faArrowAltCircleUp, faEye } from "@fortawesome/free-solid-svg-icons"
 import CryptoJS from "crypto-js";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const [country, setCountry] = useState(null)
     const [reveal, setReveal] = useState(false)
     const [themes, setThemes] = useState(null)
@@ -23,17 +24,6 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
             }
         })
     } 
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
-
     useEffect(() => {
         const runLocale = async() => {
             const sendForm = async({url,options}) => {
@@ -54,10 +44,11 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
                     "https://ipinfo.io/json",
                     // "https://apiip.net/api/check?accessKey=13ad4095-2d84-41f6-be25-df331c9e4f01",
                     "https://ipapi.co/json/",
-                    "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_geo
+                    process.env.REACT_APP_geo ? "https://api.ipgeolocation.io/ipgeo?apiKey=" + process.env.REACT_APP_geo : null //no key: skip, it only answers 401
                 ]
 
                 const locations = await Promise.all(urls.map(async(url) => {
+                    if (!url) return null
                     return await sendForm({url, options : {
                         method:"GET",
                         headers : {'Content-type': 'application/json; charset=UTF-8'},
@@ -247,7 +238,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
     return (
         <>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                         
                     <div className="w-[100%] h-[80%] shadow" style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}}>
                         <Slider {...settings}>
@@ -257,7 +248,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
                                 <div className="w-[25%] h-[100%] hover:skew-4 contrast-150">
                                     <PICTURE key={id} classes={"object-cover float-left h-[100%]"} picture={poster_path || backdrop_path} />
                                     <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[60px] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
-                                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
+                                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
                                         <button key={movie_key} onClick={() => navRoute({
                                             url:mode === "tv" ? '/series/id' : '/movies/id',
                                             state:{
@@ -287,7 +278,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
                 <button
                     type="button"
                     onClick={() => setReveal(!reveal)}
-                    className={windowWidth > 800 ? "w-[40%] border-[#ffd800] border-[2px] m-[1%] rounded-xl" : "w-[100%] border-[#ffd800] border-[2px] rounded-xl"}
+                    className={windowWidth >= DESKTOP_WIDTH ? "w-[40%] border-[#ffd800] border-[2px] m-[1%] rounded-xl" : "w-[100%] border-[#ffd800] border-[2px] rounded-xl"}
                 >
                     UKO: 
                     {country} 
@@ -305,7 +296,7 @@ const COUNTRIES = ({fetchMovies,mutateInsertMovies,mode}) => {
                             mode
                         }
                     })}
-                    className={windowWidth > 800 ? "w-[60%] h-[60px] text-red-200 underline m-[1%] rounded-md" : "w-[100%] h-[60px] text-red-200 underline rounded-md"}
+                    className={windowWidth >= DESKTOP_WIDTH ? "w-[60%] h-[60px] text-red-200 underline m-[1%] rounded-md" : "w-[100%] h-[60px] text-red-200 underline rounded-md"}
                 >
                     discover more {mode==="movie"?"movies":"tv shows"}
                 </button> */}

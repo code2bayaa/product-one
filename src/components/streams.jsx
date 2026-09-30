@@ -4,9 +4,8 @@ import {
   StreamVideoClient,
   CallControls,
   CallParticipantsGrid,
-  User,
 } from "@stream-io/video-react-sdk";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 
 // Replace with your actual values
 const apiKey = process.env.REACT_APP_stream_api;

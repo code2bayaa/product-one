@@ -1,35 +1,26 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 
 const SWEETPAGE = ({intitializeMovies,page,index,total_pages}) => {
     const [view, setView] = useState(false)
     const [newPage, setNewPage] = useState(page)
-    const [windowWidth, setWindowWidth] = useState(0);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
+    const windowWidth = useWindowWidth()
 
     const changePage = (k) => {
         const changed = k + 1
         setNewPage(changed)
+        console.log(changed,"changed")
         if(index.hasOwnProperty('page'))
             index.page = changed
         intitializeMovies({runContent:[index],type:index,adjustable:true,page:changed,genreId:'',regionId:'',languageId:'',yearId:0})
     }
     return (
-        <div className={windowWidth > 800 ? "w-[100%] flex flex-col" : "w-[60%] ml-[20%] flex flex-col"}>
+        <div className={windowWidth >= DESKTOP_WIDTH ? "w-[100%] flex flex-col" : "w-[60%] ml-[20%] flex flex-col"}>
             <button
-                className={windowWidth > 800 ? "w-[15%] border-[2px]":"min-w-[15%] border-[2px]"}
+                className={windowWidth >= DESKTOP_WIDTH ? "w-[15%] text-[#fff] border-[2px]":"min-w-[15%] text-[#fff] border-[2px]"}
                 onClick={() => setView(!view)}
             >
                 page {newPage} <FontAwesomeIcon icon={view ? faArrowUp : faArrowDown} /> 
@@ -43,7 +34,7 @@ const SWEETPAGE = ({intitializeMovies,page,index,total_pages}) => {
                         if(k + 1 !== newPage){
                             return  <button
                                     key={k}
-                                    className={windowWidth > 800 ? "w-[10%] m-[0.5%] h-[100%] border-[2px]":"min-w-[15%] m-[0.5%] h-[100%] border-[2px]"}
+                                    className={windowWidth >= DESKTOP_WIDTH ? "w-[10%] m-[0.5%] h-[100%] border-[2px] text-[#fff]":" text-[#fff] min-w-[15%] m-[0.5%] h-[100%] border-[2px]"}
                                     onClick={() => changePage(k)}
                                 >
                                     page {k + 1}

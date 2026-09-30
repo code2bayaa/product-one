@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { shortRow } from "../midlleware/shortRow"
+import { useCallback, useEffect, useState, useRef } from "react";
 import MOBILE from "./mobileBar";
 import NAVBAR from "./nav"
 import PICTURE from "../midlleware/picture"
@@ -7,12 +8,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import { gql, useLazyQuery } from '@apollo/client';
 import Swal from "sweetalert2";
 import SWEETPAGE from "../midlleware/pages";
-import { useNavigation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 // import LOAD from "../midlleware/load";
-import { useKeys } from "./safe";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 const PLAYLIST = () => {
     // const hasFetched = useRef({id:false,movies:false})
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
+    const hasChecked = useRef(false)
     // const [playlist, setPlaylist] = useState({
     //     movie: { count: 0, data: [], page:1, tags:[] },
     //     tv: { count: 0, data:[], page:1, tags:[] },
@@ -22,27 +24,39 @@ const PLAYLIST = () => {
     const [playlist, setPlaylist] = useState([])
     const movieCount = playlist.length > 0 && playlist.find(({ type }) => type === "movie")?.count
     const tvCount = playlist.length > 0 && playlist.find(({ type }) => type === "tv")?.count
-    const {safeKeys} = useKeys()
     // const [userID, setUserID] = useState(null)
-    const navigate = useNavigation()
+    const navigate = useNavigate()
 
     useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
+        if (hasChecked.current) return;
+        hasChecked.current = true;
 
-        // Set initial width
-        handleResize();
+        try {
+            async function authentication() {
+                const res = await fetch(
+                process.env.REACT_APP_ENVIRONMENT === "development"
+                    ? process.env.REACT_APP_API_URL
+                    : process.env.REACT_APP_API_URL_LIVE,
+                { credentials: "include" }
+                );
+                return await res.json();
+            }
 
-        // Add event listener for window resize
-        window.addEventListener('resize', handleResize);
+            authentication().then(async (isLoggedIn) => {
 
-        // Cleanup event listener on component unmount
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
-    }, []);
+                if (isLoggedIn.status) {
+                    console.log("logged in")
+                } else {
+                    let user = localStorage.getItem("session");
+                    console.log(user)
+                    navigate("/signin")
+                }
 
+            })
+        } catch (error) {
+            console.log(error);
+        }
+    }, [navigate]);
     // const FETCH_PLAYLIST_QUERY = gql`
     //     query Playlist (
     //         $user:ID!
@@ -167,7 +181,7 @@ const PLAYLIST = () => {
     //         }
     //     })
     // },[])
-  const intitializeMovies = useCallback(async ({ page }) => {
+  const intitializeMovies = useCallback(({ page }) => {
     // console.log(process.env.REACT_APP_PLAYLIST, "playlist")
     fetch(`${process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_PLAYLIST : process.env.REACT_APP_PLAYLIST_LIVE}`, {
       credentials: "include",
@@ -194,7 +208,7 @@ const PLAYLIST = () => {
         } else {
             Swal.fire({
                 icon: 'Empty',
-                title: 'Error',
+                title: 'Empty',
                 text: "add more movies",
                 confirmButtonText: 'OK'
             });
@@ -206,7 +220,7 @@ const PLAYLIST = () => {
     //         return
     //     }
     //     hasFetched.current.id = true       
-    //     fetch(process.env.REACT_APP_environment === "development" ? process.env.REACT_APP_api_url : process.env.REACT_APP_api_url_live,{credentials: "include"})
+    //     fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LIVE,{credentials: "include"})
     //     .then(res => {
     //         if (!res.ok) {
     //             throw new Error('Network response was not ok');
@@ -248,32 +262,32 @@ const PLAYLIST = () => {
     return (
         <div className="w-[100%] duration-250 h-[100%] text-white flex flex-row flex-wrap" style={{background:"linear-gradient(65deg, #0d0d0d, rgba(0,0,0,0.75), #1c2a3b, #0f111a)"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]">
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] h-[100%] overflow-y-auto movie-scene ml-[20%] flex flex-col":"w-[100%] h-[92%] overflow-y-auto movie-scene flex flex-col"}>
                 <div className="w-[100%] h-[auto] flex flex-col items-center justify-center">
                     <h1 className="text-[2rem] font-bold mt-[20px]">Playlist</h1>
                     <p className="text-[1.2rem] text-gray-300 mt-[10px]">Your favorite movies and series in one place.</p>
                 </div>
                 <div className="w-[100%] h-[auto] flex flex-row items-center justify-center mt-[2%]">
-                    <div className={windowWidth > 800 ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
+                    <div className={windowWidth >= DESKTOP_WIDTH ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
                         <h2 className="text-[1.5rem] font-semibold">movies</h2>
                         <p className="text-gray-300 mt-[10px]">{movieCount || 0}</p>
                     </div>
-                    <div className={windowWidth > 800 ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
+                    <div className={windowWidth >= DESKTOP_WIDTH ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
                         <h2 className="text-[1.5rem] font-semibold">series</h2>
                         <p className="text-gray-300 mt-[10px]">{tvCount || 0}</p>
                     </div>  
-                    {/* <div className={windowWidth > 800 ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
+                    {/* <div className={windowWidth >= DESKTOP_WIDTH ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
                         <h2 className="text-[1.5rem] font-semibold">season</h2>
                         <p className="text-gray-300 mt-[10px]">{playlist.season.count}</p>
                     </div>     
-                    <div className={windowWidth > 800 ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
+                    <div className={windowWidth >= DESKTOP_WIDTH ? "w-[24%] h-[auto] p-[20px] border-r-[1px] border-gray-600 m-[0.5%]":"w-[48%] h-[auto] p-[20px]"}>
                         <h2 className="text-[1.5rem] font-semibold">episode</h2>
                         <p className="text-gray-300 mt-[10px]">{playlist.episode.count}</p>
                     </div>                                                          */}
@@ -284,11 +298,11 @@ const PLAYLIST = () => {
                     //     Object.entries(playlist).map(([key,value],node) =>
                     //         value.count > 0 && 
                     //         (
-                    //             <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
+                    //             <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={node}>
                     //                 <h1 className="my-t-[5%]">{key}</h1>
                     //                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                     //                 <SWEETPAGE intitializeMovies={intitializeMovies} page={value.page} index={key} total_pages={value.count}/>
-                    //                 <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                    //                 <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
                     //                     {
                     //                         value.data.map(({season_number,episode_number,poster_path,still_path,backdrop_path,vote_average,popularity,vote_count,name,original_name,title,original_title,id},movie_key) => 
                     //                             <div 
@@ -304,7 +318,7 @@ const PLAYLIST = () => {
                     //                                         background:key === "season" ? poster_path : still_path
                     //                                     }
                     //                                 })}
-                    //                                 className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                    //                                 className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                     //                                 <div className="w-[100%] h-[100%]">
                     //                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || backdrop_path || still_path} />
                     //                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">
@@ -322,11 +336,11 @@ const PLAYLIST = () => {
                     //     )
                     movieCount > 0 || tvCount > 0 ?
                         playlist.map(({result,type,page},key) => 
-                            <div className={windowWidth > 800 ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={key}>
+                            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] h-[auto] flex flex-wrap flex-col mx-[5%]":"w-[100%] h-[auto] flex flex-wrap flex-col"} key={key}>
                                 <h1 className="my-t-[5%]">{type}</h1>
                                 <div className="w-[15%] h-[10px] border-r-[4px] bg-[#5A5A68]"></div>
                                 <SWEETPAGE intitializeMovies={intitializeMovies} page={page} index={key} total_pages={type === "movie" ? movieCount : tvCount}/>
-                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[400px]" : "h-[300px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(result)}`}>
                                     {
                                         result.map(({season_number,episode_number,poster_path,still_path,backdrop_path,vote_average,popularity,vote_count,name,original_name,title,original_title,id},movie_key) => 
                                             <div 
@@ -342,7 +356,7 @@ const PLAYLIST = () => {
                                                         background:type === "season" ? poster_path : still_path
                                                     }
                                                 })}
-                                                className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
+                                                className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:skew-4 hover:contrast-150":"cursor-pointer w-[50%] hover:skew-4 h-[100%] hover:contrast-150"}>
                                                 <div className="w-[100%] h-[100%]">
                                                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || backdrop_path || still_path} />
                                                     <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center">

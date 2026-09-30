@@ -1,4 +1,5 @@
-import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client/react';
+import { shortRow } from "../midlleware/shortRow"
+import { useMutation, useLazyQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import NAVBAR from "./nav"
 import { useLocation, useNavigate } from "react-router-dom";
@@ -11,6 +12,8 @@ import MOBILE from "./mobileBar";
 import Swal from "sweetalert2";
 import CryptoJS from "crypto-js";
 import { useKeys } from './safe';
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
+
 const PERSON = () => {
 
     const hasFetched= useRef({images:false,tv:false,movies:false,person:false,feedback:false})
@@ -18,36 +21,38 @@ const PERSON = () => {
     const [movies, setMovies] = useState(null)
     const [series, setSeries] = useState(null)
     const [images, setImages] = useState(null)
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const [following,setFollowing] = useState(null)
-    const {safeKeys} = useKeys()
+    const {safeKeys,loadKeys} = useKeys()
     // const { state } = useLocation();
     const navigate = useNavigate();
     const {state} = useLocation()
-    const id = state.id
-    const client = useApolloClient();
+    const id = state?.id
+    //Eden studio people have their own page at /eden/people/id (read from the database, never TMDB);
+    //an old link that still lands here with `eden` is sent on, and nothing below fetches for it
+    const isEden = !!state?.eden
 
-    useEffect(() => {
-        // Create the inline script
-        const inlineScript = document.createElement("script");
-        inlineScript.type = "text/javascript";
-        inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
+    // useEffect(() => {
+    //     // Create the inline script
+    //     const inlineScript = document.createElement("script");
+    //     inlineScript.type = "text/javascript";
+    //     inlineScript.text = "var infolinks_pid = 3436935; var infolinks_wsid = 0;";
 
-        // Create the external script
-        const externalScript = document.createElement("script");
-        externalScript.type = "text/javascript";
-        externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
+    //     // Create the external script
+    //     const externalScript = document.createElement("script");
+    //     externalScript.type = "text/javascript";
+    //     externalScript.src = "//resources.infolinks.com/js/infolinks_main.js";
 
-        // Append both to the body
-        document.body.appendChild(inlineScript);
-        document.body.appendChild(externalScript);
+    //     // Append both to the body
+    //     document.body.appendChild(inlineScript);
+    //     document.body.appendChild(externalScript);
 
-        // Cleanup on unmount
-        return () => {
-            document.body.removeChild(inlineScript);
-            document.body.removeChild(externalScript);
-        };
-    }, []);
+    //     // Cleanup on unmount
+    //     return () => {
+    //         document.body.removeChild(inlineScript);
+    //         document.body.removeChild(externalScript);
+    //     };
+    // }, []);
 
     useEffect(() => {
         // Create the inline script
@@ -71,17 +76,6 @@ const PERSON = () => {
             // document.body.removeChild(externalScript);
         };
     }, []);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.screen.width);
-        };
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call it once to set the initial value
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    },[])
 
     const FETCH_IMAGE_QUERY = gql`
         query Image (
@@ -162,7 +156,7 @@ const PERSON = () => {
         async function freshFetch(){
             const response = await fetch(`${safeKeys.MOVIE_DB}person/${id}/images?api_key=${safeKeys.API_KEY}`);
             const getImageData = await response.json();
-            console.log(getImageData,"images")
+            // console.log(getImageData,"images")
             let value = 0
             const {profiles} = getImageData
             let path = ''
@@ -181,7 +175,7 @@ const PERSON = () => {
                     id:id?parseInt(id):-1
                 }, data:{id:getImageData.id,path}                  
             } });
-            console.log(path,"path" )
+            // console.log(path,"path" )
             return path
         }         
         try{
@@ -210,7 +204,7 @@ const PERSON = () => {
         
 
         }
-    },[fetchImage,id, mutateInsertImage])
+    },[fetchImage,id, mutateInsertImage,safeKeys])
 
     const FETCH_PERSON_QUERY = gql`
         query Person (
@@ -243,21 +237,21 @@ const PERSON = () => {
         notifyOnNetworkStatusChange: true,
         fetchPolicy: 'cache-first',
     });
-    useEffect(() => {
-        const invalidateCache = () => {
-            console.log("Invalidating Apollo Client cache");
-            client.refetchQueries({
-                include: [FETCH_PERSON_QUERY] // Refetch all queries using this query
-            });
-            // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
-        };
+    // useEffect(() => {
+    //     const invalidateCache = () => {
+    //         console.log("Invalidating Apollo Client cache");
+    //         client.refetchQueries({
+    //             include: [FETCH_PERSON_QUERY] // Refetch all queries using this query
+    //         });
+    //         // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+    //     };
 
-        // Set up the timer to invalidate the cache after 24 hours
-        const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+    //     // Set up the timer to invalidate the cache after 24 hours
+    //     const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
 
-        // Clear the timer when the component unmounts to prevent memory leaks
-        return () => clearTimeout(timerId);
-    }, [client,FETCH_PERSON_QUERY]); // 
+    //     // Clear the timer when the component unmounts to prevent memory leaks
+    //     return () => clearTimeout(timerId);
+    // }, [client,FETCH_PERSON_QUERY]); // 
     const INSERT_PERSON_MUTATION = gql`
         mutation AddPersonID(
             $single:PERSON_ID
@@ -331,10 +325,11 @@ const PERSON = () => {
         }
     
         
-    },[fetchPersonData, id, mutateInsertPerson])
+    },[fetchPersonData, id, mutateInsertPerson, safeKeys])
 
     useEffect(() => {
-        if(hasFetched.current.feedback){
+        //the movies `followers` table is for TMDB people - Eden follow state came with the person
+        if(isEden || hasFetched.current.feedback){
             return
         }
         hasFetched.current.feedback = true        
@@ -361,11 +356,11 @@ const PERSON = () => {
         } 
         if(person && person.id)
             checkFeedback(person.id)
-    },[person])
+    },[person,isEden])
 
     const FETCH_MOVIE_QUERY = gql`
         query Played(
-            $id:ID!
+            $id:Int!
             $type:String!
             $hashedKey:String!
         ){
@@ -421,27 +416,27 @@ const PERSON = () => {
     `
     const [fetchMovie] = useLazyQuery(FETCH_MOVIE_QUERY,{
         notifyOnNetworkStatusChange: true,
-        // fetchPolicy: 'cache-first',
+        fetchPolicy: 'cache-first',
     });
-    useEffect(() => {
-        const invalidateCache = () => {
-            console.log("Invalidating Apollo Client cache");
-            client.refetchQueries({
-                include: [FETCH_MOVIE_QUERY] // Refetch all queries using this query
-            });
-            // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
-        };
+    // useEffect(() => {
+    //     const invalidateCache = () => {
+    //         console.log("Invalidating Apollo Client cache");
+    //         client.refetchQueries({
+    //             include: [FETCH_MOVIE_QUERY] // Refetch all queries using this query
+    //         });
+    //         // client.resetStore(); // Alternative: Clears the entire cache (more aggressive)
+    //     };
 
-        // Set up the timer to invalidate the cache after 24 hours
-        const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
+    //     // Set up the timer to invalidate the cache after 24 hours
+    //     const timerId = setTimeout(invalidateCache, 86400000); // 24 hours in milliseconds
 
-        // Clear the timer when the component unmounts to prevent memory leaks
-        return () => clearTimeout(timerId);
-    }, [client,FETCH_MOVIE_QUERY]); // 
+    //     // Clear the timer when the component unmounts to prevent memory leaks
+    //     return () => clearTimeout(timerId);
+    // }, [client,FETCH_MOVIE_QUERY]); // 
 
     const INSERT_MOVIE_MUTATION = gql`
         mutation AddPlayed(
-            $id:ID!
+            $id:Int!
             $cast:[ADD_CAST_PLAYED_RESULTS_INPUT]
             $crew:[ADD_CREW_PLAYED_RESULTS_INPUT]
             $hashedKey:String!
@@ -523,10 +518,11 @@ const PERSON = () => {
                 const api = `${safeKeys.MOVIE_DB}person/${id}/movie_credits?api_key=${safeKeys.API_KEY}`
                 const response = await fetch(`${api}`);
                 const movies_data = await response.json();
-                console.log(movies_data,"movie")
+                // console.log(movies_data,"movie")
                 setMovies(() => ({...movies_data})); 
                 mutateInsertMovie({ variables: {
                     ...movies_data,
+                    id:parseInt(movies_data.id),
                     type:"movie",
                     hashedKey
                 }} );
@@ -557,7 +553,7 @@ const PERSON = () => {
                 .then(data => setMovies(() => ({...data})))
             
         }
-    },[mutateInsertMovie, id, fetchMovie])
+    },[mutateInsertMovie, id, fetchMovie, safeKeys])
 
     const fetchTV = useCallback(async() => {
         try{
@@ -574,6 +570,7 @@ const PERSON = () => {
                 setSeries(() => ({...movies_data})); 
                 mutateInsertTV({ variables: {
                     ...movies_data,
+                    id:parseInt(movies_data.id),
                     type:"tv",
                     hashedKey
                 }} );
@@ -605,7 +602,11 @@ const PERSON = () => {
             
 
         }
-    },[mutateInsertTV, id, fetchMovie])
+    },[mutateInsertTV, id, fetchMovie, safeKeys])
+
+    useEffect(() => {
+        if(isEden) navigate("/eden/people/id", { replace:true, state })
+    },[isEden, navigate, state])
 
     useEffect(() => {
         // if(hasFetched.current.images){
@@ -613,15 +614,22 @@ const PERSON = () => {
         // }
         // hasFetched.current.images = true
         // graphImages()
+        //Eden people never touch TMDB - the effect above loads them
+        if(isEden) return
         const controller = new AbortController();
-        graphImages(controller.signal).catch(err => {
-            if (err && err.name === 'AbortError') return;
-            console.error("graphImages outer error", err);
-        });
+        if(safeKeys && safeKeys.hasOwnProperty("API_KEY") && safeKeys.API_KEY){
+
+            graphImages(controller.signal).catch(err => {
+                if (err && err.name === 'AbortError') return;
+                console.error("graphImages outer error", err);
+            });
+        }else{
+            loadKeys()
+        }
         return () => {
             controller.abort();
         };
-    },[graphImages])
+    },[graphImages,safeKeys,isEden,loadKeys])
 
     useEffect(() => {
         // if(hasFetched.current.person){
@@ -629,15 +637,21 @@ const PERSON = () => {
         // }
         // hasFetched.current.person = true
         // fetchPerson();
+        //Eden people never touch TMDB - the effect above loads them
+        if(isEden) return
         const controller = new AbortController();
-        fetchPerson(controller.signal).catch(err => {
-            if (err && err.name === 'AbortError') return;
-            console.error("fetchPerson outer error", err);
-        });
+        if(safeKeys && safeKeys.hasOwnProperty("API_KEY") && safeKeys.API_KEY){
+            fetchPerson(controller.signal).catch(err => {
+                if (err && err.name === 'AbortError') return;
+                console.error("fetchPerson outer error", err);
+            });
+        }else{
+            loadKeys()
+        }
         return () => {
             controller.abort();
         };
-    }, [fetchPerson]);
+    }, [fetchPerson,safeKeys,isEden,loadKeys]);
 
     useEffect(() => {
         // if(hasFetched.current.movies){
@@ -645,15 +659,21 @@ const PERSON = () => {
         // }
         // hasFetched.current.movies = true
         // fetchMovies();
+        //Eden people never touch TMDB - the effect above loads them
+        if(isEden) return
         const controller = new AbortController();
-        fetchMovies(controller.signal).catch(err => {
-            if (err && err.name === 'AbortError') return;
-            console.error("fetchMovies outer error", err);
-        });
+        if(safeKeys && safeKeys.hasOwnProperty("API_KEY") && safeKeys.API_KEY){
+            fetchMovies(controller.signal).catch(err => {
+                if (err && err.name === 'AbortError') return;
+                console.error("fetchMovies outer error", err);
+            });
+        }else{
+            loadKeys()
+        }
         return () => {
             controller.abort();
         };
-    }, [fetchMovies]);
+    }, [fetchMovies,safeKeys,isEden,loadKeys]);
 
     useEffect(() => {
         // if(hasFetched.current.tv){
@@ -661,15 +681,21 @@ const PERSON = () => {
         // }
         // hasFetched.current.tv = true
         // fetchTV();
+        //Eden people never touch TMDB - the effect above loads them
+        if(isEden) return
         const controller = new AbortController();
-        fetchTV(controller.signal).catch(err => {
-            if (err && err.name === 'AbortError') return;
-            console.error("fetchTV outer error", err);
-        });
+        if(safeKeys && safeKeys.hasOwnProperty("API_KEY") && safeKeys.API_KEY){
+            fetchTV(controller.signal).catch(err => {
+                if (err && err.name === 'AbortError') return;
+                console.error("fetchTV outer error", err);
+            });
+        }else{
+            loadKeys()
+        }
         return () => {
             controller.abort();
         };
-    }, [fetchTV]);
+    }, [fetchTV,safeKeys,isEden,loadKeys]);
 
     // const getBackground = () => {
     //     if(!images)
@@ -743,33 +769,55 @@ const PERSON = () => {
         series && movies && person ?
         <div className="w-[100%] h-[100%]  bg-cover bg-no-repeat bg-center text-white" style={{backgroundImage:`linear-gradient(105deg, #0d0d0d, rgba(0,0,0,0.75), #000, rgba(0,0,0,0.56)),url(${images ? safeKeys.IMG_POSTER + images : "/image/logo.png"})`,backgroundPosition:"0% 40%"}}>
             {
-                windowWidth > 800 ? 
+                windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] absolute h-[100%]" style={{background:"linear-gradient(85deg, rgba(13, 13, 13, 0.75), rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.45))"}}>
                     <NAVBAR/>
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={windowWidth > 800 ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] text-justify justify-center items-center":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
+            <div className={windowWidth >= DESKTOP_WIDTH ? "w-[80%] duration-100 h-[100%] overflow-y-auto movie-scene ml-[20%] text-justify justify-center items-center":"w-[98%] mx-[1%] duration-100 h-[92%] overflow-y-auto movie-scene flex flex-col"}>
             
                 
                 <>
                     {/* <div className="w-[100%] h-[60%]"> */}
-                        {/* <div className={`w-[90%] ml-[5%] ${windowWidth > 800 ? "min-h-[60%] h-auto" : "h-[auto]"} text-justify justify-center items-center`}> */}
-                            <div className={windowWidth > 800 ? "w-[40%] h-[auto] m-[1%] float-left backdrop-blur-md":"w-[98%] h-[auto] m-[1%] backdrop-blur-md"}>
-                                <PICTURE picture={person.profile_path} classes={"object-contain h-[200px] shadow-lg shadow-[#ffd800]"} />
-                            </div>
+                        {/* <div className={`w-[90%] ml-[5%] ${windowWidth >= DESKTOP_WIDTH ? "min-h-[60%] h-auto" : "h-[auto]"} text-justify justify-center items-center`}> */}
+                            <div className={`${windowWidth >= DESKTOP_WIDTH ? "w-[80%] flex-row" : "w-[98%] flex-col"} mx-auto my-[1%] flex gap-[2%] backdrop-blur-md`}>
+                                <div className={windowWidth >= DESKTOP_WIDTH ? "w-[35%] shrink-0" : "w-[100%]"}>
+                                    <PICTURE picture={person.profile_path} classes={"object-contain h-auto shadow-lg shadow-[#ffd800]"} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h1 className="text-[30px]">{person.name}</h1>
+                                    <p style={{fontStyle:"italic",color:"#ffd800"}}>{person.also_known_as && person?.also_known_as.map((name) => `${name}`).join(" || ")}</p>
+                                    <h3>{person.birthday} <FontAwesomeIcon icon={faAngleDoubleRight} /> {person.deathdate}</h3>
+                                    <h3>{person.gender === 2 ? "male" : person.gender === 1 ? "female" : ""}</h3>
+                                    <h3 style={{color:"#ffd800"}}>konwn for</h3>
+                                    <span>{person.known_for_department}</span>
+                                    <h4>{ person.place_of_birth }</h4>
+                                    <article>
+                                        {person.biography}
+                                    </article>
+                                    {/* follow hangs right under the biography */}
+                                    <button
+                                    type="button"
+                                    className={`${windowWidth >= DESKTOP_WIDTH ? "w-[45%]" : "w-[100%]"} mt-3 h-[50px] rounded-full bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200`}
+                                    onClick={() => addToFollowers()}
+                                >
+                                    {
+                                        following ?
+                                            <>
+                                                <FontAwesomeIcon icon={faBasketShopping} /> <span>following</span>
+                                            </>
+                                        :
+                                            <>
+                                                <FontAwesomeIcon icon={faCirclePlus} /> follow
+                                            </>
 
-                            <h1 className="text-[30px]">{person.name}</h1>
-                            <p style={{fontStyle:"italic",color:"#ffd800"}}>{person.also_known_as && person?.also_known_as.map((name) => `${name}`).join(" || ")}</p>
-                            <h3>{person.birthday} <FontAwesomeIcon icon={faAngleDoubleRight} /> {person.deathdate}</h3>
-                            <h3>{person.gender === 2 ? "male" : "female"}</h3>
-                            <h3 style={{color:"#ffd800"}}>konwn for</h3>
-                            <span>{person.known_for_department}</span>
-                            <h4>{ person.place_of_birth }</h4>
-                            <article>
-                                {person.biography}
-                            </article>
+                                    }
+
+                                </button>
+                                </div>
+                            </div>
                             <div style={{overflow:"hidden",margin:"5px"}}>
                                 <ins
                                     className="adsbygoogle"
@@ -780,28 +828,9 @@ const PERSON = () => {
                                     data-full-width-responsive="true"
                                 ></ins>
                             </div>
-                            <div className={windowWidth > 800 ? "w-[56%] float-right":"w-[100%]"}>
-                                <button
-                                    type="button"
-                                    className="w-[100%] h-[50px] bg-[#ffd800] text-black font-bold hover:bg-[#ffd800]/80 duration-200"
-                                    onClick={() => addToFollowers()}
-                                >
-                                    {
-                                        following ? 
-                                            <>
-                                                <FontAwesomeIcon icon={faBasketShopping} /> <span>following</span>
-                                            </>
-                                        :
-                                            <>
-                                                <FontAwesomeIcon icon={faCirclePlus} /> follow
-                                            </>
-                                            
-                                    }
-                                    
-                                </button>
-                            </div>                            
+
                         {/* </div> */}
-                                <div className={windowWidth > 800 ? "w-[90%] min-h-[100%] ml-[5%] mt-[1%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
+                                <div className={windowWidth >= DESKTOP_WIDTH ? "w-[90%] min-h-[100%] ml-[5%] mt-[1%] flex flex-col":"w-[100%] h-[auto] flex flex-col"}>
                                     {
 
                                         ((series.cast && series.cast.length > 0) || (series.crew && series.crew.length > 0)) &&
@@ -811,17 +840,17 @@ const PERSON = () => {
                                                     series.cast && series.cast.length > 0 && 
                                                     <>
                                                         <h2>PLAYED AS CAST</h2> 
-                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(series.cast)}`}>
                                                         {
                                                             series.cast && series.cast.map(({character,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <div key={movie_key} 
                                                                     // to={`/series/${id}`} 
                                                                     onClick={() => navMovie(id,`/people/serie`,"tv")}
-                                                                    className={windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115  duration-700 hover:contrast-150":"cursor-pointer w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                    className={windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-115  duration-700 hover:contrast-150":"cursor-pointer w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
-                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
+                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                                            <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
+                                                                            <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                             <h2 style={{fontStyle:"italic"}}>{character}</h2>
                                                                         </div>
@@ -837,18 +866,18 @@ const PERSON = () => {
                                                     series.crew && series.crew.length > 0 &&  
                                                     <>
                                                         <h2>PLAYED AS CREW</h2>
-                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                        <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(series.crew)}`}>
                                                             {
                                                                 series.crew && series.crew.map(({job,adult,backdrop_path,genre_ids,id,original_name,name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                     <div 
                                                                         key={movie_key} 
                                                                         // to={`/series/${id}`}
                                                                         onClick={() => navMovie(id,`/people/serie`,"tv")} 
-                                                                        className={windowWidth > 800 ? "w-[25%] h-[100%] hover:scale-115 duration-700 m-[0.5%] hover:contrast-150":"w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                        className={windowWidth >= DESKTOP_WIDTH ? "w-[25%] h-[100%] hover:scale-115 duration-700 m-[0.5%] hover:contrast-150":"w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                         <div className="w-[100%] h-[100%]">
-                                                                            <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
+                                                                            <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                             <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                                                <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
+                                                                                <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{name || original_name || title || original_title}</h2>
                                                                                 <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                                 <h2 style={{fontStyle:"italic"}}>{job}</h2>
                                                                             </div>
@@ -871,18 +900,18 @@ const PERSON = () => {
                                                 movies.cast && movies.cast.length > 0 && 
                                                 <>
                                                     <h2>PLAYED AS CAST</h2>
-                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(movies.cast)}`}>
                                                         {
                                                             movies.cast && movies.cast.map(({character,adult,backdrop_path,genre_ids,name,id,original_name,original_language,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <div 
                                                                     key={movie_key} 
                                                                     // to={`/movies/${id}`}
                                                                     onClick={() => navMovie(id,`/people/movie`,"movies")} 
-                                                                    className={windowWidth > 800 ? "w-[25%] h-[100%] hover:scale-115  duration-700 m-[0.5%] hover:contrast-150":"w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
+                                                                    className={windowWidth >= DESKTOP_WIDTH ? "w-[25%] h-[100%] hover:scale-115  duration-700 m-[0.5%] hover:contrast-150":"w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
-                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
+                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                                            <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
+                                                                            <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                             <h2 style={{fontStyle:"italic"}}>{character}</h2>
                                                                         </div>
@@ -897,7 +926,7 @@ const PERSON = () => {
                                                 movies.crew && movies.crew.length > 0 && 
                                                 <>
                                                     <h2>PLAYED AS CREW</h2>
-                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth > 800 ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]`}>
+                                                    <div className={`w-[100%] duration-50 movie-scene ${windowWidth >= DESKTOP_WIDTH ? "h-[300px]" : "h-[200px]"} flex flex-col flex-wrap overflow-x-auto overflow-y-hidden my-[1%]${shortRow(movies.crew)}`}>
                                                         {
                                                             movies.crew && movies.crew.map(({job,adult,backdrop_path,genre_ids,id,original_language,name,original_name,original_title,overview,popularity,poster_path,release_date,title,video,vote_average,vote_count},movie_key) => 
                                                                 <div 
@@ -905,12 +934,12 @@ const PERSON = () => {
                                                                     // to={`/movies/${id}`} 
                                                                     onClick={() => navMovie(id,`/people/movie`,"movies")}
                                                                     className={
-                                                                        windowWidth > 800 ? "cursor-pointer w-[25%] h-[100%] hover:scale-115  duration-700 hover:contrast-150":
+                                                                        windowWidth >= DESKTOP_WIDTH ? "cursor-pointer w-[25%] h-[100%] hover:scale-115  duration-700 hover:contrast-150":
                                                                         "cursor-pointer w-[45%] hover:scale-115  duration-700 h-[100%] m-[1%] hover:contrast-150"}>
                                                                     <div className="w-[100%] h-[100%]">
-                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth > 800 ? "" : "rounded-xl"}`} picture={poster_path} />
+                                                                        <PICTURE key={id} classes={`object-cover h-[100%] ${windowWidth >= DESKTOP_WIDTH ? "" : "rounded-xl"}`} picture={poster_path} />
                                                                         <div className="w-[100%] relative min-h-[60px] top-[-50%] bg-[rgba(0,0,0,0.75)] bg-opacity-60 text-white flex flex-col items-center justify-center">
-                                                                            <h2 className={windowWidth > 800 ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
+                                                                            <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":""}>{original_name || name || title || original_title}</h2>
                                                                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count}</p>
                                                                             <h2 style={{fontStyle:"italic"}}>{job}</h2>
                                                                         </div>

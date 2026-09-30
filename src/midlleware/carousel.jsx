@@ -15,23 +15,13 @@ import "swiper/css/effect-coverflow"
 import "swiper/css/pagination"
 import "swiper/css/navigation"
 import "swiper/css/effect-cards"
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
 
   const swiperRef = useRef(null); // Reference to the Swiper instance
-  const [windowWidth, setWindowWidth] = useState(0);
+  const windowWidth = useWindowWidth()
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Call it once to set the initial value
-    return () => {
-        window.removeEventListener("resize", handleResize);
-    };
-  },[])
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger, Draggable, Flip, MotionPathPlugin); 
@@ -75,7 +65,7 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
           controller={{ control: true }}
           onSlideChange={(swiper) => {
             // console.log(swiper)
-            if(window.screen.width > 800)
+            if(window.innerWidth >= DESKTOP_WIDTH)
               swiper.el.style.width = "100%"
           }}
           effect={'coverflow'} 
@@ -116,7 +106,7 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
               <SwiperSlide key={index} virtual={index}>
                 
                 <div 
-                  className={windowWidth > 800 ? "w-[100%] h-[100%] hover:skew-4 hover:contrast-150":"w-[100%] hover:skew-4 h-[90%] hover:contrast-150"}
+                  className={windowWidth >= DESKTOP_WIDTH ? "w-[100%] h-[100%] hover:skew-4 hover:contrast-150":"w-[100%] hover:skew-4 h-[90%] hover:contrast-150"}
                   style={{
                     boxShadow:"inset 0 0 30px rgba(0,0,0,0.6),0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)",
                     overflow: "hidden",
@@ -124,9 +114,9 @@ const Carousel = ({ images, type, mode, autoplayInterval = 5000 }) => {
                 >
                     <PICTURE key={id} classes={"object-cover h-[100%]"} picture={poster_path || profile_path} />
                     <div style={{boxShadow:"0 10px 30px rgba(0,0,0,0.7),0 0 60px rgba(0,0,0,0.5)"}} className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[90%] h-[90%] bg-[#000000] bg-opacity-60 text-white flex flex-col items-center justify-center z-10">
-                        <h2 className={windowWidth > 800 ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
+                        <h2 className={windowWidth >= DESKTOP_WIDTH ? "text-[15px] font-bold":"text-[12px]"}>{title || original_title || name || original_name}</h2>
                         {
-                          windowWidth > 800 ?
+                          windowWidth >= DESKTOP_WIDTH ?
                             <p style={{color:"#ffd800"}}><FontAwesomeIcon icon={faStar} /> { parseFloat(vote_average).toFixed(1) || parseFloat(popularity).toFixed(1) || vote_count || credit_id}</p>
                           :
                             <h3 className="italic">{character}</h3>

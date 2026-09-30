@@ -5,10 +5,10 @@ const SOCKETS = new (function(){
     this.connect = async() => {
         this.socketModule = await new Promise((resolve) => {
             resolve(io(
-                    process.env.REACT_APP_environment === "development"
-                    ? process.env.REACT_APP_socket_api_sandbox
+                    process.env.REACT_APP_ENVIRONMENT === "development"
+                    ? process.env.REACT_APP_SOCKET_API_SANDBOX
                     :
-                    process.env.REACT_APP_socket_api_live))
+                    process.env.REACT_APP_SOCKET_API_LIVE))
         });
 
         return this.socketModule

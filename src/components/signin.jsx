@@ -1,28 +1,34 @@
 import NAVBAR from "./nav";
 import {useEffect,useState,useCallback,useRef} from "react"
-import { NavLink, useNavigate  } from "react-router-dom"
+import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import Swal from "sweetalert2";
 import MOBILE from "./mobileBar";
 import {jwtDecode} from 'jwt-decode';
+import { forgetSignedIn } from "./access";
+import { useWindowWidth, DESKTOP_WIDTH } from "../hooks/useWindowWidth";
 
 const SIGNIN = () => {
     const [loading, setLoading] = useState(false)
     const [form,setForm] = useState({username:"",password:"",account:""})
     const [remember, setRemember] = useState(false);
+    //PRD #22: a right account number gets a code emailed; the cookie comes from /signin/verify
+    const [challenge, setChallenge] = useState(null) // {id, sentTo}
+    const [code, setCode] = useState("")
     const [honeypot, setHoneypot] = useState("") // bot trap
     const recaptchaSiteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY || null
     const router = useNavigate()
+    // REQUIRELOGIN (access.jsx) sends the page it turned away here, to go back to once signed in
+    const { state: arrivedWith } = useLocation()
+    const goNext = useCallback(() => {
+      forgetSignedIn()
+      const next = arrivedWith?.next
+      if (next?.pathname) router(next.pathname + (next.search || ""), { state: next.state })
+      else router("/")
+    }, [router, arrivedWith])
     // const router = useRouter()
     const formStartRef = useRef(Date.now()) 
-    const [windowWidth, setWindowWidth] = useState(0);
+    const windowWidth = useWindowWidth()
     const recaptchaLoadedRef = useRef(false)
-    useEffect(() => {
-      const handleResize = () => {
-          setWindowWidth(window.screen.width);
-      };
-      window.addEventListener("resize", handleResize);
-      handleResize(); // Call it once to set the initial value      
-    })
     // rate-limit config
     const MAX_ATTEMPTS = 5
     const LOCK_WINDOW_MS = 15 * 60 * 1000 // 15 minutes lockout
@@ -68,8 +74,9 @@ const SIGNIN = () => {
       const res = await fetch(process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_GOOGLE_SIGNIN : process.env.REACT_APP_GOOGLE_SIGNIN_LIVE, {
           method: "POST",
           credentials: "include",
+          //the server checks the credential with Google - the decoded email above is only for display
           body:JSON.stringify({
-            email,
+            credential:response.credential,
             remember
           }),
           headers: {
@@ -85,8 +92,8 @@ const SIGNIN = () => {
         }
 
         console.log(message)
-        router("/");
-    },[router,remember])
+        goNext();
+    },[goNext,remember])
 
     // ...existing code (resize effect etc) ...
     useEffect(() => {
@@ -106,31 +113,6 @@ const SIGNIN = () => {
       };
     }, [handleCredentialResponse]);
     
-    const validateInput = ({ username, password, hp }) => {
-      // honeypot must be empty
-      if(hp && hp.trim().length > 0) return { ok:false, message: "Bot detected" }
-
-      const email = String(username || "").trim()
-      const pass = String(password || "")
-
-      if(email.length === 0) return { ok:false, message: "Email is required" }
-      if(email.length > 254) return { ok:false, message: "Email too long" }
-
-      // simple RFC-like email regex (not perfect but OK for client-side)
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-      if(!emailRe.test(email)) return { ok:false, message: "Invalid email format" }
-
-      if(pass.length === 0) return { ok:false, message: "Password is required" }
-      if(pass.length < 8) return { ok:false, message: "Password must be at least 8 characters" }
-      if(pass.length > 128) return { ok:false, message: "Password too long" }
-
-      // optional: check basic complexity (at least letters + number)
-      const complexity = /(?=.*[A-Za-z])(?=.*\d)/
-      if(!complexity.test(pass)) return { ok:false, message: "Password must include letters and numbers" }
-
-      return { ok:true, email, pass }
-    }
-
     const handleSubmit = async (e) => {
       try{
         e.preventDefault();
@@ -218,7 +200,12 @@ const SIGNIN = () => {
 
         // success -> clear attempts
         resetAttempts()
-        router("/");
+        if(data.twoFactor){
+          setCode("")
+          setChallenge({ id:data.challenge, sentTo:data.sentTo })
+          return
+        }
+        goNext();
       }catch(error){
         console.error(error)
         Swal.fire("Error","Unexpected error. Try again later.","error")
@@ -228,28 +215,87 @@ const SIGNIN = () => {
 
     };
 
+    const signinUrl = process.env.REACT_APP_ENVIRONMENT === "development" ? process.env.REACT_APP_SIGNIN : process.env.REACT_APP_SIGNIN_LIVE
+    const verifyCode = async (e) => {
+      e.preventDefault()
+      if(!/^\d{6}$/.test(code.trim())){
+        Swal.fire("oops!", "Enter the 6-digit code from your email", "error")
+        return
+      }
+      setLoading(true)
+      try{
+        const response = await fetch(`${signinUrl}/verify`, {
+          method: "POST",
+          credentials: "include",
+          body: JSON.stringify({ challenge:challenge.id, code:code.trim() }),
+          headers: { 'Content-Type': 'application/json' },
+        })
+        const data = await response.json()
+        if(!data?.status){
+          Swal.fire("oops!", data?.message || "Wrong code", "error")
+          //the code is used up (expired / too many tries) - back to the account number
+          if(/sign in again/i.test(data?.message || "")) setChallenge(null)
+          return
+        }
+        goNext()
+      }catch(error){
+        console.error(error)
+        Swal.fire("Error","Unexpected error. Try again later.","error")
+      }finally{
+        setLoading(false)
+      }
+    }
+
     return (
         <div className="w-[100%] h-[100%] text-white flex flex-row flex-wrap" style={{background:"url(/image/grey.jpg)"}}>
             {
-              windowWidth > 800 ? 
+              windowWidth >= DESKTOP_WIDTH ? 
                 <div className="w-[20%] absolute h-[100%] border-r-[3px] border-[#2E2E3A]" style={{background:"linear-gradient(85deg, #0d0d0d, rgba(0,0,0,0.75), #000, #0f111a)"}}>
-                    <NAVBAR  fullCover={true}/>
+                    <NAVBAR  
+                    // fullCover={true}
+                    />
                 </div>
                 :
                 <MOBILE/>
             }
-            <div className={`flex flex-1 items-center ${windowWidth > 800 ? "w-[100%]" : "h-[92%] w-[100%]"} justify-center min-h-screen`}>
-                <div className={`bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 flex flex-col items-center  ${windowWidth > 800 ? "w-[60%] ml-[20%]" : "w-[100%]"}`}>
+            <div className={`flex flex-1 items-center ${windowWidth >= DESKTOP_WIDTH ? "w-[100%]" : "h-[92%] w-[100%]"} justify-center min-h-screen`}>
+                <div className={`bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 flex flex-col items-center  ${windowWidth >= DESKTOP_WIDTH ? "w-[60%] ml-[20%]" : "w-[100%]"}`}>
                     <img src="/image/footer3.png" alt="late developers https://late-developers.com" className="w-1/2 mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-center text-[#18181c] mb-6">Sign in to your account</h2>
-                    <div className={`${windowWidth > 800 ? "w-full" : "w-[100%]"} flex flex-col gap-4`}>
+                    <div className={`${windowWidth >= DESKTOP_WIDTH ? "w-full" : "w-[100%]"} flex flex-col gap-4`}>
                         {/* Google Sign-In */}
                         <div className="flex flex-col items-center w-full mb-2">
                             <div id="google-signin-btn" style={{ width: "100%", display: "flex", justifyContent: "center" }}></div>
                             <div className="my-4 text-gray-400 text-sm">or</div>
                         </div>
-                        {/* Email/Password Sign-In */}
-                        <form onSubmit={handleSubmit} className={`${windowWidth > 800 ? "w-full" : "w-[100%]"} flex flex-col gap-4`}>
+                        {challenge ?
+                        <form onSubmit={verifyCode} className="w-full flex flex-col gap-4">
+                            <p className="text-gray-700 text-center">We emailed a 6-digit sign-in code to <b>{challenge.sentTo}</b>. It works for 10 minutes.</p>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="one-time-code"
+                              maxLength={6}
+                              placeholder="Sign-in code"
+                              value={code}
+                              onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
+                              className="p-3 rounded border border-gray-300 focus:outline-none focus:border-[#ffd800] text-black text-center tracking-[0.4em]"
+                              autoFocus
+                            />
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-3 rounded bg-[#18181c] text-white font-bold hover:bg-[#ffd800] hover:text-black transition"
+                            >
+                                {loading ? "Checking..." : "Verify"}
+                            </button>
+                            <button type="button" onClick={() => setChallenge(null)} className="text-[#18181c] underline">
+                                Use a different account number / send a new code
+                            </button>
+                        </form>
+                        :
+                        /* Account-number Sign-In */
+                        <form onSubmit={handleSubmit} className={`${windowWidth >= DESKTOP_WIDTH ? "w-full" : "w-[100%]"} flex flex-col gap-4`}>
                             {/* honeypot field - hidden from users, visible to bots */}
                             <input
                               name="hp"
@@ -259,7 +305,7 @@ const SIGNIN = () => {
                               tabIndex="-1"
                               style={{position:'absolute', left:'-9999px', top:'-9999px', opacity:0, height:0, width:0}}
                             />
-                            <div className={`flex gap-2 ${windowWidth > 800 ? "w-full flex-row" : "w-[100%] flex-col"}`}>
+                            <div className={`flex gap-2 ${windowWidth >= DESKTOP_WIDTH ? "w-full flex-row" : "w-[100%] flex-col"}`}>
                                 {/* <input
                                     type="email"
                                     placeholder="Email"
@@ -303,9 +349,7 @@ const SIGNIN = () => {
                                   className="text-[#ffd800] underline"
                                 >
                                   change account no
-                                </NavLink>
-                                <NavLink to="/signup" className="text-[#ffd800] w-[48%] m-[1%] underline">Create an Account</NavLink>
-                            </div>
+                                </NavLink>                            </div>
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -313,7 +357,12 @@ const SIGNIN = () => {
                             >
                                 {loading ? "Signing in..." : "Sign In"}
                             </button>
+                            <p className="w-full mt-3 text-center text-gray-700">
+                                New here?{" "}
+                                <NavLink to="/signup" className="text-[#ffd800] underline">Create an Account</NavLink>
+                            </p>
                         </form>
+                        }
                     </div>
                 </div>
      
